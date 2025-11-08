@@ -18,6 +18,9 @@ export default defineConfig({
         '.hive-mind/**',
         '.swarm/**',
         '.checkpoints/**',
+        '**/*.config.ts',
+        '**/*.config.js',
+        '**/*.cjs',
       ],
       thresholds: {
         lines: 80,
