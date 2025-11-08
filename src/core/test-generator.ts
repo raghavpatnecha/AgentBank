@@ -4,6 +4,19 @@
  */
 
 import type { ParsedApiSpec, ApiEndpoint, InfoObject } from '../types/openapi-types.js';
+import type {
+  TestCase,
+  GeneratedTestFile,
+  TestGenerationResult,
+  GenerationStatistics,
+  OrganizationStrategy,
+} from '../types/test-generator-types.js';
+import type {
+  TestGeneratorInterface,
+  TestOrganizerInterface,
+  CodeGeneratorInterface,
+  OrganizedTests,
+} from '../types/generator-interfaces.js';
 
 /**
  * Options for test generation
@@ -18,6 +31,12 @@ export interface TestGeneratorOptions {
   /** Include edge case tests (boundary values, error cases) */
   includeEdgeCases?: boolean;
 
+  /** Include error case tests (4xx, 5xx responses) */
+  includeErrors?: boolean;
+
+  /** Include workflow/flow tests */
+  includeFlows?: boolean;
+
   /** Include performance tests */
   includePerformance?: boolean;
 
@@ -26,6 +45,9 @@ export interface TestGeneratorOptions {
 
   /** Output directory for generated tests */
   outputDir?: string;
+
+  /** Organization strategy */
+  organizationStrategy?: OrganizationStrategy;
 
   /** Test framework specific options */
   framework?: {
@@ -38,46 +60,27 @@ export interface TestGeneratorOptions {
 }
 
 /**
- * Represents a generated test file
- */
-export interface GeneratedTestFile {
-  /** File path relative to output directory */
-  path: string;
-
-  /** Generated test content */
-  content: string;
-
-  /** Test metadata */
-  metadata: {
-    /** Endpoints covered by this test file */
-    endpoints: string[];
-
-    /** Number of test cases */
-    testCount: number;
-
-    /** Tags for test organization */
-    tags: string[];
-  };
-}
-
-/**
- * Main Test Generator Class
+ * Main Test Generator Class - Complete Implementation
  *
  * Responsibilities:
- * - Parse OpenAPI specification
- * - Generate test cases for each endpoint
- * - Generate test fixtures and helpers
- * - Organize tests by tags/endpoints
+ * - Orchestrate all test generators (HappyPath, ErrorCase, EdgeCase, Auth, Flow)
+ * - Extract endpoints from OpenAPI specification
+ * - Coordinate test organization
+ * - Generate final test files
+ * - Provide statistics and reporting
  *
  * Design decisions:
  * - Uses Playwright's request fixture for API testing
  * - Generates TypeScript for type safety
- * - Organizes tests by API tags (if available) or by resource path
- * - Generates data-driven tests using faker for realistic test data
+ * - Modular architecture with specialized generators
+ * - Pluggable organization strategies
  */
 export class TestGenerator {
   private spec: ParsedApiSpec;
   private options: TestGeneratorOptions;
+  private generators: Map<string, TestGeneratorInterface>;
+  private organizer: TestOrganizerInterface | null;
+  private codeGenerator: CodeGeneratorInterface | null;
 
   /**
    * Creates a new test generator instance
@@ -91,8 +94,11 @@ export class TestGenerator {
       includeAuth: true,
       includeValidation: true,
       includeEdgeCases: true,
+      includeErrors: true,
+      includeFlows: true,
       includePerformance: false,
       outputDir: 'tests/generated',
+      organizationStrategy: 'by-tag',
       framework: {
         useFixtures: true,
         useHooks: true,
@@ -100,12 +106,35 @@ export class TestGenerator {
       ...options,
     };
 
-    // Note: Private methods prefixed with _ are placeholders for future implementation
-    // and will be used in later tasks (2.2-2.7). Suppressing unused warnings.
-    void this._extractEndpoints;
-    void this._groupEndpoints;
-    void this._generateEndpointTests;
-    void this._generateFixtures;
+    // Initialize generators map (will be populated by setGenerator)
+    this.generators = new Map();
+    this.organizer = null;
+    this.codeGenerator = null;
+  }
+
+  /**
+   * Set a test generator for a specific type
+   * @param type - Test type
+   * @param generator - Generator implementation
+   */
+  setGenerator(type: string, generator: TestGeneratorInterface): void {
+    this.generators.set(type, generator);
+  }
+
+  /**
+   * Set the test organizer
+   * @param organizer - Organizer implementation
+   */
+  setOrganizer(organizer: TestOrganizerInterface): void {
+    this.organizer = organizer;
+  }
+
+  /**
+   * Set the code generator
+   * @param codeGenerator - Code generator implementation
+   */
+  setCodeGenerator(codeGenerator: CodeGeneratorInterface): void {
+    this.codeGenerator = codeGenerator;
   }
 
   /**
@@ -113,85 +142,309 @@ export class TestGenerator {
    *
    * Strategy:
    * 1. Extract all endpoints from spec
-   * 2. Group endpoints by tag or resource
-   * 3. Generate test cases for each endpoint
-   * 4. Generate fixtures and helpers
-   * 5. Organize into test files
+   * 2. Generate test cases using all configured generators
+   * 3. Organize tests by configured strategy
+   * 4. Generate code files
+   * 5. Collect statistics
    *
-   * @returns Array of generated test files
+   * @returns Test generation result with files and statistics
    */
-  async generateTests(): Promise<GeneratedTestFile[]> {
-    const testFiles: GeneratedTestFile[] = [];
+  async generateTests(): Promise<TestGenerationResult> {
+    const startTime = Date.now();
 
-    // TODO: Implement in later tasks
-    // - Extract endpoints from spec (Task 2.2)
-    // - Group endpoints (Task 2.3)
-    // - Generate test cases (Task 2.4-2.6)
-    // - Generate fixtures (Task 2.7)
+    try {
+      // Step 1: Extract endpoints
+      const endpoints = this.extractEndpoints();
 
-    await Promise.resolve(); // Placeholder for future async operations
+      if (endpoints.length === 0) {
+        return {
+          files: [],
+          totalTests: 0,
+          statistics: this.createEmptyStatistics(startTime),
+          warnings: [
+            {
+              message: 'No endpoints found in OpenAPI specification',
+              code: 'NO_ENDPOINTS',
+              severity: 'high',
+            },
+          ],
+          errors: [],
+        };
+      }
 
-    return testFiles;
+      // Step 2: Generate test cases from all generators
+      const allTests: TestCase[] = [];
+
+      // Happy path tests (always included)
+      if (this.generators.has('happy-path')) {
+        const happyGen = this.generators.get('happy-path')!;
+        allTests.push(...happyGen.generateTests(endpoints));
+      }
+
+      // Error case tests
+      if (this.options.includeErrors && this.generators.has('error-case')) {
+        const errorGen = this.generators.get('error-case')!;
+        allTests.push(...errorGen.generateTests(endpoints));
+      }
+
+      // Edge case tests
+      if (this.options.includeEdgeCases && this.generators.has('edge-case')) {
+        const edgeGen = this.generators.get('edge-case')!;
+        allTests.push(...edgeGen.generateTests(endpoints));
+      }
+
+      // Auth tests
+      if (this.options.includeAuth && this.generators.has('auth')) {
+        const authGen = this.generators.get('auth')!;
+        allTests.push(...authGen.generateTests(endpoints));
+      }
+
+      // Flow tests
+      if (this.options.includeFlows && this.generators.has('flow')) {
+        const flowGen = this.generators.get('flow')!;
+        allTests.push(...flowGen.generateTests(endpoints));
+      }
+
+      // Step 3: Organize tests
+      const organized = this.organizeTests(allTests);
+
+      // Step 4: Generate code files
+      const files = this.generateCodeFiles(organized);
+
+      // Step 5: Collect statistics
+      const statistics = this.collectStatistics(endpoints, allTests, files, startTime);
+
+      return {
+        files,
+        totalTests: allTests.length,
+        statistics,
+        warnings: [],
+        errors: [],
+      };
+    } catch (error) {
+      return {
+        files: [],
+        totalTests: 0,
+        statistics: this.createEmptyStatistics(startTime),
+        warnings: [],
+        errors: [
+          {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            code: 'GENERATION_ERROR',
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+        ],
+      };
+    }
   }
 
   /**
    * Extracts all API endpoints from the specification
    *
    * @returns Array of API endpoints
-   * @private
    */
-  private _extractEndpoints(): ApiEndpoint[] {
+  extractEndpoints(): ApiEndpoint[] {
     const endpoints: ApiEndpoint[] = [];
 
-    // TODO: Implement endpoint extraction from spec.paths
-    // This will be implemented in Task 2.2
+    // Iterate through all paths in the spec
+    for (const [path, pathItem] of Object.entries(this.spec.paths)) {
+      if (!pathItem) continue;
+
+      // Extract each HTTP method operation
+      const methods: Array<{ method: string; operation: any }> = [
+        { method: 'get', operation: pathItem.get },
+        { method: 'post', operation: pathItem.post },
+        { method: 'put', operation: pathItem.put },
+        { method: 'patch', operation: pathItem.patch },
+        { method: 'delete', operation: pathItem.delete },
+        { method: 'options', operation: pathItem.options },
+        { method: 'head', operation: pathItem.head },
+        { method: 'trace', operation: pathItem.trace },
+      ];
+
+      for (const { method, operation } of methods) {
+        if (!operation) continue;
+
+        // Build endpoint object
+        const endpoint: ApiEndpoint = {
+          path,
+          method: method as any,
+          operationId: operation.operationId,
+          summary: operation.summary,
+          description: operation.description,
+          parameters: this.extractParameters(operation.parameters, pathItem.parameters),
+          requestBody: operation.requestBody,
+          responses: this.extractResponses(operation.responses),
+          security: operation.security || this.spec.security || [],
+          tags: operation.tags || [],
+          servers: operation.servers || pathItem.servers || this.spec.servers || [],
+        };
+
+        endpoints.push(endpoint);
+      }
+    }
 
     return endpoints;
   }
 
   /**
-   * Groups endpoints by tag or resource path
-   *
-   * @param _endpoints - Array of endpoints to group
-   * @returns Map of group name to endpoints
-   * @private
+   * Extract and normalize parameters
    */
-  private _groupEndpoints(_endpoints: ApiEndpoint[]): Map<string, ApiEndpoint[]> {
-    const groups = new Map<string, ApiEndpoint[]>();
+  private extractParameters(
+    operationParams?: any[],
+    pathParams?: any[]
+  ): any[] {
+    const params = [];
 
-    // TODO: Implement grouping logic
-    // This will be implemented in Task 2.3
+    if (pathParams) {
+      params.push(...pathParams);
+    }
 
-    return groups;
+    if (operationParams) {
+      params.push(...operationParams);
+    }
+
+    return params;
   }
 
   /**
-   * Generates test cases for a single endpoint
-   *
-   * @param _endpoint - API endpoint to generate tests for
-   * @returns Array of test case strings
-   * @private
+   * Extract and normalize responses
    */
-  private _generateEndpointTests(_endpoint: ApiEndpoint): string[] {
-    const tests: string[] = [];
+  private extractResponses(responses: any): Map<number | 'default', any> {
+    const responseMap = new Map<number | 'default', any>();
 
-    // TODO: Implement test generation
-    // This will be implemented in Tasks 2.4-2.6
+    for (const [statusCode, response] of Object.entries(responses)) {
+      if (statusCode === 'default') {
+        responseMap.set('default', response);
+      } else {
+        const code = parseInt(statusCode, 10);
+        if (!isNaN(code)) {
+          responseMap.set(code, response);
+        }
+      }
+    }
 
-    return tests;
+    return responseMap;
   }
 
   /**
-   * Generates fixture code for common test setup
-   *
-   * @returns Fixture code as string
-   * @private
+   * Organize tests using the configured strategy
    */
-  private _generateFixtures(): string {
-    // TODO: Implement fixture generation
-    // This will be implemented in Task 2.7
+  private organizeTests(tests: TestCase[]): OrganizedTests {
+    if (this.organizer) {
+      const strategy = this.options.organizationStrategy || 'by-tag';
+      return this.organizer.organize(tests, strategy);
+    }
 
-    return '';
+    // Fallback: simple organization by test type
+    const files = new Map<string, TestCase[]>();
+
+    for (const test of tests) {
+      const key = `${test.type}.spec.ts`;
+      if (!files.has(key)) {
+        files.set(key, []);
+      }
+      files.get(key)!.push(test);
+    }
+
+    return {
+      files,
+      metadata: {
+        strategy: this.options.organizationStrategy || 'by-type',
+        fileCount: files.size,
+        testCount: tests.length,
+      },
+    };
+  }
+
+  /**
+   * Generate code files from organized tests
+   */
+  private generateCodeFiles(organized: OrganizedTests): GeneratedTestFile[] {
+    if (this.codeGenerator) {
+      return this.codeGenerator.generateFiles(organized);
+    }
+
+    // Fallback: create basic test files structure
+    const files: GeneratedTestFile[] = [];
+
+    for (const [fileName, tests] of organized.files) {
+      files.push({
+        filePath: fileName,
+        fileName,
+        content: this.generateBasicTestContent(tests),
+        tests,
+        imports: ["import { test, expect } from '@playwright/test';"],
+        metadata: {
+          endpoints: tests.map(t => t.endpoint),
+          testTypes: [...new Set(tests.map(t => t.type))],
+          testCount: tests.length,
+          tags: [...new Set(tests.flatMap(t => t.metadata.tags))],
+          generatedAt: new Date().toISOString(),
+        },
+      });
+    }
+
+    return files;
+  }
+
+  /**
+   * Generate basic test content (fallback)
+   */
+  private generateBasicTestContent(tests: TestCase[]): string {
+    let content = "import { test, expect } from '@playwright/test';\n\n";
+
+    for (const testCase of tests) {
+      content += `test('${testCase.name}', async ({ request }) => {\n`;
+      content += `  // ${testCase.description}\n`;
+      content += `  const response = await request.${testCase.method.toLowerCase()}('${testCase.endpoint}');\n`;
+      content += `  expect(response.ok()).toBeTruthy();\n`;
+      content += `});\n\n`;
+    }
+
+    return content;
+  }
+
+  /**
+   * Collect generation statistics
+   */
+  private collectStatistics(
+    endpoints: ApiEndpoint[],
+    tests: TestCase[],
+    files: GeneratedTestFile[],
+    startTime: number
+  ): GenerationStatistics {
+    const testsByType: Record<string, number> = {};
+
+    for (const test of tests) {
+      testsByType[test.type] = (testsByType[test.type] || 0) + 1;
+    }
+
+    // Calculate total lines of code
+    const linesOfCode = files.reduce((sum, file) => {
+      return sum + file.content.split('\n').length;
+    }, 0);
+
+    return {
+      endpointsProcessed: endpoints.length,
+      testsByType: testsByType as any,
+      filesGenerated: files.length,
+      generationTime: Date.now() - startTime,
+      linesOfCode,
+    };
+  }
+
+  /**
+   * Create empty statistics
+   */
+  private createEmptyStatistics(startTime: number): GenerationStatistics {
+    return {
+      endpointsProcessed: 0,
+      testsByType: {} as any,
+      filesGenerated: 0,
+      generationTime: Date.now() - startTime,
+      linesOfCode: 0,
+    };
   }
 
   /**
@@ -220,5 +473,19 @@ export class TestGenerator {
    */
   getApiInfo(): InfoObject {
     return this.spec.info;
+  }
+
+  /**
+   * Get the number of registered generators
+   */
+  getGeneratorCount(): number {
+    return this.generators.size;
+  }
+
+  /**
+   * Check if a specific generator is registered
+   */
+  hasGenerator(type: string): boolean {
+    return this.generators.has(type);
   }
 }

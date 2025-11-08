@@ -5,12 +5,16 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "api-test-agent": "./dist/cli/index.js"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "cli": "node dist/cli/index.js",
     "test": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
@@ -41,6 +45,7 @@
   "license": "MIT",
   "dependencies": {
     "@playwright/test": "^1.40.1",
+    "commander": "^11.1.0",
     "dotenv": "^17.2.3",
     "swagger-parser": "^10.0.3",
     "yaml": "^2.3.4",
