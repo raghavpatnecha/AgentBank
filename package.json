@@ -47,6 +47,7 @@
     "@playwright/test": "^1.40.1",
     "commander": "^11.1.0",
     "dotenv": "^17.2.3",
+    "openai": "^4.104.0",
     "swagger-parser": "^10.0.3",
     "yaml": "^2.3.4",
     "zod": "^3.22.4"
