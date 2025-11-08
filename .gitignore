@@ -25,3 +25,42 @@ coordination/orchestration/*
 claude-flow
 # Removed Windows wrapper files per user request
 hive-mind-prompt-*.txt
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Temp files
+tmp/
+temp/
