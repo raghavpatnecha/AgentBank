@@ -44,10 +44,17 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@octokit/plugin-retry": "^8.0.3",
+    "@octokit/plugin-throttling": "^11.0.3",
+    "@octokit/rest": "^22.0.1",
     "@playwright/test": "^1.40.1",
+    "@types/express": "^5.0.5",
+    "@types/supertest": "^6.0.3",
     "commander": "^11.1.0",
     "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "openai": "^4.104.0",
+    "supertest": "^7.1.4",
     "swagger-parser": "^10.0.3",
     "yaml": "^2.3.4",
     "zod": "^3.22.4"

@@ -1,0 +1,537 @@
+# Complete GitHub Workflow Example for API Test Agent
+# This workflow demonstrates all features including:
+# - PR triggers
+# - Comment triggers
+# - Manual workflow dispatch
+# - Matrix testing (multiple environments)
+# - Check run creation
+# - Comment posting
+# - Artifact uploads
+# - Slack/Teams notifications
+# - Deployment integration
+
+name: API Testing Complete
+
+on:
+  # Trigger on pull request events
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'api/**/*.yaml'
+      - 'api/**/*.json'
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/api-tests.yml'
+
+  # Trigger on PR/issue comments
+  issue_comment:
+    types: [created, edited]
+
+  # Manual workflow dispatch with inputs
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test against'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      spec_path:
+        description: 'Path to OpenAPI spec'
+        required: false
+        default: 'api/openapi.yaml'
+      run_full_suite:
+        description: 'Run full test suite (slower)'
+        required: false
+        type: boolean
+        default: false
+
+  # Scheduled runs
+  schedule:
+    # Run tests daily at 2 AM UTC against production
+    - cron: '0 2 * * *'
+    # Run tests every 6 hours against staging
+    - cron: '0 */6 * * *'
+
+# Prevent concurrent runs for the same PR
+concurrency:
+  group: api-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Set default permissions (principle of least privilege)
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  issues: write
+
+env:
+  NODE_VERSION: '18'
+  CACHE_KEY_PREFIX: 'api-test-agent-v1'
+
+jobs:
+  # Job 1: Determine if and what to test
+  detect-trigger:
+    name: Detect Test Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      spec_paths: ${{ steps.check.outputs.spec_paths }}
+      environments: ${{ steps.check.outputs.environments }}
+      run_full_suite: ${{ steps.check.outputs.run_full_suite }}
+      triggered_by: ${{ steps.check.outputs.triggered_by }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect trigger and parse configuration
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = github;
+            let shouldRun = false;
+            let specPaths = ['api/openapi.yaml'];
+            let environments = ['dev'];
+            let runFullSuite = false;
+            let triggeredBy = 'unknown';
+
+            // Comment trigger
+            if (context.eventName === 'issue_comment') {
+              const comment = context.payload.comment.body;
+              const triggerPattern = /@api-test-agent\s+test/i;
+
+              if (triggerPattern.test(comment)) {
+                shouldRun = true;
+                triggeredBy = 'comment';
+
+                // Parse spec path
+                const specMatch = comment.match(/--spec[=\s]+([^\s]+)/i);
+                if (specMatch) {
+                  specPaths = [specMatch[1]];
+                }
+
+                // Parse environment
+                const envMatch = comment.match(/--env[=\s]+(\w+)/i);
+                if (envMatch) {
+                  environments = [envMatch[1]];
+                }
+
+                // Parse multiple environments
+                const multiEnvMatch = comment.match(/--envs[=\s]+([\w,]+)/i);
+                if (multiEnvMatch) {
+                  environments = multiEnvMatch[1].split(',');
+                }
+
+                // Check for full suite flag
+                if (/--full/i.test(comment)) {
+                  runFullSuite = true;
+                }
+
+                core.info(`Comment trigger detected: spec=${specPaths}, env=${environments}`);
+              }
+            }
+
+            // Pull request trigger
+            else if (context.eventName === 'pull_request') {
+              // Skip draft PRs unless explicitly requested
+              if (!context.payload.pull_request.draft) {
+                shouldRun = true;
+                triggeredBy = 'pull_request';
+
+                // Check which files changed
+                const { data: files } = await github.rest.pulls.listFiles({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.payload.pull_request.number,
+                });
+
+                // Find changed spec files
+                const changedSpecs = files
+                  .map(f => f.filename)
+                  .filter(f => f.startsWith('api/') && (f.endsWith('.yaml') || f.endsWith('.json')));
+
+                if (changedSpecs.length > 0) {
+                  specPaths = changedSpecs;
+                  core.info(`Detected changed specs: ${changedSpecs.join(', ')}`);
+                }
+              }
+            }
+
+            // Manual workflow dispatch
+            else if (context.eventName === 'workflow_dispatch') {
+              shouldRun = true;
+              triggeredBy = 'manual';
+              environments = [github.event.inputs.environment];
+              specPaths = [github.event.inputs.spec_path];
+              runFullSuite = github.event.inputs.run_full_suite === 'true';
+            }
+
+            // Scheduled run
+            else if (context.eventName === 'schedule') {
+              shouldRun = true;
+              triggeredBy = 'schedule';
+              const hour = new Date().getHours();
+
+              // 2 AM run - full production test
+              if (hour === 2) {
+                environments = ['prod'];
+                runFullSuite = true;
+              }
+              // Every 6 hours - quick staging test
+              else {
+                environments = ['staging'];
+              }
+            }
+
+            // Set outputs
+            core.setOutput('should_run', shouldRun.toString());
+            core.setOutput('spec_paths', JSON.stringify(specPaths));
+            core.setOutput('environments', JSON.stringify(environments));
+            core.setOutput('run_full_suite', runFullSuite.toString());
+            core.setOutput('triggered_by', triggeredBy);
+
+            return {
+              shouldRun,
+              specPaths,
+              environments,
+              runFullSuite,
+              triggeredBy,
+            };
+
+  # Job 2: Run API tests (matrix strategy for multiple specs/environments)
+  api-tests:
+    name: Test ${{ matrix.spec }} on ${{ matrix.environment }}
+    needs: detect-trigger
+    if: needs.detect-trigger.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        spec: ${{ fromJSON(needs.detect-trigger.outputs.spec_paths) }}
+        environment: ${{ fromJSON(needs.detect-trigger.outputs.environments) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ env.CACHE_KEY_PREFIX }}-${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g api-test-agent@latest
+
+      - name: Validate OpenAPI spec
+        run: |
+          npx swagger-cli validate ${{ matrix.spec }}
+
+      - name: Create check run
+        id: create-check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: `API Tests: ${{ matrix.spec }} (${{ matrix.environment }})`,
+              head_sha: context.payload.pull_request?.head?.sha || context.sha,
+              status: 'in_progress',
+              output: {
+                title: 'Running API tests...',
+                summary: `Testing **${{ matrix.spec }}** against **${{ matrix.environment }}** environment`,
+              },
+            });
+            core.setOutput('check_run_id', data.id);
+            return data.id;
+
+      - name: Run API tests
+        id: run-tests
+        env:
+          API_BASE_URL: ${{ secrets[format('{0}_API_URL', matrix.environment)] }}
+          AUTH_TOKEN: ${{ secrets[format('{0}_AUTH_TOKEN', matrix.environment)] }}
+          API_KEY: ${{ secrets[format('{0}_API_KEY', matrix.environment)] }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # Build test command
+          CMD="api-test-agent test \
+            --spec=${{ matrix.spec }} \
+            --base-url=$API_BASE_URL \
+            --environment=${{ matrix.environment }} \
+            --output=json \
+            --output-file=test-results.json"
+
+          # Add auth if available
+          if [ -n "$AUTH_TOKEN" ]; then
+            CMD="$CMD --auth-token=$AUTH_TOKEN"
+          elif [ -n "$API_KEY" ]; then
+            CMD="$CMD --api-key=$API_KEY"
+          fi
+
+          # Add full suite flag if requested
+          if [ "${{ needs.detect-trigger.outputs.run_full_suite }}" = "true" ]; then
+            CMD="$CMD --full-suite"
+          fi
+
+          # Run tests
+          echo "Running: $CMD"
+          eval $CMD
+
+      - name: Parse test results
+        id: parse-results
+        if: always()
+        run: |
+          if [ -f test-results.json ]; then
+            RESULTS=$(cat test-results.json)
+            TOTAL=$(echo "$RESULTS" | jq '.summary.total // 0')
+            PASSED=$(echo "$RESULTS" | jq '.summary.passed // 0')
+            FAILED=$(echo "$RESULTS" | jq '.summary.failed // 0')
+            SKIPPED=$(echo "$RESULTS" | jq '.summary.skipped // 0')
+            DURATION=$(echo "$RESULTS" | jq '.summary.duration // 0')
+
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+            echo "duration=$DURATION" >> $GITHUB_OUTPUT
+
+            # Calculate pass rate
+            if [ "$TOTAL" -gt 0 ]; then
+              PASS_RATE=$(echo "scale=2; $PASSED * 100 / $TOTAL" | bc)
+              echo "pass_rate=$PASS_RATE" >> $GITHUB_OUTPUT
+            else
+              echo "pass_rate=0" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+            echo "duration=0" >> $GITHUB_OUTPUT
+            echo "pass_rate=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate HTML report
+        if: always()
+        run: |
+          if [ -f test-results.json ]; then
+            api-test-agent report \
+              --input=test-results.json \
+              --output=test-report.html \
+              --format=html
+          fi
+
+      - name: Update check run with results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const checkRunId = ${{ steps.create-check.outputs.check_run_id }};
+            const passed = parseInt('${{ steps.parse-results.outputs.passed }}');
+            const failed = parseInt('${{ steps.parse-results.outputs.failed }}');
+            const total = parseInt('${{ steps.parse-results.outputs.total }}');
+
+            let conclusion = 'success';
+            let title = '✅ All API tests passed';
+            let summary = `**${passed}** out of **${total}** tests passed`;
+
+            if (failed > 0) {
+              conclusion = 'failure';
+              title = `❌ ${failed} test(s) failed`;
+              summary = `**${failed}** out of **${total}** tests failed`;
+            } else if (total === 0) {
+              conclusion = 'neutral';
+              title = '⚠️ No tests found';
+              summary = 'No API tests were executed';
+            }
+
+            let details = '';
+            if (fs.existsSync('test-results.json')) {
+              const results = JSON.parse(fs.readFileSync('test-results.json', 'utf8'));
+              details = JSON.stringify(results, null, 2);
+            }
+
+            await github.rest.checks.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: checkRunId,
+              status: 'completed',
+              conclusion,
+              output: {
+                title,
+                summary,
+                text: `\`\`\`json\n${details}\n\`\`\``,
+              },
+            });
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.spec }}-${{ matrix.environment }}-${{ github.run_number }}
+          path: |
+            test-results.json
+            test-report.html
+            playwright-report/
+          retention-days: 30
+
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ matrix.spec }}-${{ matrix.environment }}
+          path: test-results/traces/
+          retention-days: 7
+
+  # Job 3: Aggregate results and post summary
+  summary:
+    name: Test Summary
+    needs: [detect-trigger, api-tests]
+    if: always() && needs.detect-trigger.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Aggregate results
+        id: aggregate
+        run: |
+          TOTAL_TESTS=0
+          TOTAL_PASSED=0
+          TOTAL_FAILED=0
+
+          # Sum up all test results
+          for file in artifacts/test-results-*/test-results.json; do
+            if [ -f "$file" ]; then
+              PASSED=$(jq '.summary.passed // 0' "$file")
+              FAILED=$(jq '.summary.failed // 0' "$file")
+              TOTAL_TESTS=$((TOTAL_TESTS + PASSED + FAILED))
+              TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
+              TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
+            fi
+          done
+
+          echo "total=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+          echo "passed=$TOTAL_PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$TOTAL_FAILED" >> $GITHUB_OUTPUT
+
+      - name: Post summary comment
+        if: github.event_name == 'pull_request' || github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const total = parseInt('${{ steps.aggregate.outputs.total }}');
+            const passed = parseInt('${{ steps.aggregate.outputs.passed }}');
+            const failed = parseInt('${{ steps.aggregate.outputs.failed }}');
+
+            const emoji = failed === 0 ? '✅' : '❌';
+            const status = failed === 0 ? 'PASSED' : 'FAILED';
+
+            const comment = `### ${emoji} API Test Results - ${status}
+
+**Triggered by**: ${{ needs.detect-trigger.outputs.triggered_by }}
+**Environments tested**: ${JSON.parse('${{ needs.detect-trigger.outputs.environments }}').join(', ')}
+
+| Metric | Count |
+|--------|-------|
+| Total Tests | ${total} |
+| Passed | ✅ ${passed} |
+| Failed | ❌ ${failed} |
+| Pass Rate | ${total > 0 ? Math.round(passed * 100 / total) : 0}% |
+
+**Specs tested**:
+${JSON.parse('${{ needs.detect-trigger.outputs.spec_paths }}').map(s => `- \`${s}\``).join('\n')}
+
+[View detailed results](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+`;
+
+            const prNumber = context.payload.pull_request?.number || context.payload.issue?.number;
+            if (prNumber) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment,
+              });
+            }
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ Scheduled API tests failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*API Test Failure*\n${{ steps.aggregate.outputs.failed }} tests failed out of ${{ steps.aggregate.outputs.total }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Results"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: Create deployment (on success in prod)
+        if: |
+          success() &&
+          needs.detect-trigger.outputs.environments == '["prod"]' &&
+          github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.payload.pull_request.head.sha,
+              environment: 'production',
+              auto_merge: false,
+              required_contexts: [],
+            });
+
+      - name: Fail workflow if tests failed
+        if: steps.aggregate.outputs.failed != '0'
+        run: |
+          echo "::error::${{ steps.aggregate.outputs.failed }} test(s) failed"
+          exit 1

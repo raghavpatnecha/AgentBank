@@ -1,0 +1,479 @@
+name: 'API Test Agent'
+description: 'Automated API testing with OpenAPI/Swagger specification validation and self-healing capabilities'
+author: 'API Test Agent Team'
+
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  spec-path:
+    description: 'Path to OpenAPI/Swagger specification file (JSON or YAML)'
+    required: true
+    default: 'openapi.yaml'
+
+  environment:
+    description: 'Target environment for testing (dev, staging, production)'
+    required: false
+    default: 'dev'
+
+  api-base-url:
+    description: 'Base URL for the API under test'
+    required: true
+
+  auth-token:
+    description: 'Authentication token for API requests (use secrets for security)'
+    required: false
+    default: ''
+
+  auth-type:
+    description: 'Authentication type (bearer, apiKey, basic, oauth2)'
+    required: false
+    default: 'bearer'
+
+  output-path:
+    description: 'Directory path for test results and reports'
+    required: false
+    default: './test-results'
+
+  test-timeout:
+    description: 'Maximum timeout for each test in milliseconds'
+    required: false
+    default: '30000'
+
+  retries:
+    description: 'Number of retries for failed tests'
+    required: false
+    default: '3'
+
+  parallel-workers:
+    description: 'Number of parallel workers for test execution'
+    required: false
+    default: '4'
+
+  enable-self-healing:
+    description: 'Enable AI-powered self-healing for failed tests'
+    required: false
+    default: 'true'
+
+  openai-api-key:
+    description: 'OpenAI API key for self-healing features (use secrets)'
+    required: false
+    default: ''
+
+  coverage-threshold:
+    description: 'Minimum coverage threshold percentage (0-100)'
+    required: false
+    default: '80'
+
+  generate-html-report:
+    description: 'Generate HTML test report'
+    required: false
+    default: 'true'
+
+  fail-on-error:
+    description: 'Fail the workflow if tests fail'
+    required: false
+    default: 'true'
+
+  upload-artifacts:
+    description: 'Upload test results as GitHub artifacts'
+    required: false
+    default: 'true'
+
+  custom-headers:
+    description: 'Custom headers as JSON string (e.g., {"X-Custom": "value"})'
+    required: false
+    default: '{}'
+
+  test-filter:
+    description: 'Filter tests by tag or pattern (e.g., "user-api", "critical")'
+    required: false
+    default: ''
+
+outputs:
+  test-results:
+    description: 'JSON string containing all test results'
+    value: ${{ steps.run-tests.outputs.results }}
+
+  success-count:
+    description: 'Number of tests that passed'
+    value: ${{ steps.analyze-results.outputs.success-count }}
+
+  failure-count:
+    description: 'Number of tests that failed'
+    value: ${{ steps.analyze-results.outputs.failure-count }}
+
+  skip-count:
+    description: 'Number of tests that were skipped'
+    value: ${{ steps.analyze-results.outputs.skip-count }}
+
+  total-count:
+    description: 'Total number of tests executed'
+    value: ${{ steps.analyze-results.outputs.total-count }}
+
+  coverage-percentage:
+    description: 'Test coverage percentage'
+    value: ${{ steps.analyze-results.outputs.coverage }}
+
+  report-url:
+    description: 'URL to the HTML test report (if uploaded as artifact)'
+    value: ${{ steps.upload-report.outputs.artifact-url }}
+
+  healed-tests:
+    description: 'Number of tests that were auto-healed'
+    value: ${{ steps.analyze-results.outputs.healed-count }}
+
+  status:
+    description: 'Overall test status (success, failure, partial)'
+    value: ${{ steps.analyze-results.outputs.status }}
+
+runs:
+  using: 'composite'
+  steps:
+    # Step 1: Validate inputs
+    - name: Validate inputs
+      shell: bash
+      run: |
+        echo "::group::Validating action inputs"
+
+        # Check if spec file exists
+        if [ ! -f "${{ inputs.spec-path }}" ]; then
+          echo "::error::OpenAPI specification file not found: ${{ inputs.spec-path }}"
+          exit 1
+        fi
+
+        # Validate base URL format
+        if [[ ! "${{ inputs.api-base-url }}" =~ ^https?:// ]]; then
+          echo "::error::Invalid API base URL format. Must start with http:// or https://"
+          exit 1
+        fi
+
+        # Validate coverage threshold
+        if [ "${{ inputs.coverage-threshold }}" -lt 0 ] || [ "${{ inputs.coverage-threshold }}" -gt 100 ]; then
+          echo "::error::Coverage threshold must be between 0 and 100"
+          exit 1
+        fi
+
+        # Validate parallel workers
+        if [ "${{ inputs.parallel-workers }}" -lt 1 ] || [ "${{ inputs.parallel-workers }}" -gt 20 ]; then
+          echo "::error::Parallel workers must be between 1 and 20"
+          exit 1
+        fi
+
+        echo "✅ All inputs validated successfully"
+        echo "::endgroup::"
+
+    # Step 2: Setup Node.js environment
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    # Step 3: Cache dependencies
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      id: cache
+      with:
+        path: |
+          node_modules
+          ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    # Step 4: Install dependencies
+    - name: Install dependencies
+      shell: bash
+      run: |
+        echo "::group::Installing dependencies"
+        if [ "${{ steps.cache.outputs.cache-hit }}" != "true" ]; then
+          npm ci --prefer-offline --no-audit
+        else
+          echo "✅ Dependencies restored from cache"
+        fi
+        echo "::endgroup::"
+
+    # Step 5: Verify installation
+    - name: Verify installation
+      shell: bash
+      run: |
+        echo "::group::Verifying installation"
+        npm list --depth=0
+        npx api-test-agent --version || echo "CLI not found, continuing..."
+        echo "::endgroup::"
+
+    # Step 6: Generate tests from OpenAPI spec
+    - name: Generate tests
+      id: generate-tests
+      shell: bash
+      env:
+        SPEC_PATH: ${{ inputs.spec-path }}
+        OUTPUT_PATH: ${{ inputs.output-path }}
+        TEST_FILTER: ${{ inputs.test-filter }}
+      run: |
+        echo "::group::Generating tests from OpenAPI specification"
+
+        mkdir -p "$OUTPUT_PATH/generated"
+
+        # Build generate command
+        GEN_CMD="npm run generate -- --spec \"$SPEC_PATH\" --output \"$OUTPUT_PATH/generated\""
+
+        if [ -n "$TEST_FILTER" ]; then
+          GEN_CMD="$GEN_CMD --filter \"$TEST_FILTER\""
+        fi
+
+        echo "Running: $GEN_CMD"
+        eval $GEN_CMD
+
+        # Count generated tests
+        TEST_COUNT=$(find "$OUTPUT_PATH/generated" -name "*.spec.ts" | wc -l)
+        echo "Generated $TEST_COUNT test files"
+        echo "test-count=$TEST_COUNT" >> $GITHUB_OUTPUT
+
+        echo "::endgroup::"
+
+    # Step 7: Create test configuration
+    - name: Configure test environment
+      shell: bash
+      env:
+        API_BASE_URL: ${{ inputs.api-base-url }}
+        AUTH_TOKEN: ${{ inputs.auth-token }}
+        AUTH_TYPE: ${{ inputs.auth-type }}
+        ENVIRONMENT: ${{ inputs.environment }}
+        CUSTOM_HEADERS: ${{ inputs.custom-headers }}
+        TEST_TIMEOUT: ${{ inputs.test-timeout }}
+        RETRIES: ${{ inputs.retries }}
+        ENABLE_SELF_HEALING: ${{ inputs.enable-self-healing }}
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+      run: |
+        echo "::group::Configuring test environment"
+
+        # Create .env file for test execution
+        cat > .env.test << EOF
+        API_BASE_URL=$API_BASE_URL
+        AUTH_TOKEN=$AUTH_TOKEN
+        AUTH_TYPE=$AUTH_TYPE
+        ENVIRONMENT=$ENVIRONMENT
+        CUSTOM_HEADERS=$CUSTOM_HEADERS
+        TEST_TIMEOUT=$TEST_TIMEOUT
+        RETRIES=$RETRIES
+        ENABLE_SELF_HEALING=$ENABLE_SELF_HEALING
+        OPENAI_API_KEY=$OPENAI_API_KEY
+        NODE_ENV=test
+        CI=true
+        EOF
+
+        echo "✅ Test environment configured"
+        echo "::endgroup::"
+
+    # Step 8: Run tests
+    - name: Run API tests
+      id: run-tests
+      shell: bash
+      env:
+        OUTPUT_PATH: ${{ inputs.output-path }}
+        PARALLEL_WORKERS: ${{ inputs.parallel-workers }}
+      run: |
+        echo "::group::Running API tests"
+
+        # Load environment variables
+        export $(cat .env.test | xargs)
+
+        # Run tests with Playwright
+        npm test -- \
+          --reporter=json \
+          --reporter=html \
+          --workers=$PARALLEL_WORKERS \
+          --output="$OUTPUT_PATH" \
+          || TEST_EXIT_CODE=$?
+
+        # Store exit code for later
+        echo "exit-code=${TEST_EXIT_CODE:-0}" >> $GITHUB_OUTPUT
+
+        # Read test results
+        if [ -f "$OUTPUT_PATH/results.json" ]; then
+          RESULTS=$(cat "$OUTPUT_PATH/results.json")
+          echo "results<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        fi
+
+        echo "::endgroup::"
+
+        # Don't fail here, analyze results first
+        exit 0
+
+    # Step 9: Analyze test results
+    - name: Analyze results
+      id: analyze-results
+      shell: bash
+      env:
+        OUTPUT_PATH: ${{ inputs.output-path }}
+        COVERAGE_THRESHOLD: ${{ inputs.coverage-threshold }}
+      run: |
+        echo "::group::Analyzing test results"
+
+        RESULTS_FILE="$OUTPUT_PATH/results.json"
+
+        if [ ! -f "$RESULTS_FILE" ]; then
+          echo "::error::Test results file not found"
+          echo "status=failure" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        # Parse results using Node.js
+        node -e "
+        const fs = require('fs');
+        const results = JSON.parse(fs.readFileSync('$RESULTS_FILE', 'utf8'));
+
+        const stats = {
+          total: results.suites?.reduce((sum, s) => sum + (s.specs?.length || 0), 0) || 0,
+          passed: results.suites?.reduce((sum, s) => sum + s.specs?.filter(spec => spec.ok).length || 0, 0) || 0,
+          failed: results.suites?.reduce((sum, s) => sum + s.specs?.filter(spec => !spec.ok && !spec.skipped).length || 0, 0) || 0,
+          skipped: results.suites?.reduce((sum, s) => sum + s.specs?.filter(spec => spec.skipped).length || 0, 0) || 0,
+          healed: results.healed || 0
+        };
+
+        const coverage = stats.total > 0 ? Math.round((stats.passed / stats.total) * 100) : 0;
+        const status = stats.failed === 0 ? 'success' : stats.passed > 0 ? 'partial' : 'failure';
+
+        // Write to GitHub output
+        const output = [
+          \`success-count=\${stats.passed}\`,
+          \`failure-count=\${stats.failed}\`,
+          \`skip-count=\${stats.skipped}\`,
+          \`total-count=\${stats.total}\`,
+          \`healed-count=\${stats.healed}\`,
+          \`coverage=\${coverage}\`,
+          \`status=\${status}\`
+        ].join('\n');
+
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, output + '\n');
+
+        // Log summary
+        console.log('📊 Test Results Summary:');
+        console.log(\`   Total: \${stats.total}\`);
+        console.log(\`   ✅ Passed: \${stats.passed}\`);
+        console.log(\`   ❌ Failed: \${stats.failed}\`);
+        console.log(\`   ⏭️  Skipped: \${stats.skipped}\`);
+        console.log(\`   🔧 Healed: \${stats.healed}\`);
+        console.log(\`   📈 Coverage: \${coverage}%\`);
+        "
+
+        echo "::endgroup::"
+
+    # Step 10: Generate HTML report
+    - name: Generate HTML report
+      if: inputs.generate-html-report == 'true'
+      shell: bash
+      env:
+        OUTPUT_PATH: ${{ inputs.output-path }}
+      run: |
+        echo "::group::Generating HTML report"
+
+        # Playwright already generates HTML report
+        if [ -d "$OUTPUT_PATH/playwright-report" ]; then
+          echo "✅ HTML report generated at $OUTPUT_PATH/playwright-report"
+        else
+          echo "⚠️  HTML report directory not found"
+        fi
+
+        echo "::endgroup::"
+
+    # Step 11: Upload test results
+    - name: Upload test results
+      id: upload-report
+      if: inputs.upload-artifacts == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-test-results-${{ inputs.environment }}-${{ github.run_number }}
+        path: |
+          ${{ inputs.output-path }}/**/*
+          !${{ inputs.output-path }}/**/*.log
+        retention-days: 30
+        if-no-files-found: warn
+
+    # Step 12: Post results as comment (if PR)
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      env:
+        SUCCESS_COUNT: ${{ steps.analyze-results.outputs.success-count }}
+        FAILURE_COUNT: ${{ steps.analyze-results.outputs.failure-count }}
+        SKIP_COUNT: ${{ steps.analyze-results.outputs.skip-count }}
+        TOTAL_COUNT: ${{ steps.analyze-results.outputs.total-count }}
+        COVERAGE: ${{ steps.analyze-results.outputs.coverage }}
+        HEALED_COUNT: ${{ steps.analyze-results.outputs.healed-count }}
+        STATUS: ${{ steps.analyze-results.outputs.status }}
+        ENVIRONMENT: ${{ inputs.environment }}
+      with:
+        script: |
+          const { SUCCESS_COUNT, FAILURE_COUNT, SKIP_COUNT, TOTAL_COUNT, COVERAGE, HEALED_COUNT, STATUS, ENVIRONMENT } = process.env;
+
+          const statusEmoji = STATUS === 'success' ? '✅' : STATUS === 'partial' ? '⚠️' : '❌';
+          const coverageEmoji = COVERAGE >= 80 ? '🟢' : COVERAGE >= 60 ? '🟡' : '🔴';
+
+          const comment = `## ${statusEmoji} API Test Results - ${ENVIRONMENT}
+
+          ### Test Summary
+          | Metric | Value |
+          |--------|-------|
+          | Total Tests | ${TOTAL_COUNT} |
+          | ✅ Passed | ${SUCCESS_COUNT} |
+          | ❌ Failed | ${FAILURE_COUNT} |
+          | ⏭️ Skipped | ${SKIP_COUNT} |
+          | 🔧 Auto-healed | ${HEALED_COUNT} |
+          | ${coverageEmoji} Coverage | ${COVERAGE}% |
+
+          ### Status: ${STATUS.toUpperCase()}
+
+          <details>
+          <summary>View Details</summary>
+
+          - **Environment**: ${ENVIRONMENT}
+          - **Workflow Run**: [#${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+          - **Commit**: ${context.sha.substring(0, 7)}
+
+          </details>
+          `;
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    # Step 13: Check coverage threshold
+    - name: Check coverage threshold
+      shell: bash
+      env:
+        COVERAGE: ${{ steps.analyze-results.outputs.coverage }}
+        THRESHOLD: ${{ inputs.coverage-threshold }}
+      run: |
+        echo "::group::Checking coverage threshold"
+
+        if [ "$COVERAGE" -lt "$THRESHOLD" ]; then
+          echo "::warning::Coverage $COVERAGE% is below threshold $THRESHOLD%"
+        else
+          echo "✅ Coverage $COVERAGE% meets threshold $THRESHOLD%"
+        fi
+
+        echo "::endgroup::"
+
+    # Step 14: Final status check
+    - name: Final status check
+      if: inputs.fail-on-error == 'true'
+      shell: bash
+      env:
+        FAILURE_COUNT: ${{ steps.analyze-results.outputs.failure-count }}
+        STATUS: ${{ steps.analyze-results.outputs.status }}
+      run: |
+        if [ "$FAILURE_COUNT" -gt 0 ]; then
+          echo "::error::$FAILURE_COUNT test(s) failed"
+          exit 1
+        fi
+
+        echo "✅ All tests passed successfully"
