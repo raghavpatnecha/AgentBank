@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="API Tests" tests="5" failures="1" errors="0" skipped="0" time="2.571">
+  <testsuite name="Users API" tests="2" failures="0" errors="0" skipped="0" time="0.359" timestamp="2025-01-08T10:29:00.000Z" hostname="test-server">
+    <properties>
+      <property name="baseUrl" value="https://api.staging.example.com"/>
+      <property name="environment" value="staging"/>
+      <property name="nodeVersion" value="v20.10.0"/>
+      <property name="osInfo" value="Linux 5.15.0"/>
+    </properties>
+    <testcase name="GET /users - Retrieve all users" classname="Users API" time="0.125"/>
+    <testcase name="POST /users - Create new user" classname="Users API" time="0.234"/>
+    <system-out><![CDATA[Test Execution Summary
+======================
+Total Tests: 5
+Passed: 4
+Failed: 1
+Skipped: 0
+Success Rate: 80.00%
+Duration: 2571ms
+
+Self-Healing Statistics
+=======================
+Total Attempts: 2
+Successful: 2
+Failed: 0
+Success Rate: 100.00%]]></system-out>
+  </testsuite>
+  
+  <testsuite name="Orders API" tests="2" failures="1" errors="0" skipped="0" time="2.200" timestamp="2025-01-08T10:29:01.000Z" hostname="test-server">
+    <testcase name="POST /orders - Create order with invalid quantity" classname="Orders API" time="0.800">
+      <failure message="Expected status 400 but got 422" type="AssertionError">
+Expected: 400
+Actual: 422
+Message: Expected status 400 but got 422
+
+Stack Trace:
+AssertionError: Expected status 400 but got 422
+    at Test.assert (test.js:123:45)
+      </failure>
+      <system-out><![CDATA[Request: POST /orders
+Body: {"quantity":-1}
+Response Status: 422
+Response Body: {"error":"Unprocessable entity"}
+Note: This test was self-healed]]></system-out>
+    </testcase>
+    <testcase name="GET /orders - Retrieve orders" classname="Orders API" time="1.400"/>
+    <system-err><![CDATA[Failed Tests
+============
+
+Test: POST /orders - Create order with invalid quantity
+Error: Expected status 400 but got 422
+AssertionError: Expected status 400 but got 422
+    at Test.assert (test.js:123:45)]]></system-err>
+  </testsuite>
+</testsuites>
