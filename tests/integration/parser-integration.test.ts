@@ -32,9 +32,7 @@ describe('Parser Integration Tests', () => {
 
       expect(endpoints.length).toBeGreaterThan(0);
 
-      const getUsersEndpoint = endpoints.find(
-        (e) => e.path === '/users' && e.method === 'get'
-      );
+      const getUsersEndpoint = endpoints.find((e) => e.path === '/users' && e.method === 'get');
       expect(getUsersEndpoint).toBeDefined();
       expect(getUsersEndpoint?.operationId).toBe('listUsers');
       expect(getUsersEndpoint?.parameters).toHaveLength(2);
@@ -74,9 +72,7 @@ describe('Parser Integration Tests', () => {
 
       expect(endpoints.length).toBeGreaterThan(0);
 
-      const createUserEndpoint = endpoints.find(
-        (e) => e.path === '/users' && e.method === 'post'
-      );
+      const createUserEndpoint = endpoints.find((e) => e.path === '/users' && e.method === 'post');
       expect(createUserEndpoint).toBeDefined();
       expect(createUserEndpoint?.operationId).toBe('createUser');
     });
@@ -241,9 +237,7 @@ describe('Parser Integration Tests', () => {
       expect(authSchemes).toBeDefined();
 
       // Step 5: Verify endpoint details
-      const getUsersEndpoint = endpoints.find(
-        (e) => e.path === '/users' && e.method === 'get'
-      );
+      const getUsersEndpoint = endpoints.find((e) => e.path === '/users' && e.method === 'get');
       expect(getUsersEndpoint).toBeDefined();
       expect(getUsersEndpoint?.parameters).toBeDefined();
       expect(getUsersEndpoint?.responses).toBeDefined();

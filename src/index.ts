@@ -57,3 +57,7 @@ export {
 // File utilities
 export { loadFile, loadSpec, detectFormat, parseContent } from './utils/file-loader.js';
 export type { FileFormat, LoadOptions } from './utils/file-loader.js';
+
+// Test Generator (Feature 2)
+export { TestGenerator } from './core/test-generator.js';
+export type { TestGeneratorOptions, GeneratedTestFile } from './core/test-generator.js';
