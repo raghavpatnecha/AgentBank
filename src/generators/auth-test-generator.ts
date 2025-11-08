@@ -9,11 +9,9 @@ import {
   authSchemeToConfig,
   generateAuthTestDescription,
   getAuthFixtureName,
-  getInvalidToken,
   isAuthOptional,
   extractAuthSchemes,
   requiresMultipleAuth,
-  generateAuthRequestOptions,
 } from '../utils/auth-helper.js';
 import { generateAuthFixture } from '../utils/auth-fixture-generator.js';
 
@@ -108,7 +106,7 @@ export class AuthTestGenerator {
     }
 
     // Extract all auth schemes used by this endpoint
-    const schemes = extractAuthSchemes(endpoint.security, this.allSchemes);
+    // Note: We process each requirement separately below
     const optional = isAuthOptional(endpoint.security);
 
     // Generate tests for each security requirement
@@ -152,10 +150,9 @@ export class AuthTestGenerator {
   private generateSchemeTests(
     endpoint: ApiEndpoint,
     scheme: AuthScheme,
-    optional: boolean
+    _optional: boolean
   ): TestCase[] {
     const tests: TestCase[] = [];
-    const method = endpoint.method.toUpperCase();
 
     // Test with valid credentials
     tests.push(this.generateValidAuthTest(endpoint, scheme));
@@ -180,13 +177,11 @@ export class AuthTestGenerator {
    * Generate test with valid authentication
    */
   private generateValidAuthTest(endpoint: ApiEndpoint, scheme: AuthScheme): TestCase {
-    const method = endpoint.method.toUpperCase();
-    const fixtureName = getAuthFixtureName(scheme);
     const config = authSchemeToConfig(scheme);
 
     return {
       id: `auth-valid-${scheme.name}-${endpoint.method}-${endpoint.path}`,
-      name: generateAuthTestDescription(scheme, true, endpoint.path, method),
+      name: generateAuthTestDescription(scheme, true, endpoint.path, endpoint.method.toUpperCase()),
       description: `Test endpoint with valid ${config.type} authentication`,
       type: 'auth',
       method: endpoint.method,
@@ -216,12 +211,11 @@ export class AuthTestGenerator {
    * Generate test with invalid authentication
    */
   private generateInvalidAuthTest(endpoint: ApiEndpoint, scheme: AuthScheme): TestCase {
-    const method = endpoint.method.toUpperCase();
     const config = authSchemeToConfig(scheme);
 
     return {
       id: `auth-invalid-${scheme.name}-${endpoint.method}-${endpoint.path}`,
-      name: generateAuthTestDescription(scheme, false, endpoint.path, method),
+      name: generateAuthTestDescription(scheme, false, endpoint.path, endpoint.method.toUpperCase()),
       description: `Test endpoint with invalid ${config.type} credentials - expect 401`,
       type: 'auth',
       method: endpoint.method,
@@ -251,11 +245,9 @@ export class AuthTestGenerator {
    * Generate test without authentication
    */
   private generateUnauthorizedTest(endpoint: ApiEndpoint): TestCase {
-    const method = endpoint.method.toUpperCase();
-
     return {
       id: `auth-none-${endpoint.method}-${endpoint.path}`,
-      name: `${method} ${endpoint.path} - without authentication (401)`,
+      name: `${endpoint.method.toUpperCase()} ${endpoint.path} - without authentication (401)`,
       description: 'Test endpoint without authentication - expect 401',
       type: 'auth',
       method: endpoint.method,
@@ -279,11 +271,9 @@ export class AuthTestGenerator {
    * Generate test for optional authentication
    */
   private generateOptionalAuthTest(endpoint: ApiEndpoint): TestCase {
-    const method = endpoint.method.toUpperCase();
-
     return {
       id: `auth-optional-${endpoint.method}-${endpoint.path}`,
-      name: `${method} ${endpoint.path} - without authentication (optional)`,
+      name: `${endpoint.method.toUpperCase()} ${endpoint.path} - without authentication (optional)`,
       description: 'Test endpoint without authentication - should succeed as auth is optional',
       type: 'auth',
       method: endpoint.method,
@@ -307,12 +297,11 @@ export class AuthTestGenerator {
    * Generate test for expired token
    */
   private generateExpiredTokenTest(endpoint: ApiEndpoint, scheme: AuthScheme): TestCase {
-    const method = endpoint.method.toUpperCase();
     const config = authSchemeToConfig(scheme);
 
     return {
       id: `auth-expired-${scheme.name}-${endpoint.method}-${endpoint.path}`,
-      name: `${method} ${endpoint.path} - with expired ${config.type} token (401)`,
+      name: `${endpoint.method.toUpperCase()} ${endpoint.path} - with expired ${config.type} token (401)`,
       description: `Test endpoint with expired ${config.type} token - expect 401`,
       type: 'auth',
       method: endpoint.method,
@@ -344,15 +333,14 @@ export class AuthTestGenerator {
   private generateMultipleAuthTests(
     endpoint: ApiEndpoint,
     schemes: AuthScheme[],
-    requirement: SecurityRequirement
+    _requirement: SecurityRequirement
   ): TestCase[] {
     const tests: TestCase[] = [];
-    const method = endpoint.method.toUpperCase();
 
     // Test with all valid auth schemes
     tests.push({
       id: `auth-multiple-valid-${endpoint.method}-${endpoint.path}`,
-      name: `${method} ${endpoint.path} - with all required auth schemes`,
+      name: `${endpoint.method.toUpperCase()} ${endpoint.path} - with all required auth schemes`,
       description: `Test endpoint with multiple auth schemes (${schemes.map((s) => s.name).join(', ')})`,
       type: 'auth',
       method: endpoint.method,
@@ -375,7 +363,7 @@ export class AuthTestGenerator {
     for (const scheme of schemes) {
       tests.push({
         id: `auth-multiple-missing-${scheme.name}-${endpoint.method}-${endpoint.path}`,
-        name: `${method} ${endpoint.path} - missing ${scheme.name} auth (401)`,
+        name: `${endpoint.method.toUpperCase()} ${endpoint.path} - missing ${scheme.name} auth (401)`,
         description: `Test endpoint missing required ${scheme.name} - expect 401`,
         type: 'auth',
         method: endpoint.method,

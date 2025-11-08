@@ -3,7 +3,7 @@
  * Provides utilities for generating auth headers and setup code
  */
 
-import type { AuthScheme, SecuritySchemeObject } from '../types/openapi-types.js';
+import type { AuthScheme } from '../types/openapi-types.js';
 
 /**
  * Auth configuration for test generation

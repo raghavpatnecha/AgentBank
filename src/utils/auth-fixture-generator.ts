@@ -50,7 +50,6 @@ export function generateAuthFixture(
   }
 
   // Add imports
-  const importStyle = useESM ? 'import' : 'require';
   if (useESM) {
     lines.push("import { test as base } from '@playwright/test';");
   } else {
@@ -96,7 +95,6 @@ export function generateAuthFixture(
   for (let i = 0; i < schemes.length; i++) {
     const scheme = schemes[i];
     if (!scheme) continue; // Skip undefined schemes
-    const fixtureName = getAuthFixtureName(scheme);
     const fixtureCode = generateFixtureImplementation(scheme, addComments);
 
     lines.push(fixtureCode);
@@ -301,8 +299,8 @@ export function generateCompleteFixtureFile(
   };
 }
 
-// Re-export camelCase helper for consistency
-function camelCase(str: string): string {
+// Helper function for camelCase conversion (exported for potential future use)
+export function camelCase(str: string): string {
   return str
     .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
     .replace(/^[A-Z]/, (c) => c.toLowerCase());

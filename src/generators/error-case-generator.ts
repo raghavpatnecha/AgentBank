@@ -18,8 +18,8 @@ import type { TestCase } from '../types/test-generator-types.js';
  */
 export class ErrorCaseGenerator {
   // bodyGenerator reserved for future use in generating complex invalid request bodies
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(private bodyGenerator: RequestBodyGenerator) {}
+  // @ts-expect-error - Reserved for future use
+  constructor(private _bodyGenerator: RequestBodyGenerator) {}
 
   /**
    * Generate all error test cases for an endpoint
