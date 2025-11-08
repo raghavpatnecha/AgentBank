@@ -5,29 +5,31 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Playwright Configuration for API Testing
+ * Playwright Configuration for API Testing - Production
  *
- * This configuration is optimized for API testing (no browser automation).
+ * This is the production configuration for the Test Executor (Feature 3).
+ * It's optimized for executing generated tests with comprehensive reporting.
+ *
  * Key features:
- * - API-only testing with request fixture
- * - Environment-based base URL configuration
- * - Comprehensive test reporting
- * - Configurable timeouts for various API scenarios
- * - Parallel test execution for speed
+ * - Executes tests from tests/generated directory
+ * - Configurable workers and retries
+ * - Multiple reporter formats (JSON, JUnit, HTML)
+ * - Proper timeout handling
+ * - Results stored in results/ directory
  */
 export default defineConfig({
-  // Test directory
-  testDir: './tests',
+  // Test directory - where generated tests are stored
+  testDir: './tests/generated',
 
-  // Match test files
+  // Match all test files in the generated directory
   testMatch: '**/*.spec.ts',
 
-  // Maximum time one test can run
-  timeout: 30 * 1000, // 30 seconds
+  // Maximum time one test can run (30 seconds)
+  timeout: 30000,
 
-  // Expect timeout for assertions
+  // Expect timeout for assertions (5 seconds)
   expect: {
-    timeout: 5 * 1000, // 5 seconds
+    timeout: 5000,
   },
 
   // Run tests in files in parallel
@@ -36,69 +38,81 @@ export default defineConfig({
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
 
-  // Retry on CI only
-  retries: process.env.CI ? 2 : 0,
+  // Number of retry attempts (3 retries for robustness)
+  retries: 3,
 
-  // Opt out of parallel tests on CI
-  workers: process.env.CI ? 1 : undefined,
+  // Number of parallel workers
+  // Use environment variable if set, otherwise use 4 workers
+  workers: process.env.WORKERS ? parseInt(process.env.WORKERS, 10) : 4,
 
-  // Reporter to use
+  // Reporter configuration
+  // Multiple reporters for comprehensive test reporting
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['json', { outputFile: 'test-results/results.json' }],
-    ['junit', { outputFile: 'test-results/junit.xml' }],
-    ['list'], // Console output
+    // JSON reporter - machine-readable results
+    ['json', { outputFile: 'results/results.json' }],
+
+    // JUnit XML reporter - for CI/CD integration
+    ['junit', { outputFile: 'results/junit.xml' }],
+
+    // HTML reporter - human-readable test report
+    ['html', { outputFolder: 'results/html-report', open: 'never' }],
+
+    // List reporter - console output during test execution
+    ['list'],
   ],
 
-  // Shared settings for all the projects below
+  // Shared settings for all projects
   use: {
     // Base URL for API requests
+    // Use environment variable if set, otherwise use default
     baseURL: process.env.API_BASE_URL || 'http://localhost:3000',
 
-    // Extra HTTP headers to be sent with every request
+    // Extra HTTP headers sent with every request
     extraHTTPHeaders: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
 
-    // Collect trace for debugging
+    // Collect trace on first retry for debugging
     trace: 'on-first-retry',
 
-    // Timeout for each action (like request)
-    actionTimeout: 10 * 1000, // 10 seconds
+    // Screenshot on failure for debugging
+    screenshot: 'only-on-failure',
+
+    // Video on failure for debugging
+    video: 'retain-on-failure',
+
+    // Timeout for each individual action (10 seconds)
+    actionTimeout: 10000,
+
+    // Navigation timeout (15 seconds)
+    navigationTimeout: 15000,
   },
 
-  // Configure projects for different API testing scenarios
+  // Configure project for API testing
   projects: [
     {
       name: 'api-tests',
-      testMatch: '**/*.spec.ts',
+      testDir: './tests/generated',
       use: {
-        ...devices['Desktop Chrome'], // Use Chrome user agent for API requests
+        ...devices['Desktop Chrome'], // Use Chrome user agent
       },
-    },
-
-    // Separate project for integration tests with longer timeout
-    {
-      name: 'integration',
-      testMatch: '**/integration/**/*.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-      timeout: 60 * 1000, // 60 seconds for integration tests
-    },
-
-    // Separate project for E2E tests with even longer timeout
-    {
-      name: 'e2e',
-      testMatch: '**/e2e/**/*.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-      timeout: 120 * 1000, // 120 seconds for E2E tests
     },
   ],
 
-  // Output folder for test artifacts
-  outputDir: 'test-results',
+  // Output folder for test artifacts (traces, videos, screenshots)
+  outputDir: 'results/test-artifacts',
+
+  // Global setup/teardown
+  // globalSetup: require.resolve('./tests/global-setup.ts'),
+  // globalTeardown: require.resolve('./tests/global-teardown.ts'),
+
+  // Web server configuration (if testing against local server)
+  // Uncomment if you need to start a local API server before tests
+  // webServer: {
+  //   command: 'npm run start:api',
+  //   port: 3000,
+  //   timeout: 120000,
+  //   reuseExistingServer: !process.env.CI,
+  // },
 });
