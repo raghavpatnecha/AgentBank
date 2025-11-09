@@ -47,7 +47,6 @@ export interface HttpTransaction {
   testName?: string;
 }
 
-
 /**
  * Request Logger Options
  */
@@ -103,9 +102,8 @@ export class RequestLogger {
     const redactedHeaders = this.config.redactSensitiveData
       ? redactHeaders(headers, this.filterConfig)
       : headers;
-    const redactedBody = this.config.redactSensitiveData && body
-      ? redactObject(body, this.filterConfig)
-      : body;
+    const redactedBody =
+      this.config.redactSensitiveData && body ? redactObject(body, this.filterConfig) : body;
 
     // Truncate body if needed
     const truncatedBody = truncateBody(redactedBody, this.config.maxBodySize);
@@ -165,9 +163,8 @@ export class RequestLogger {
     const redactedHeaders = this.config.redactSensitiveData
       ? redactHeaders(headers, this.filterConfig)
       : headers;
-    const redactedBody = this.config.redactSensitiveData && body
-      ? redactObject(body, this.filterConfig)
-      : body;
+    const redactedBody =
+      this.config.redactSensitiveData && body ? redactObject(body, this.filterConfig) : body;
 
     // Truncate body if needed
     const truncatedBody = truncateBody(redactedBody, this.config.maxBodySize);
@@ -341,7 +338,7 @@ export class RequestLogger {
    * Get transactions for specific test
    */
   getTransactionsByTest(testId: string): HttpTransaction[] {
-    return this.transactions.filter(t => t.testId === testId);
+    return this.transactions.filter((t) => t.testId === testId);
   }
 
   /**
@@ -357,7 +354,7 @@ export class RequestLogger {
   async exportToFile(filePath: string): Promise<void> {
     await this.ensureDirectoryExists(filePath);
 
-    const logEntries = this.transactions.map(transaction => ({
+    const logEntries = this.transactions.map((transaction) => ({
       timestamp: transaction.timestamp,
       testId: transaction.testId,
       testName: transaction.testName,
@@ -383,7 +380,7 @@ export class RequestLogger {
     await this.rotateIfNeeded();
 
     // Append logs
-    const content = this.logBuffer.join('\n') + '\n';
+    const content = `${this.logBuffer.join('\n')}\n`;
     await fs.appendFile(this.config.filePath, content, 'utf-8');
     this.logBuffer = [];
   }
@@ -535,7 +532,7 @@ export async function attachLoggerToPage(
 
   page.on('request', (request: Request) => {
     requestTimes.set(request.url(), Date.now());
-    logger.logPlaywrightRequest(request).catch(err => {
+    logger.logPlaywrightRequest(request).catch((err) => {
       console.error('Failed to log request:', err);
     });
   });
@@ -543,7 +540,7 @@ export async function attachLoggerToPage(
   page.on('response', (response: Response) => {
     const startTime = requestTimes.get(response.url());
     requestTimes.delete(response.url());
-    logger.logPlaywrightResponse(response, startTime).catch(err => {
+    logger.logPlaywrightResponse(response, startTime).catch((err) => {
       console.error('Failed to log response:', err);
     });
   });

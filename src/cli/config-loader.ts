@@ -84,7 +84,9 @@ export async function loadConfig(
     try {
       fileConfig = await loadConfigFile(configPath);
     } catch (error) {
-      throw new Error(`Failed to load config file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to load config file: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   } else {
     // Try to find config file in common locations
@@ -170,7 +172,13 @@ function validateConfig(config: CliConfig): void {
   }
 
   // Validate organization strategy
-  const validStrategies: OrganizationStrategy[] = ['by-endpoint', 'by-tag', 'by-type', 'by-method', 'flat'];
+  const validStrategies: OrganizationStrategy[] = [
+    'by-endpoint',
+    'by-tag',
+    'by-type',
+    'by-method',
+    'flat',
+  ];
   if (!validStrategies.includes(config.organizationStrategy)) {
     throw new Error(
       `Invalid organization strategy: ${config.organizationStrategy}. Must be one of: ${validStrategies.join(', ')}`

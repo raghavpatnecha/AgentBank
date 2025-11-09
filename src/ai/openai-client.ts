@@ -71,14 +71,21 @@ export interface RateLimitInfo {
  * Error types for OpenAI operations
  */
 export class OpenAIError extends Error {
-  constructor(message: string, public readonly code: string, public readonly status?: number) {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly status?: number
+  ) {
     super(message);
     this.name = 'OpenAIError';
   }
 }
 
 export class RateLimitError extends OpenAIError {
-  constructor(message: string, public readonly retryAfter: number) {
+  constructor(
+    message: string,
+    public readonly retryAfter: number
+  ) {
     super(message, 'RATE_LIMIT', 429);
     this.name = 'RateLimitError';
   }
@@ -242,10 +249,7 @@ export class OpenAIClient {
       return result;
     } catch (error) {
       if (this.isRateLimitError(error)) {
-        throw new RateLimitError(
-          'Rate limit exceeded',
-          this.getRetryAfter(error)
-        );
+        throw new RateLimitError('Rate limit exceeded', this.getRetryAfter(error));
       }
 
       throw new OpenAIError(
@@ -259,10 +263,7 @@ export class OpenAIClient {
   /**
    * Generate completion with retry logic
    */
-  async generateWithRetry(
-    prompt: string,
-    maxRetries?: number
-  ): Promise<CompletionResult> {
+  async generateWithRetry(prompt: string, maxRetries?: number): Promise<CompletionResult> {
     const retries = maxRetries ?? this.config.maxRetries;
     let lastError: Error | null = null;
 
@@ -326,7 +327,7 @@ export class OpenAIClient {
    * Sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -339,9 +340,7 @@ export class OpenAIClient {
 
     const err = error as any;
     return (
-      err?.status === 429 ||
-      err?.code === 'rate_limit_exceeded' ||
-      err?.type === 'rate_limit_error'
+      err?.status === 429 || err?.code === 'rate_limit_exceeded' || err?.type === 'rate_limit_error'
     );
   }
 
@@ -390,20 +389,14 @@ export class OpenAIClient {
   private updateRateLimitInfo(response: any): void {
     // Note: OpenAI's Node SDK doesn't expose headers directly
     // This is a placeholder for when headers are available
-    const headers = (response as any).headers || {};
+    const headers = response.headers || {};
 
     if (headers['x-ratelimit-limit-requests']) {
-      this.rateLimitInfo.limitRequests = parseInt(
-        headers['x-ratelimit-limit-requests'],
-        10
-      );
+      this.rateLimitInfo.limitRequests = parseInt(headers['x-ratelimit-limit-requests'], 10);
     }
 
     if (headers['x-ratelimit-limit-tokens']) {
-      this.rateLimitInfo.limitTokens = parseInt(
-        headers['x-ratelimit-limit-tokens'],
-        10
-      );
+      this.rateLimitInfo.limitTokens = parseInt(headers['x-ratelimit-limit-tokens'], 10);
     }
 
     if (headers['x-ratelimit-remaining-requests']) {
@@ -414,22 +407,15 @@ export class OpenAIClient {
     }
 
     if (headers['x-ratelimit-remaining-tokens']) {
-      this.rateLimitInfo.remainingTokens = parseInt(
-        headers['x-ratelimit-remaining-tokens'],
-        10
-      );
+      this.rateLimitInfo.remainingTokens = parseInt(headers['x-ratelimit-remaining-tokens'], 10);
     }
 
     if (headers['x-ratelimit-reset-requests']) {
-      this.rateLimitInfo.resetRequests = new Date(
-        headers['x-ratelimit-reset-requests']
-      );
+      this.rateLimitInfo.resetRequests = new Date(headers['x-ratelimit-reset-requests']);
     }
 
     if (headers['x-ratelimit-reset-tokens']) {
-      this.rateLimitInfo.resetTokens = new Date(
-        headers['x-ratelimit-reset-tokens']
-      );
+      this.rateLimitInfo.resetTokens = new Date(headers['x-ratelimit-reset-tokens']);
     }
   }
 
@@ -526,9 +512,7 @@ export class OpenAIClient {
    */
   monitorTokenUsage(): TokenMetrics {
     const averageTokensPerRequest =
-      this.metrics.requestCount > 0
-        ? this.metrics.totalTokens / this.metrics.requestCount
-        : 0;
+      this.metrics.requestCount > 0 ? this.metrics.totalTokens / this.metrics.requestCount : 0;
 
     // GPT-4 pricing (approximate)
     const promptCostPer1k = 0.03; // $0.03 per 1K prompt tokens

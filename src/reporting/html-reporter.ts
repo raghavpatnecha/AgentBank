@@ -5,16 +5,8 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import {
-  TestResult,
-  TestStatus,
-  ExecutionSummary,
-  TestError,
-} from '../types/executor-types';
-import {
-  HealingAttempt,
-  HealingMetricsSummary,
-} from '../types/self-healing-types';
+import { TestResult, TestStatus, ExecutionSummary, TestError } from '../types/executor-types';
+import { HealingAttempt, HealingMetricsSummary } from '../types/self-healing-types';
 
 /**
  * HTML Reporter Configuration
@@ -343,9 +335,7 @@ export class HTMLReporter {
    * Generate test results section
    */
   generateTestResultsSection(tests: TestResult[]): string {
-    const testRows = tests
-      .map((test, index) => this.generateTestRow(test, index))
-      .join('');
+    const testRows = tests.map((test, index) => this.generateTestRow(test, index)).join('');
 
     return `
     <section class="test-results-section">
@@ -525,9 +515,7 @@ export class HTMLReporter {
    * Generate failed tests section
    */
   generateFailedTestsSection(tests: TestResult[]): string {
-    const failedTestsHtml = tests
-      .map((test) => this.formatFailedTest(test))
-      .join('');
+    const failedTestsHtml = tests.map((test) => this.formatFailedTest(test)).join('');
 
     return `
     <section class="failed-tests-section">
@@ -584,10 +572,10 @@ export class HTMLReporter {
   /**
    * Generate healed tests section
    */
-  generateHealedTestsSection(healedTests: Array<{ test: TestResult; attempt: HealingAttempt }>): string {
-    const healedTestsHtml = healedTests
-      .map((item) => this.formatHealedTest(item))
-      .join('');
+  generateHealedTestsSection(
+    healedTests: Array<{ test: TestResult; attempt: HealingAttempt }>
+  ): string {
+    const healedTestsHtml = healedTests.map((item) => this.formatHealedTest(item)).join('');
 
     return `
     <section class="healed-tests-section">
@@ -626,18 +614,26 @@ export class HTMLReporter {
             <span class="label">Cost:</span>
             <span class="value">${cost}</span>
           </div>
-          ${attempt.tokensUsed ? `
+          ${
+            attempt.tokensUsed
+              ? `
           <div class="info-row">
             <span class="label">Tokens Used:</span>
             <span class="value">${attempt.tokensUsed}</span>
-          </div>` : ''}
+          </div>`
+              : ''
+          }
           ${attempt.cacheHit ? `<div class="cache-badge">✓ Cache Hit</div>` : ''}
         </div>
-        ${attempt.generatedFix ? `
+        ${
+          attempt.generatedFix
+            ? `
         <div class="generated-fix">
           <h4>Generated Fix</h4>
           <pre class="code-block">${this.escapeHTML(attempt.generatedFix)}</pre>
-        </div>` : ''}
+        </div>`
+            : ''
+        }
       </div>
     </div>`;
   }
@@ -650,21 +646,25 @@ export class HTMLReporter {
     const avgDuration = metrics.averageDuration.toFixed(0);
 
     const slowestTests = metrics.slowestTests
-      .map((test) => `
+      .map(
+        (test) => `
         <tr>
           <td>${this.escapeHTML(test.name)}</td>
           <td>${test.duration.toFixed(0)}ms</td>
         </tr>
-      `)
+      `
+      )
       .join('');
 
     const fastestTests = metrics.fastestTests
-      .map((test) => `
+      .map(
+        (test) => `
         <tr>
           <td>${this.escapeHTML(test.name)}</td>
           <td>${test.duration.toFixed(0)}ms</td>
         </tr>
-      `)
+      `
+      )
       .join('');
 
     return `
@@ -683,11 +683,15 @@ export class HTMLReporter {
           <div class="perf-label">Tests/Second</div>
           <div class="perf-value">${metrics.testsPerSecond.toFixed(2)}</div>
         </div>
-        ${metrics.memoryUsage ? `
+        ${
+          metrics.memoryUsage
+            ? `
         <div class="perf-card">
           <div class="perf-label">Peak Memory</div>
           <div class="perf-value">${this.formatBytes(metrics.memoryUsage.peak)}</div>
-        </div>` : ''}
+        </div>`
+            : ''
+        }
       </div>
       <div class="performance-tables">
         <div class="perf-table-wrapper">
@@ -733,7 +737,10 @@ export class HTMLReporter {
     let browsersSection = '';
     if (env.browsers && Object.keys(env.browsers).length > 0) {
       const browserRows = Object.entries(env.browsers)
-        .map(([name, version]) => `<tr><td>${this.escapeHTML(name)}</td><td>${this.escapeHTML(version)}</td></tr>`)
+        .map(
+          ([name, version]) =>
+            `<tr><td>${this.escapeHTML(name)}</td><td>${this.escapeHTML(version)}</td></tr>`
+        )
         .join('');
       browsersSection = `
         <div class="env-section">
@@ -873,13 +880,7 @@ export class HTMLReporter {
     return {
       passFailPieChart: {
         labels: ['Passed', 'Failed', 'Skipped', 'Timeout', 'Error'],
-        data: [
-          summary.passed,
-          summary.failed,
-          summary.skipped,
-          summary.timeout,
-          summary.error,
-        ],
+        data: [summary.passed, summary.failed, summary.skipped, summary.timeout, summary.error],
         colors: ['#28a745', '#dc3545', '#6c757d', '#ffc107', '#fd7e14'],
       },
       durationBarChart: {
@@ -1655,10 +1656,7 @@ export class HTMLReporter {
    * Format timestamp for filename
    */
   private formatTimestamp(date: Date): string {
-    return date
-      .toISOString()
-      .replace(/:/g, '-')
-      .replace(/\..+/, '');
+    return date.toISOString().replace(/:/g, '-').replace(/\..+/, '');
   }
 
   /**
@@ -1683,6 +1681,6 @@ export class HTMLReporter {
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   }
 }

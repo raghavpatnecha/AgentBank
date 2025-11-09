@@ -8,7 +8,10 @@ import { OpenAPIParser } from '../../src/core/openapi-parser.js';
 import { FlowGenerator } from '../../src/generators/flow-generator.js';
 import { RequestBodyGenerator } from '../../src/generators/request-body-generator.js';
 import { TestOrganizer } from '../../src/generators/test-organizer.js';
-import { generateFileStructure, generateIndexFile } from '../../src/utils/file-structure-generator.js';
+import {
+  generateFileStructure,
+  generateIndexFile,
+} from '../../src/utils/file-structure-generator.js';
 import type { ParsedApiSpec, ApiEndpoint } from '../../src/types/openapi-types.js';
 import type { TestCase, OrganizationStrategy } from '../../src/types/test-generator-types.js';
 import path from 'node:path';
@@ -162,7 +165,7 @@ describe('Test Organization Integration', () => {
 
       files.forEach((file) => {
         expect(file.fileName).toMatch(/\.spec\.ts$/);
-        expect(file.content).toContain("import { test, expect }");
+        expect(file.content).toContain('import { test, expect }');
         expect(file.content).toContain('describe(');
         expect(file.content).toContain('test(');
         expect(file.tests.length).toBeGreaterThan(0);
@@ -351,7 +354,13 @@ describe('Test Organization Integration', () => {
     });
 
     it('should handle all organization strategies for same test set', () => {
-      const strategies: OrganizationStrategy[] = ['by-tag', 'by-endpoint', 'by-type', 'by-method', 'flat'];
+      const strategies: OrganizationStrategy[] = [
+        'by-tag',
+        'by-endpoint',
+        'by-type',
+        'by-method',
+        'flat',
+      ];
 
       const mockTests: TestCase[] = endpoints.slice(0, 10).map((endpoint, index) => ({
         id: `test-${index}`,
@@ -424,7 +433,7 @@ describe('Test Organization Integration', () => {
       // Generate and verify files
       const testFiles = organizer.generateTestFiles(organized);
       testFiles.forEach((file) => {
-        expect(file.content).toContain("import { test, expect }");
+        expect(file.content).toContain('import { test, expect }');
         expect(file.metadata.endpoints.length).toBeGreaterThan(0);
       });
     });

@@ -387,7 +387,9 @@ export class EdgeCaseGenerator {
 
         // Test array with many items
         if (field.type === 'array' && !field.maxItems) {
-          const largeArray = Array(100).fill(this.dataFactory.generate(field.items as SchemaObject));
+          const largeArray = Array(100).fill(
+            this.dataFactory.generate(field.items as SchemaObject)
+          );
 
           tests.push({
             id: `${endpoint.operationId || endpoint.path}-edge-large-array`,
@@ -427,7 +429,10 @@ export class EdgeCaseGenerator {
   /**
    * Generate a valid request body with specific field overrides
    */
-  private generateValidBody(schema: SchemaObject, overrides: Record<string, unknown>): Record<string, unknown> {
+  private generateValidBody(
+    schema: SchemaObject,
+    overrides: Record<string, unknown>
+  ): Record<string, unknown> {
     const baseBody = this.dataFactory.generate(schema) as Record<string, unknown>;
 
     // Merge overrides
@@ -436,5 +441,4 @@ export class EdgeCaseGenerator {
       ...overrides,
     };
   }
-
 }

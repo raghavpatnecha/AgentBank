@@ -23,7 +23,7 @@ describe('Sensitive Data Filter', () => {
   describe('Header Redaction', () => {
     it('should redact Authorization header', () => {
       const headers = {
-        'Authorization': 'Bearer secret-token',
+        Authorization: 'Bearer secret-token',
         'Content-Type': 'application/json',
       };
 
@@ -37,7 +37,7 @@ describe('Sensitive Data Filter', () => {
       const headers = {
         'api-key': 'secret-key',
         'X-API-Key': 'another-key',
-        'ApiKey': 'third-key',
+        ApiKey: 'third-key',
       };
 
       const redacted = redactHeaders(headers);
@@ -49,7 +49,7 @@ describe('Sensitive Data Filter', () => {
 
     it('should redact Cookie header', () => {
       const headers = {
-        'Cookie': 'session=abc123; token=xyz789',
+        Cookie: 'session=abc123; token=xyz789',
         'User-Agent': 'TestAgent',
       };
 
@@ -79,7 +79,7 @@ describe('Sensitive Data Filter', () => {
       const headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       };
 
       const redacted = redactHeaders(headers);
@@ -95,7 +95,7 @@ describe('Sensitive Data Filter', () => {
 
       const headers = {
         'X-Custom-Auth': 'secret',
-        'Authorization': 'Bearer token',
+        Authorization: 'Bearer token',
       };
 
       const redacted = redactHeaders(headers, config);
@@ -252,7 +252,8 @@ describe('Sensitive Data Filter', () => {
     });
 
     it('should redact JWT tokens', () => {
-      const text = 'Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U';
+      const text =
+        'Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U';
       const redacted = redactString(text);
 
       expect(redacted).toContain('[REDACTED]');
@@ -296,7 +297,7 @@ describe('Sensitive Data Filter', () => {
         method: 'POST',
         url: 'https://api.example.com/login',
         headers: {
-          'Authorization': 'Bearer secret',
+          Authorization: 'Bearer secret',
           'Content-Type': 'application/json',
         },
         body: {

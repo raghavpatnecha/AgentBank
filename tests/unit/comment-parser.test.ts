@@ -140,7 +140,9 @@ This is a second line`;
     });
 
     it('should parse all known arguments', () => {
-      const args = parser.parseArguments('--env prod --spec openapi.yaml --base-url https://api.example.com');
+      const args = parser.parseArguments(
+        '--env prod --spec openapi.yaml --base-url https://api.example.com'
+      );
       expect(args.env).toBe('prod');
       expect(args.spec).toBe('openapi.yaml');
       expect(args.baseUrl).toBe('https://api.example.com');
@@ -164,7 +166,9 @@ This is a second line`;
     });
 
     it('should handle URL arguments with special characters', () => {
-      const args = parser.parseArguments('--base-url https://api.example.com/v2?key=value&other=test');
+      const args = parser.parseArguments(
+        '--base-url https://api.example.com/v2?key=value&other=test'
+      );
       expect(args.baseUrl).toBeTruthy();
     });
 
@@ -197,7 +201,9 @@ This is a second line`;
     });
 
     it('should parse run command with multiple arguments', () => {
-      const result = parser.parse('@api-test-agent run --env production --spec api/openapi.yaml --base-url https://api.example.com');
+      const result = parser.parse(
+        '@api-test-agent run --env production --spec api/openapi.yaml --base-url https://api.example.com'
+      );
       expect(result).toBeDefined();
       expect(result!.command).toBe('run');
       expect(result!.args.env).toBe('production');
@@ -295,7 +301,7 @@ Thanks for the review!`;
 
     it('should validate recognized environments', () => {
       const envs = ['dev', 'development', 'staging', 'stage', 'prod', 'production'];
-      envs.forEach(env => {
+      envs.forEach((env) => {
         const command: ParsedCommand = {
           command: 'run',
           args: { env },
@@ -321,7 +327,7 @@ Thanks for the review!`;
 
     it('should accept valid YAML spec paths', () => {
       const paths = ['api.yaml', 'api.yml', 'api/v2/openapi.yaml'];
-      paths.forEach(spec => {
+      paths.forEach((spec) => {
         const command: ParsedCommand = {
           command: 'run',
           args: { spec },
@@ -480,7 +486,7 @@ Thanks for the review!`;
 
     it('should get help for all commands', () => {
       const commands: CommandType[] = ['run', 'help', 'config', 'retry', 'cancel'];
-      commands.forEach(cmd => {
+      commands.forEach((cmd) => {
         const help = parser.getCommandHelp(cmd);
         expect(help.length).toBeGreaterThan(0);
       });
@@ -526,13 +532,15 @@ Thanks for the review!`;
     });
 
     it('should handle very long commands', () => {
-      const longUrl = 'https://api.example.com/' + 'a'.repeat(1000);
+      const longUrl = `https://api.example.com/${'a'.repeat(1000)}`;
       const result = parser.parse(`@api-test-agent run --base-url ${longUrl}`);
       expect(result).toBeDefined();
     });
 
     it('should handle special characters in arguments', () => {
-      const result = parser.parse('@api-test-agent run --base-url https://api.example.com/v2?key=value&other=test');
+      const result = parser.parse(
+        '@api-test-agent run --base-url https://api.example.com/v2?key=value&other=test'
+      );
       expect(result).toBeDefined();
       expect(result!.args.baseUrl).toBeTruthy();
     });

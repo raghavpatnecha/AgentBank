@@ -52,7 +52,7 @@ export class SelfHealingOrchestrator {
 
   constructor(
     private components: HealingComponents,
-    config?: Partial<SelfHealingConfig>,
+    config?: Partial<SelfHealingConfig>
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.healingAttempts = new Map();
@@ -72,7 +72,7 @@ export class SelfHealingOrchestrator {
     for (const failedTest of failedTests) {
       // Check time limit
       if (this.totalTimeSpent >= this.config.maxTotalTime) {
-        console.log(`Healing timeout: ${this.totalTimeSpent}ms >= ${this.config.maxTotalTime}ms`);
+        console.warn(`Healing timeout: ${this.totalTimeSpent}ms >= ${this.config.maxTotalTime}ms`);
         break;
       }
 
@@ -316,12 +316,12 @@ export class SelfHealingOrchestrator {
     allResults: TestResult[],
     failedTests: FailedTest[],
     healingResults: HealingResult[],
-    attempts: HealingAttempt[],
+    attempts: HealingAttempt[]
   ): HealingReport {
-    const successfullyHealed = healingResults.filter(r => r.success).length;
-    const failedHealing = healingResults.filter(r => r.attempted && !r.success).length;
-    const nonHealable = healingResults.filter(r => !r.attempted).length;
-    const healingAttempts = healingResults.filter(r => r.attempted).length;
+    const successfullyHealed = healingResults.filter((r) => r.success).length;
+    const failedHealing = healingResults.filter((r) => r.attempted && !r.success).length;
+    const nonHealable = healingResults.filter((r) => !r.attempted).length;
+    const healingAttempts = healingResults.filter((r) => r.attempted).length;
 
     // Calculate statistics
     const statistics = this.calculateStatistics(healingResults, attempts);
@@ -345,10 +345,10 @@ export class SelfHealingOrchestrator {
    */
   private calculateStatistics(
     results: HealingResult[],
-    attempts: HealingAttempt[],
+    attempts: HealingAttempt[]
   ): HealingStatistics {
-    const attempted = results.filter(r => r.attempted);
-    const successful = results.filter(r => r.success);
+    const attempted = results.filter((r) => r.attempted);
+    const successful = results.filter((r) => r.success);
 
     const successRate = attempted.length > 0 ? successful.length / attempted.length : 0;
 
@@ -374,16 +374,17 @@ export class SelfHealingOrchestrator {
 
     const totalTokensUsed = attempts.reduce(
       (sum, a) => sum + (a.regenerationResult.tokensUsed || 0),
-      0,
+      0
     );
 
-    const avgConfidence = attempts.length > 0
-      ? attempts.reduce((sum, a) => {
-          // Get confidence from regeneration result if available
-          const confidence = a.regenerationResult.validation?.valid ? 0.9 : 0.5;
-          return sum + confidence;
-        }, 0) / attempts.length
-      : 0;
+    const avgConfidence =
+      attempts.length > 0
+        ? attempts.reduce((sum, a) => {
+            // Get confidence from regeneration result if available
+            const confidence = a.regenerationResult.validation?.valid ? 0.9 : 0.5;
+            return sum + confidence;
+          }, 0) / attempts.length
+        : 0;
 
     return {
       successRate,
@@ -440,8 +441,8 @@ export class SelfHealingOrchestrator {
 
     for (const attempts of this.healingAttempts.values()) {
       totalAttempts += attempts.length;
-      successfulAttempts += attempts.filter(a => a.success).length;
-      failedAttempts += attempts.filter(a => !a.success).length;
+      successfulAttempts += attempts.filter((a) => a.success).length;
+      failedAttempts += attempts.filter((a) => !a.success).length;
     }
 
     return {
@@ -490,7 +491,11 @@ export class SimpleFailureAnalyzer {
     if (errorMessage.includes('type') && errorMessage.includes('mismatch')) {
       return 'type_mismatch' as FailureType;
     }
-    if (errorMessage.includes('status') || errorMessage.includes('404') || errorMessage.includes('500')) {
+    if (
+      errorMessage.includes('status') ||
+      errorMessage.includes('404') ||
+      errorMessage.includes('500')
+    ) {
       return 'status_code_changed' as FailureType;
     }
     if (errorMessage.includes('endpoint') || errorMessage.includes('not found')) {
@@ -543,20 +548,26 @@ export class SimpleFailureAnalyzer {
 
   private calculateConfidence(_testResult: TestResult, failureType: FailureType): number {
     // High confidence for specific error types
-    if (failureType === ('field_missing' as FailureType) ||
-        failureType === ('type_mismatch' as FailureType)) {
+    if (
+      failureType === ('field_missing' as FailureType) ||
+      failureType === ('type_mismatch' as FailureType)
+    ) {
       return 0.9;
     }
-    if (failureType === ('status_code_changed' as FailureType) ||
-        failureType === ('schema_validation' as FailureType)) {
+    if (
+      failureType === ('status_code_changed' as FailureType) ||
+      failureType === ('schema_validation' as FailureType)
+    ) {
       return 0.8;
     }
     if (failureType === ('endpoint_not_found' as FailureType)) {
       return 0.7;
     }
     // Low confidence for timeouts and network errors
-    if (failureType === ('timeout' as FailureType) ||
-        failureType === ('network_error' as FailureType)) {
+    if (
+      failureType === ('timeout' as FailureType) ||
+      failureType === ('network_error' as FailureType)
+    ) {
       return 0.3;
     }
     return 0.5;

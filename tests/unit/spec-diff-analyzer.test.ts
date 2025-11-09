@@ -10,7 +10,7 @@ import {
   OpenAPISpec,
   ChangeType,
   ChangeSeverity,
-  FailureType
+  FailureType,
 } from '../../src/types/spec-diff-types.js';
 
 const FIXTURES_DIR = path.join(__dirname, '../fixtures/openapi');
@@ -47,7 +47,7 @@ describe('SpecDiffAnalyzer', () => {
       const jsonSpec = {
         openapi: '3.0.0',
         info: { title: 'Test API', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
 
       const tempPath = path.join(__dirname, '../fixtures/openapi/temp-spec.json');
@@ -69,18 +69,14 @@ describe('SpecDiffAnalyzer', () => {
       const tempPath = path.join(__dirname, '../fixtures/openapi/test.txt');
       await fs.writeFile(tempPath, 'some content');
 
-      await expect(
-        analyzer.loadAndParseSpec(tempPath)
-      ).rejects.toThrow('Unsupported file format');
+      await expect(analyzer.loadAndParseSpec(tempPath)).rejects.toThrow('Unsupported file format');
 
       // Cleanup
       await fs.unlink(tempPath);
     });
 
     it('should throw error for non-existent file', async () => {
-      await expect(
-        analyzer.loadAndParseSpec('/nonexistent/spec.yaml')
-      ).rejects.toThrow();
+      await expect(analyzer.loadAndParseSpec('/nonexistent/spec.yaml')).rejects.toThrow();
     });
 
     it('should throw error for invalid OpenAPI spec', async () => {
@@ -88,9 +84,7 @@ describe('SpecDiffAnalyzer', () => {
       const fs = await import('fs/promises');
       await fs.writeFile(tempPath, 'invalid: yaml\nno: paths');
 
-      await expect(
-        analyzer.loadAndParseSpec(tempPath)
-      ).rejects.toThrow('Invalid OpenAPI spec');
+      await expect(analyzer.loadAndParseSpec(tempPath)).rejects.toThrow('Invalid OpenAPI spec');
 
       // Cleanup
       await fs.unlink(tempPath);
@@ -142,9 +136,7 @@ describe('SpecDiffAnalyzer', () => {
       expect(diff.endpoints.added.length).toBeGreaterThan(0);
 
       // Check for specific added endpoints
-      const reviewEndpoints = diff.endpoints.added.filter(e =>
-        e.path.includes('/reviews')
-      );
+      const reviewEndpoints = diff.endpoints.added.filter((e) => e.path.includes('/reviews'));
       expect(reviewEndpoints.length).toBeGreaterThan(0);
     });
 
@@ -152,8 +144,8 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // PUT was replaced with PATCH for products
-      const removedPut = diff.endpoints.removed.find(e =>
-        e.method === 'put' && e.path === '/products/{productId}'
+      const removedPut = diff.endpoints.removed.find(
+        (e) => e.method === 'put' && e.path === '/products/{productId}'
       );
       expect(removedPut).toBeDefined();
     });
@@ -185,7 +177,7 @@ describe('SpecDiffAnalyzer', () => {
     it('should track old and new operations', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
-      const added = diff.endpoints.added.find(e => e.path.includes('/reviews'));
+      const added = diff.endpoints.added.find((e) => e.path.includes('/reviews'));
       expect(added?.newOperation).toBeDefined();
       expect(added?.oldOperation).toBeUndefined();
 
@@ -202,8 +194,8 @@ describe('SpecDiffAnalyzer', () => {
       expect(diff.parameters.added.length).toBeGreaterThan(0);
 
       // GET /products added minPrice, maxPrice, sortBy parameters
-      const productsParams = diff.parameters.added.filter(p =>
-        p.endpoint === '/products' && p.method === 'get'
+      const productsParams = diff.parameters.added.filter(
+        (p) => p.endpoint === '/products' && p.method === 'get'
       );
       expect(productsParams.length).toBeGreaterThan(0);
     });
@@ -232,9 +224,8 @@ describe('SpecDiffAnalyzer', () => {
       // For now, verify the logic exists
       const diff = analyzer.compareSpecs(spec1, spec2);
 
-      const requiredParam = diff.allChanges.find(c =>
-        c.type === ChangeType.FIELD_ADDED &&
-        c.description.includes('required')
+      const requiredParam = diff.allChanges.find(
+        (c) => c.type === ChangeType.FIELD_ADDED && c.description.includes('required')
       );
 
       if (requiredParam) {
@@ -245,10 +236,11 @@ describe('SpecDiffAnalyzer', () => {
     it('should mark adding optional parameter as minor', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
-      const optionalParam = diff.allChanges.find(c =>
-        c.type === ChangeType.FIELD_ADDED &&
-        c.path.includes('parameters') &&
-        c.description.includes('optional')
+      const optionalParam = diff.allChanges.find(
+        (c) =>
+          c.type === ChangeType.FIELD_ADDED &&
+          c.path.includes('parameters') &&
+          c.description.includes('optional')
       );
 
       if (optionalParam) {
@@ -264,8 +256,8 @@ describe('SpecDiffAnalyzer', () => {
       expect(diff.schemas.added.length).toBeGreaterThan(0);
 
       // Review schema was added
-      const reviewSchema = diff.schemas.added.find(s =>
-        s.schemaName === 'Review' || s.schemaName === 'ReviewInput'
+      const reviewSchema = diff.schemas.added.find(
+        (s) => s.schemaName === 'Review' || s.schemaName === 'ReviewInput'
       );
       expect(reviewSchema).toBeDefined();
     });
@@ -276,9 +268,7 @@ describe('SpecDiffAnalyzer', () => {
       expect(diff.schemas.modified.length).toBeGreaterThan(0);
 
       // Product schema was modified (added fields)
-      const productSchema = diff.schemas.modified.find(s =>
-        s.schemaName === 'Product'
-      );
+      const productSchema = diff.schemas.modified.find((s) => s.schemaName === 'Product');
       expect(productSchema).toBeDefined();
     });
 
@@ -286,9 +276,8 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // Product schema added: sku, discountPrice, tags, etc.
-      const productChanges = diff.allChanges.filter(c =>
-        c.path.includes('Product.properties') &&
-        c.type === ChangeType.FIELD_ADDED
+      const productChanges = diff.allChanges.filter(
+        (c) => c.path.includes('Product.properties') && c.type === ChangeType.FIELD_ADDED
       );
       expect(productChanges.length).toBeGreaterThan(0);
     });
@@ -297,9 +286,8 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // User schema: firstName and lastName merged to fullName
-      const userChanges = diff.allChanges.filter(c =>
-        c.path.includes('User.properties') &&
-        c.type === ChangeType.FIELD_REMOVED
+      const userChanges = diff.allChanges.filter(
+        (c) => c.path.includes('User.properties') && c.type === ChangeType.FIELD_REMOVED
       );
       expect(userChanges.length).toBeGreaterThan(0);
     });
@@ -308,9 +296,8 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // Product now requires 'sku' field
-      const requiredChanges = diff.allChanges.filter(c =>
-        c.type === ChangeType.REQUIRED_CHANGED ||
-        c.description.includes('required')
+      const requiredChanges = diff.allChanges.filter(
+        (c) => c.type === ChangeType.REQUIRED_CHANGED || c.description.includes('required')
       );
       expect(requiredChanges.length).toBeGreaterThan(0);
     });
@@ -319,9 +306,8 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // Order status enum changed (added 'confirmed' and 'refunded')
-      const enumChanges = diff.allChanges.filter(c =>
-        c.type === ChangeType.ENUM_CHANGED ||
-        c.path.includes('.enum')
+      const enumChanges = diff.allChanges.filter(
+        (c) => c.type === ChangeType.ENUM_CHANGED || c.path.includes('.enum')
       );
       expect(enumChanges.length).toBeGreaterThan(0);
     });
@@ -335,9 +321,7 @@ describe('SpecDiffAnalyzer', () => {
     it('should find affected endpoints for schema changes', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
-      const productSchema = diff.schemas.modified.find(s =>
-        s.schemaName === 'Product'
-      );
+      const productSchema = diff.schemas.modified.find((s) => s.schemaName === 'Product');
 
       if (productSchema) {
         expect(productSchema.affectedEndpoints).toBeDefined();
@@ -349,9 +333,7 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // Address schema changes (added 'apartment', made postalCode required)
-      const addressChanges = diff.allChanges.filter(c =>
-        c.path.includes('Address.properties')
-      );
+      const addressChanges = diff.allChanges.filter((c) => c.path.includes('Address.properties'));
       expect(addressChanges.length).toBeGreaterThan(0);
     });
 
@@ -359,9 +341,7 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // Product.images is now an array of URIs
-      const arrayChanges = diff.allChanges.filter(c =>
-        c.path.includes('.items')
-      );
+      const arrayChanges = diff.allChanges.filter((c) => c.path.includes('.items'));
       // Should exist in the comprehensive comparison
       expect(arrayChanges).toBeDefined();
     });
@@ -374,9 +354,7 @@ describe('SpecDiffAnalyzer', () => {
       expect(diff.auth.added.length).toBeGreaterThan(0);
 
       // apiKey scheme was added
-      const apiKeyScheme = diff.auth.added.find(a =>
-        a.schemeName === 'apiKey'
-      );
+      const apiKeyScheme = diff.auth.added.find((a) => a.schemeName === 'apiKey');
       expect(apiKeyScheme).toBeDefined();
       expect(apiKeyScheme?.schemeType).toBe('apiKey');
     });
@@ -385,9 +363,7 @@ describe('SpecDiffAnalyzer', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
       // bearerAuth got a description added
-      const modifiedBearer = diff.auth.modified.find(a =>
-        a.schemeName === 'bearerAuth'
-      );
+      const modifiedBearer = diff.auth.modified.find((a) => a.schemeName === 'bearerAuth');
 
       // May or may not exist depending on description handling
       if (modifiedBearer) {
@@ -398,9 +374,7 @@ describe('SpecDiffAnalyzer', () => {
     it('should find affected endpoints for auth changes', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
-      const apiKeyScheme = diff.auth.added.find(a =>
-        a.schemeName === 'apiKey'
-      );
+      const apiKeyScheme = diff.auth.added.find((a) => a.schemeName === 'apiKey');
 
       if (apiKeyScheme) {
         expect(apiKeyScheme.affectedEndpoints).toBeDefined();
@@ -412,9 +386,8 @@ describe('SpecDiffAnalyzer', () => {
       // Would be tested with a spec that removes auth
       const diff = analyzer.compareSpecs(spec1, spec2);
 
-      const authRemoval = diff.allChanges.find(c =>
-        c.path.includes('securitySchemes') &&
-        c.type === ChangeType.FIELD_REMOVED
+      const authRemoval = diff.allChanges.find(
+        (c) => c.path.includes('securitySchemes') && c.type === ChangeType.FIELD_REMOVED
       );
 
       if (authRemoval) {
@@ -425,9 +398,8 @@ describe('SpecDiffAnalyzer', () => {
     it('should mark auth addition as minor change', () => {
       const diff = analyzer.compareSpecs(spec1, spec2);
 
-      const authAddition = diff.allChanges.find(c =>
-        c.path.includes('securitySchemes') &&
-        c.type === ChangeType.FIELD_ADDED
+      const authAddition = diff.allChanges.find(
+        (c) => c.path.includes('securitySchemes') && c.type === ChangeType.FIELD_ADDED
       );
 
       if (authAddition) {
@@ -528,8 +500,8 @@ describe('SpecDiffAnalyzer', () => {
       const report = analyzer.generateDiffReport(diff);
 
       if (diff.summary.breakingChanges > 0) {
-        const hasVersionRecommendation = report.recommendations.some(r =>
-          r.includes('version') || r.includes('Breaking')
+        const hasVersionRecommendation = report.recommendations.some(
+          (r) => r.includes('version') || r.includes('Breaking')
         );
         expect(hasVersionRecommendation).toBe(true);
       }
@@ -539,15 +511,13 @@ describe('SpecDiffAnalyzer', () => {
   describe('comparison options', () => {
     it('should ignore description changes when configured', () => {
       const customAnalyzer = new SpecDiffAnalyzer({
-        ignoreDescriptionChanges: true
+        ignoreDescriptionChanges: true,
       });
 
       const diff = customAnalyzer.compareSpecs(spec1, spec2);
 
       // Should have fewer changes
-      const descriptionChanges = diff.allChanges.filter(c =>
-        c.path.includes('.description')
-      );
+      const descriptionChanges = diff.allChanges.filter((c) => c.path.includes('.description'));
       expect(descriptionChanges.length).toBe(0);
     });
 
@@ -571,7 +541,7 @@ describe('SpecDiffAnalyzer', () => {
 
     it('should accept comparison options', async () => {
       const diff = await compareSpecFiles(SPEC_V1_PATH, SPEC_V2_PATH, {
-        ignoreDescriptionChanges: true
+        ignoreDescriptionChanges: true,
       });
 
       expect(diff).toBeDefined();
@@ -594,13 +564,13 @@ describe('SpecDiffAnalyzer', () => {
       const minimalSpec1: OpenAPISpec = {
         openapi: '3.0.0',
         info: { title: 'Test', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
 
       const minimalSpec2: OpenAPISpec = {
         openapi: '3.0.0',
         info: { title: 'Test', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
 
       const diff = analyzer.compareSpecs(minimalSpec1, minimalSpec2);
@@ -612,7 +582,7 @@ describe('SpecDiffAnalyzer', () => {
       const emptySpec: OpenAPISpec = {
         openapi: '3.0.0',
         info: { title: 'Empty', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
 
       const diff = analyzer.compareSpecs(emptySpec, emptySpec);

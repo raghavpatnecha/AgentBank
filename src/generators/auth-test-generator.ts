@@ -37,10 +37,7 @@ export class AuthTestGenerator {
   private options: AuthTestGeneratorOptions;
   private allSchemes: Map<string, AuthScheme>;
 
-  constructor(
-    allSchemes: AuthScheme[] = [],
-    options: AuthTestGeneratorOptions = {}
-  ) {
+  constructor(allSchemes: AuthScheme[] = [], options: AuthTestGeneratorOptions = {}) {
     this.options = {
       testUnauthorized: true,
       testInvalidCredentials: true,
@@ -50,9 +47,7 @@ export class AuthTestGenerator {
     };
 
     // Convert array to map for easy lookup
-    this.allSchemes = new Map(
-      allSchemes.map((scheme) => [scheme.name, scheme])
-    );
+    this.allSchemes = new Map(allSchemes.map((scheme) => [scheme.name, scheme]));
   }
 
   /**
@@ -120,9 +115,7 @@ export class AuthTestGenerator {
 
       // Check if this requirement uses multiple schemes (AND logic)
       if (requiresMultipleAuth(requirement)) {
-        tests.push(
-          ...this.generateMultipleAuthTests(endpoint, requirementSchemes, requirement)
-        );
+        tests.push(...this.generateMultipleAuthTests(endpoint, requirementSchemes, requirement));
       } else {
         // Single scheme (OR logic with other requirements)
         for (const scheme of requirementSchemes) {
@@ -215,7 +208,12 @@ export class AuthTestGenerator {
 
     return {
       id: `auth-invalid-${scheme.name}-${endpoint.method}-${endpoint.path}`,
-      name: generateAuthTestDescription(scheme, false, endpoint.path, endpoint.method.toUpperCase()),
+      name: generateAuthTestDescription(
+        scheme,
+        false,
+        endpoint.path,
+        endpoint.method.toUpperCase()
+      ),
       description: `Test endpoint with invalid ${config.type} credentials - expect 401`,
       type: 'auth',
       method: endpoint.method,

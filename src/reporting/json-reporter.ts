@@ -341,7 +341,7 @@ export class JSONReporter implements Reporter {
         return false;
       }
 
-      return !!valid;
+      return Boolean(valid);
     } catch (error) {
       console.error('Failed to parse JSON for validation:', error);
       return false;
@@ -387,7 +387,7 @@ export class JSONReporter implements Reporter {
       if (this.config.compress) {
         // Save compressed file
         const compressed = await this.compress(json);
-        await fs.writeFile(outputPath + '.gz', compressed);
+        await fs.writeFile(`${outputPath}.gz`, compressed);
       } else {
         // Save regular JSON file
         await fs.writeFile(outputPath, json, 'utf-8');
@@ -408,7 +408,7 @@ export class JSONReporter implements Reporter {
     await this.saveToFile(json, filepath);
 
     const outputPath = filepath || this.config.outputPath;
-    return this.config.compress ? outputPath + '.gz' : outputPath;
+    return this.config.compress ? `${outputPath}.gz` : outputPath;
   }
 
   /**

@@ -122,8 +122,8 @@ describe('Happy Path Test Generation Integration', () => {
     expect(code).toContain('expect(');
 
     // Check that code is valid (no syntax errors patterns)
-    expect(code).not.toMatch(/\bundefined\s*,/);  // No undefined in parameter lists
-    expect(code).not.toMatch(/:\s*undefined/);  // No undefined as values
+    expect(code).not.toMatch(/\bundefined\s*,/); // No undefined in parameter lists
+    expect(code).not.toMatch(/:\s*undefined/); // No undefined as values
   });
 
   it('should generate POST test with request body', async () => {
@@ -161,9 +161,7 @@ describe('Happy Path Test Generation Integration', () => {
     const endpoints = parser.extractEndpoints();
 
     // Find GET /pet/{petId} endpoint
-    const getPetEndpoint = endpoints.find(
-      (e) => e.method === 'get' && e.path === '/pet/{petId}'
-    );
+    const getPetEndpoint = endpoints.find((e) => e.method === 'get' && e.path === '/pet/{petId}');
     expect(getPetEndpoint).toBeDefined();
 
     const dataFactory = new DataFactory();
@@ -260,7 +258,7 @@ describe('Happy Path Test Generation Integration', () => {
     const code = codeGen.generateTestFile(tests, metadata);
 
     // Basic syntax checks - avoid invalid patterns
-    expect(code).not.toContain(': undefined');  // No undefined values
+    expect(code).not.toContain(': undefined'); // No undefined values
     expect(code).not.toContain('[object Object]');
 
     // Check for balanced braces
@@ -281,9 +279,7 @@ describe('Happy Path Test Generation Integration', () => {
     const endpoints = parser.extractEndpoints();
 
     // Find an endpoint with response schema
-    const getPetEndpoint = endpoints.find(
-      (e) => e.method === 'get' && e.path === '/pet/{petId}'
-    );
+    const getPetEndpoint = endpoints.find((e) => e.method === 'get' && e.path === '/pet/{petId}');
     expect(getPetEndpoint).toBeDefined();
 
     const dataFactory = new DataFactory();

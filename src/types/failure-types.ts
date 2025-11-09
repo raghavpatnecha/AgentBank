@@ -14,7 +14,7 @@ export enum FailureType {
   SELECTOR = 'selector',
   NAVIGATION = 'navigation',
   VALIDATION = 'validation',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 /**
@@ -26,7 +26,7 @@ export enum NetworkErrorType {
   SSL_ERROR = 'ssl_error',
   HTTP_ERROR = 'http_error',
   CORS_ERROR = 'cors_error',
-  TIMEOUT = 'timeout'
+  TIMEOUT = 'timeout',
 }
 
 /**
@@ -39,7 +39,7 @@ export enum AssertionErrorType {
   ATTRIBUTE = 'attribute',
   COUNT = 'count',
   STATE = 'state',
-  VALUE = 'value'
+  VALUE = 'value',
 }
 
 /**
@@ -232,7 +232,14 @@ export interface FailureAnalysis {
   failureType: FailureType;
   parsedError: ParsedError;
   context: FailureContext;
-  specificError?: AssertionFailure | NetworkError | TimeoutError | AuthError | SelectorError | NavigationError | ValidationError;
+  specificError?:
+    | AssertionFailure
+    | NetworkError
+    | TimeoutError
+    | AuthError
+    | SelectorError
+    | NavigationError
+    | ValidationError;
   rootCause: string;
   potentialFixes: Fix[];
   relatedFailures?: RelatedFailure[];

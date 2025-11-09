@@ -62,7 +62,12 @@ export function formatRequestConsole(request: RequestLogData, level: LogLevel = 
   if (request.body !== undefined) {
     lines.push('  📦 Body:');
     const bodyStr = formatBodyForConsole(request.body);
-    lines.push(bodyStr.split('\n').map(line => `     ${line}`).join('\n'));
+    lines.push(
+      bodyStr
+        .split('\n')
+        .map((line) => `     ${line}`)
+        .join('\n')
+    );
   }
 
   return lines.join('\n');
@@ -79,7 +84,9 @@ export function formatResponseConsole(response: ResponseLogData, level: LogLevel
   const testContext = response.testName ? ` [${response.testName}]` : '';
   const statusIcon = getStatusIcon(response.status);
   const duration = response.duration ? ` (${response.duration}ms)` : '';
-  lines.push(`${levelPrefix}${testContext} ← ${response.status} ${response.statusText}${statusIcon}${duration}`);
+  lines.push(
+    `${levelPrefix}${testContext} ← ${response.status} ${response.statusText}${statusIcon}${duration}`
+  );
 
   // Timestamp
   lines.push(`  ⏰ ${response.timestamp}`);
@@ -97,7 +104,12 @@ export function formatResponseConsole(response: ResponseLogData, level: LogLevel
   if (response.body !== undefined) {
     lines.push('  📦 Body:');
     const bodyStr = formatBodyForConsole(response.body);
-    lines.push(bodyStr.split('\n').map(line => `     ${line}`).join('\n'));
+    lines.push(
+      bodyStr
+        .split('\n')
+        .map((line) => `     ${line}`)
+        .join('\n')
+    );
   }
 
   return lines.join('\n');

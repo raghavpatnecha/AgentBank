@@ -22,7 +22,7 @@ import {
   FailurePattern,
   AssertionErrorType,
   NetworkErrorType,
-  AnalysisOptions
+  AnalysisOptions,
 } from '../types/failure-types.js';
 
 /**
@@ -34,7 +34,7 @@ const DEFAULT_OPTIONS: AnalysisOptions = {
   includeRelatedFailures: false,
   maxRelatedFailures: 5,
   confidenceThreshold: 0.6,
-  enablePatternLearning: false
+  enablePatternLearning: false,
 };
 
 /**
@@ -44,13 +44,14 @@ const FAILURE_PATTERNS: FailurePattern[] = [
   // Assertion failures
   {
     type: FailureType.ASSERTION,
-    regex: /expect.*?(?:toBe|toEqual|toContain|toHaveText|toBeVisible|toHaveAttribute)\((.*?)\).*?(?:Received|but got|actual):\s*(.+)/is,
+    regex:
+      /expect.*?(?:toBe|toEqual|toContain|toHaveText|toBeVisible|toHaveAttribute)\((.*?)\).*?(?:Received|but got|actual):\s*(.+)/is,
     priority: 10,
     extractor: (match) => ({
       type: FailureType.ASSERTION,
       expectedValue: match[1]?.trim(),
-      actualValue: match[2]?.trim()
-    })
+      actualValue: match[2]?.trim(),
+    }),
   },
   {
     type: FailureType.ASSERTION,
@@ -59,8 +60,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     extractor: (match) => ({
       type: FailureType.ASSERTION,
       expectedValue: match[1]?.trim(),
-      actualValue: match[2]?.trim()
-    })
+      actualValue: match[2]?.trim(),
+    }),
   },
   {
     type: FailureType.ASSERTION,
@@ -69,8 +70,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     extractor: (match) => ({
       type: FailureType.ASSERTION,
       expectedValue: match[1]?.trim(),
-      actualValue: match[2]?.trim()
-    })
+      actualValue: match[2]?.trim(),
+    }),
   },
 
   // Network errors
@@ -81,8 +82,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     extractor: (match) => ({
       type: FailureType.NETWORK,
       httpStatus: parseInt(match[1] || '0', 10),
-      cleanMessage: match[2]?.trim()
-    })
+      cleanMessage: match[2]?.trim(),
+    }),
   },
   {
     type: FailureType.NETWORK,
@@ -90,8 +91,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 9,
     extractor: (match) => ({
       type: FailureType.NETWORK,
-      url: match[1]?.trim()
-    })
+      url: match[1]?.trim(),
+    }),
   },
   {
     type: FailureType.NETWORK,
@@ -99,8 +100,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 8,
     extractor: () => ({
       type: FailureType.NETWORK,
-      cleanMessage: 'Connection refused'
-    })
+      cleanMessage: 'Connection refused',
+    }),
   },
 
   // Timeout errors
@@ -110,8 +111,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 10,
     extractor: (match) => ({
       type: FailureType.TIMEOUT,
-      timeout: parseInt(match[1] || '0', 10)
-    })
+      timeout: parseInt(match[1] || '0', 10),
+    }),
   },
   {
     type: FailureType.TIMEOUT,
@@ -119,8 +120,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 9,
     extractor: (match) => ({
       type: FailureType.TIMEOUT,
-      timeout: parseInt(match[1] || '0', 10)
-    })
+      timeout: parseInt(match[1] || '0', 10),
+    }),
   },
 
   // Auth errors
@@ -130,8 +131,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 10,
     extractor: () => ({
       type: FailureType.AUTH,
-      httpStatus: 401
-    })
+      httpStatus: 401,
+    }),
   },
   {
     type: FailureType.AUTH,
@@ -139,19 +140,20 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 9,
     extractor: () => ({
       type: FailureType.AUTH,
-      httpStatus: 403
-    })
+      httpStatus: 403,
+    }),
   },
 
   // Selector errors
   {
     type: FailureType.SELECTOR,
-    regex: /(?:Selector|locator)\s+['"](.+?)['"].*?(?:not found|could not be found|did not match any elements)/i,
+    regex:
+      /(?:Selector|locator)\s+['"](.+?)['"].*?(?:not found|could not be found|did not match any elements)/i,
     priority: 10,
     extractor: (match) => ({
       type: FailureType.SELECTOR,
-      selector: match[1]?.trim()
-    })
+      selector: match[1]?.trim(),
+    }),
   },
   {
     type: FailureType.SELECTOR,
@@ -159,8 +161,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 9,
     extractor: (match) => ({
       type: FailureType.SELECTOR,
-      selector: match[1]?.trim()
-    })
+      selector: match[1]?.trim(),
+    }),
   },
 
   // Navigation errors
@@ -170,8 +172,8 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     priority: 10,
     extractor: (match) => ({
       type: FailureType.NAVIGATION,
-      url: match[1]?.trim()
-    })
+      url: match[1]?.trim(),
+    }),
   },
 
   // Validation errors
@@ -182,9 +184,9 @@ const FAILURE_PATTERNS: FailurePattern[] = [
     extractor: (match) => ({
       type: FailureType.VALIDATION,
       fieldName: match[1]?.trim(),
-      expectedValue: match[2]?.trim()
-    })
-  }
+      expectedValue: match[2]?.trim(),
+    }),
+  },
 ];
 
 /**
@@ -282,7 +284,7 @@ export class FailureAnalyzer {
       specificError,
       rootCause,
       potentialFixes: this.options.includeSuggestions ? potentialFixes : [],
-      confidence
+      confidence,
     };
   }
 
@@ -303,7 +305,7 @@ export class FailureAnalyzer {
           type: pattern.type,
           rawMessage: message,
           cleanMessage,
-          ...extracted
+          ...extracted,
         };
       }
     }
@@ -314,7 +316,7 @@ export class FailureAnalyzer {
     return {
       type,
       rawMessage: message,
-      cleanMessage
+      cleanMessage,
     };
   }
 
@@ -353,7 +355,7 @@ export class FailureAnalyzer {
       actualValue: parsedError.actualValue,
       fieldName,
       message: parsedError.cleanMessage,
-      suggestion: this.generateAssertionSuggestion(type, parsedError)
+      suggestion: this.generateAssertionSuggestion(type, parsedError),
     };
   }
 
@@ -392,7 +394,7 @@ export class FailureAnalyzer {
       statusCode,
       method,
       message: parsedError.cleanMessage,
-      suggestion: this.generateNetworkSuggestion(type, statusCode)
+      suggestion: this.generateNetworkSuggestion(type, statusCode),
     };
   }
 
@@ -408,7 +410,11 @@ export class FailureAnalyzer {
       operation = 'navigation';
     } else if (message.includes('selector') || message.includes('locator')) {
       operation = 'selector';
-    } else if (message.includes('action') || message.includes('click') || message.includes('fill')) {
+    } else if (
+      message.includes('action') ||
+      message.includes('click') ||
+      message.includes('fill')
+    ) {
       operation = 'action';
     } else if (message.includes('request') || message.includes('response')) {
       operation = 'network';
@@ -428,7 +434,7 @@ export class FailureAnalyzer {
       selector,
       url,
       message: parsedError.cleanMessage,
-      suggestion: this.generateTimeoutSuggestion(operation)
+      suggestion: this.generateTimeoutSuggestion(operation),
     };
   }
 
@@ -445,7 +451,10 @@ export class FailureAnalyzer {
       type = 'forbidden';
     } else if (message.includes('token') && message.includes('expired')) {
       type = 'token_expired';
-    } else if (message.includes('invalid') && (message.includes('credentials') || message.includes('password'))) {
+    } else if (
+      message.includes('invalid') &&
+      (message.includes('credentials') || message.includes('password'))
+    ) {
       type = 'invalid_credentials';
     }
 
@@ -469,7 +478,7 @@ export class FailureAnalyzer {
       endpoint,
       authMethod,
       message: parsedError.cleanMessage,
-      suggestion: this.generateAuthSuggestion(type)
+      suggestion: this.generateAuthSuggestion(type),
     };
   }
 
@@ -514,7 +523,7 @@ export class FailureAnalyzer {
       selectorType,
       reason,
       message: parsedError.cleanMessage,
-      suggestion: this.generateSelectorSuggestion(reason, selectorType)
+      suggestion: this.generateSelectorSuggestion(reason, selectorType),
     };
   }
 
@@ -547,7 +556,7 @@ export class FailureAnalyzer {
       reason,
       statusCode: parsedError.httpStatus,
       message: parsedError.cleanMessage,
-      suggestion: this.generateNavigationSuggestion(reason)
+      suggestion: this.generateNavigationSuggestion(reason),
     };
   }
 
@@ -579,7 +588,7 @@ export class FailureAnalyzer {
       expectedFormat: parsedError.expectedValue?.toString(),
       actualValue: parsedError.actualValue,
       message: parsedError.cleanMessage,
-      suggestion: this.generateValidationSuggestion(validationType, fieldName)
+      suggestion: this.generateValidationSuggestion(validationType, fieldName),
     };
   }
 
@@ -595,13 +604,23 @@ export class FailureAnalyzer {
     if (lower.includes('timeout') || lower.includes('exceeded')) {
       return FailureType.TIMEOUT;
     }
-    if (lower.includes('401') || lower.includes('403') || lower.includes('unauthorized') || lower.includes('forbidden')) {
+    if (
+      lower.includes('401') ||
+      lower.includes('403') ||
+      lower.includes('unauthorized') ||
+      lower.includes('forbidden')
+    ) {
       return FailureType.AUTH;
     }
     if (lower.includes('network') || lower.includes('http') || lower.includes('request failed')) {
       return FailureType.NETWORK;
     }
-    if (lower.includes('selector') || lower.includes('locator') || lower.includes('element') || lower.includes('not found')) {
+    if (
+      lower.includes('selector') ||
+      lower.includes('locator') ||
+      lower.includes('element') ||
+      lower.includes('not found')
+    ) {
       return FailureType.SELECTOR;
     }
     if (lower.includes('navigation') || lower.includes('navigate')) {
@@ -626,8 +645,11 @@ export class FailureAnalyzer {
       lineNumber: location?.line,
       codeSnippet: testResult.error?.snippet,
       timestamp: new Date(),
-      screenshots: testResult.attachments?.filter(a => a.contentType.includes('image')).map(a => a.path) || [],
-      traces: testResult.attachments?.filter(a => a.name.includes('trace')).map(a => a.path) || []
+      screenshots:
+        testResult.attachments?.filter((a) => a.contentType.includes('image')).map((a) => a.path) ||
+        [],
+      traces:
+        testResult.attachments?.filter((a) => a.name.includes('trace')).map((a) => a.path) || [],
     };
   }
 
@@ -638,7 +660,7 @@ export class FailureAnalyzer {
     return {
       testFile: testResult.testPath,
       testName: testResult.testName,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
@@ -704,7 +726,9 @@ export class FailureAnalyzer {
       case NetworkErrorType.TIMEOUT:
         return 'Increase network timeout or check server responsiveness.';
       default:
-        return statusCode === 404 ? 'Verify the endpoint URL is correct.' : 'Check server logs and network configuration.';
+        return statusCode === 404
+          ? 'Verify the endpoint URL is correct.'
+          : 'Check server logs and network configuration.';
     }
   }
 
@@ -730,7 +754,10 @@ export class FailureAnalyzer {
     }
   }
 
-  private generateSelectorSuggestion(reason: SelectorError['reason'], type: SelectorError['selectorType']): string {
+  private generateSelectorSuggestion(
+    reason: SelectorError['reason'],
+    type: SelectorError['selectorType']
+  ): string {
     switch (reason) {
       case 'not_found':
         return `Element not found. Verify ${type} selector is correct and element exists on page.`;
@@ -754,7 +781,10 @@ export class FailureAnalyzer {
     }
   }
 
-  private generateValidationSuggestion(type: ValidationError['validationType'], fieldName: string): string {
+  private generateValidationSuggestion(
+    type: ValidationError['validationType'],
+    fieldName: string
+  ): string {
     switch (type) {
       case 'required':
         return `Field '${fieldName}' is required. Ensure it is provided in the request.`;
@@ -778,7 +808,7 @@ export class FailureAnalyzer {
       effort: 'low',
       automated: true,
       file: context.testFile,
-      line: context.lineNumber
+      line: context.lineNumber,
     });
 
     if (failure.type === AssertionErrorType.VISIBILITY) {
@@ -788,7 +818,7 @@ export class FailureAnalyzer {
         code: `await page.waitForSelector('${failure.selector}', { state: 'visible' });`,
         priority: 'medium',
         effort: 'low',
-        automated: true
+        automated: true,
       });
     }
 
@@ -804,7 +834,7 @@ export class FailureAnalyzer {
         description: 'Start the server before running tests',
         priority: 'high',
         effort: 'low',
-        automated: false
+        automated: false,
       });
     }
 
@@ -814,7 +844,7 @@ export class FailureAnalyzer {
         description: 'Update endpoint URL to correct path',
         priority: 'high',
         effort: 'low',
-        automated: false
+        automated: false,
       });
     }
 
@@ -829,7 +859,7 @@ export class FailureAnalyzer {
       description: `Increase timeout from ${error.timeout}ms to ${error.timeout * 2}ms`,
       priority: 'medium',
       effort: 'low',
-      automated: true
+      automated: true,
     });
 
     return fixes;
@@ -843,7 +873,7 @@ export class FailureAnalyzer {
       description: 'Ensure authentication token is set before request',
       priority: 'high',
       effort: 'medium',
-      automated: false
+      automated: false,
     });
 
     return fixes;
@@ -858,7 +888,7 @@ export class FailureAnalyzer {
         description: `Update selector or add waitFor: await page.waitForSelector('${error.selector}')`,
         priority: 'high',
         effort: 'low',
-        automated: true
+        automated: true,
       });
     }
 
@@ -873,7 +903,7 @@ export class FailureAnalyzer {
       description: 'Verify URL configuration and server availability',
       priority: 'high',
       effort: 'medium',
-      automated: false
+      automated: false,
     });
 
     return fixes;
@@ -887,7 +917,7 @@ export class FailureAnalyzer {
       description: `Update test data for field '${error.fieldName}' to meet validation requirements`,
       priority: 'high',
       effort: 'low',
-      automated: false
+      automated: false,
     });
 
     return fixes;

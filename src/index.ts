@@ -138,12 +138,7 @@ export type {
 } from './generators/flow-generator.js';
 
 // Dependency Analyzer Types
-export type {
-  CRUDSet,
-  DependencyGraph,
-} from './utils/dependency-analyzer.js';
+export type { CRUDSet, DependencyGraph } from './utils/dependency-analyzer.js';
 
 // Test Organizer Types
-export type {
-  OrganizedTests,
-} from './generators/test-organizer.js';
+export type { OrganizedTests } from './generators/test-organizer.js';

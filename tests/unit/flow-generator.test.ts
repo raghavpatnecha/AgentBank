@@ -4,7 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FlowGenerator, type WorkflowFlow, type FlowStep } from '../../src/generators/flow-generator.js';
+import {
+  FlowGenerator,
+  type WorkflowFlow,
+  type FlowStep,
+} from '../../src/generators/flow-generator.js';
 import { RequestBodyGenerator } from '../../src/generators/request-body-generator.js';
 import type { ApiEndpoint, HttpMethod, SchemaObject } from '../../src/types/openapi-types.js';
 
@@ -22,11 +26,15 @@ function createEndpoint(
     operationId,
     summary: `${method.toUpperCase()} ${path}`,
     description: `Test endpoint for ${path}`,
-    parameters: path.includes('{id}') || path.includes('{userId}')
-      ? [{ name: path.includes('{userId}') ? 'userId' : 'id', in: 'path', required: true }]
-      : [],
+    parameters:
+      path.includes('{id}') || path.includes('{userId}')
+        ? [{ name: path.includes('{userId}') ? 'userId' : 'id', in: 'path', required: true }]
+        : [],
     requestBody,
-    responses: new Map([[200, { description: 'Success' }], [201, { description: 'Created' }]]),
+    responses: new Map([
+      [200, { description: 'Success' }],
+      [201, { description: 'Created' }],
+    ]),
     security: [],
     tags,
     servers: [],
@@ -89,9 +97,7 @@ describe('FlowGenerator', () => {
     });
 
     it('should detect list-filter workflow', () => {
-      const endpoints = [
-        createEndpoint('/users', 'get', 'listUsers', ['users']),
-      ];
+      const endpoints = [createEndpoint('/users', 'get', 'listUsers', ['users'])];
       // Add query parameters for filtering
       endpoints[0]!.parameters.push(
         { name: 'status', in: 'query', required: false },
@@ -106,10 +112,7 @@ describe('FlowGenerator', () => {
 
     it('should filter flows by minimum steps', () => {
       const customGen = new FlowGenerator(bodyGenerator, { minSteps: 5 });
-      const endpoints = [
-        createEndpoint('/users', 'post'),
-        createEndpoint('/users/{id}', 'get'),
-      ];
+      const endpoints = [createEndpoint('/users', 'post'), createEndpoint('/users/{id}', 'get')];
 
       const flows = customGen.detectFlows(endpoints);
 
@@ -349,10 +352,7 @@ describe('FlowGenerator', () => {
 
   describe('Edge Cases', () => {
     it('should handle endpoints with no tags', () => {
-      const endpoints = [
-        createEndpoint('/items', 'post'),
-        createEndpoint('/items/{id}', 'get'),
-      ];
+      const endpoints = [createEndpoint('/items', 'post'), createEndpoint('/items/{id}', 'get')];
 
       const flows = generator.detectFlows(endpoints);
 
@@ -371,10 +371,7 @@ describe('FlowGenerator', () => {
     });
 
     it('should handle missing operation IDs', () => {
-      const endpoints = [
-        createEndpoint('/data', 'post'),
-        createEndpoint('/data/{id}', 'get'),
-      ];
+      const endpoints = [createEndpoint('/data', 'post'), createEndpoint('/data/{id}', 'get')];
 
       const flows = generator.detectFlows(endpoints);
 

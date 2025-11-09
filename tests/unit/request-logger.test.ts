@@ -4,7 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { RequestLogger, createRequestLogger, attachLoggerToPage } from '../../src/executor/request-logger.js';
+import {
+  RequestLogger,
+  createRequestLogger,
+  attachLoggerToPage,
+} from '../../src/executor/request-logger.js';
 import type { LoggerConfig } from '../../src/config/logger.js';
 import { promises as fs } from 'fs';
 
@@ -127,7 +131,7 @@ describe('RequestLogger', () => {
 
     it('should redact sensitive headers', async () => {
       const headers = {
-        'Authorization': 'Bearer secret-token',
+        Authorization: 'Bearer secret-token',
         'Content-Type': 'application/json',
       };
       await logger.logRequest('GET', 'https://api.example.com/data', headers);
@@ -448,9 +452,14 @@ describe('RequestLogger', () => {
         sensitiveFields: ['customSecret'],
       });
 
-      await logger.logRequest('POST', 'https://api.example.com/data', {}, {
-        customSecret: 'should-be-redacted',
-      });
+      await logger.logRequest(
+        'POST',
+        'https://api.example.com/data',
+        {},
+        {
+          customSecret: 'should-be-redacted',
+        }
+      );
 
       const transactions = logger.getTransactions();
       const body = transactions[0]?.request.body as Record<string, unknown>;
@@ -460,9 +469,14 @@ describe('RequestLogger', () => {
     it('should disable redaction when configured', async () => {
       logger.updateConfig({ redactSensitiveData: false });
 
-      await logger.logRequest('POST', 'https://api.example.com/data', {}, {
-        password: 'secret123',
-      });
+      await logger.logRequest(
+        'POST',
+        'https://api.example.com/data',
+        {},
+        {
+          password: 'secret123',
+        }
+      );
 
       const transactions = logger.getTransactions();
       const body = transactions[0]?.request.body as Record<string, unknown>;

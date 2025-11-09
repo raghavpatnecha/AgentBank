@@ -65,7 +65,9 @@ export class ResponseValidatorGenerator {
       lines.push(`${indent}expect(Array.isArray(${varName})).toBe(true);`);
 
       if (schema.minItems !== undefined) {
-        lines.push(`${indent}expect(${varName}.length).toBeGreaterThanOrEqual(${schema.minItems});`);
+        lines.push(
+          `${indent}expect(${varName}.length).toBeGreaterThanOrEqual(${schema.minItems});`
+        );
       }
 
       if (schema.maxItems !== undefined) {
@@ -79,7 +81,11 @@ export class ResponseValidatorGenerator {
           lines.push(`${indent}// Validate array items`);
         }
         lines.push(`${indent}if (${varName}.length > 0) {`);
-        const itemValidation = this.generateSchemaValidation(itemSchema, `${varName}[0]`, depth + 1);
+        const itemValidation = this.generateSchemaValidation(
+          itemSchema,
+          `${varName}[0]`,
+          depth + 1
+        );
         lines.push(...itemValidation);
         lines.push(`${indent}}`);
       }
@@ -166,7 +172,9 @@ export class ResponseValidatorGenerator {
     // String constraints
     if (schema.type === 'string') {
       if (schema.minLength !== undefined) {
-        lines.push(`${indent}expect(${varName}.length).toBeGreaterThanOrEqual(${schema.minLength});`);
+        lines.push(
+          `${indent}expect(${varName}.length).toBeGreaterThanOrEqual(${schema.minLength});`
+        );
       }
       if (schema.maxLength !== undefined) {
         lines.push(`${indent}expect(${varName}.length).toBeLessThanOrEqual(${schema.maxLength});`);

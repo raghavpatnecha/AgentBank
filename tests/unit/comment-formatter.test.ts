@@ -11,7 +11,13 @@ import {
   HealedTest,
   PerformanceMetrics,
 } from '../../src/github/comment-formatter.js';
-import { TestResult, TestStatus, ExecutionSummary, TestError, ErrorType } from '../../src/types/executor-types.js';
+import {
+  TestResult,
+  TestStatus,
+  ExecutionSummary,
+  TestError,
+  ErrorType,
+} from '../../src/types/executor-types.js';
 
 describe('CommentFormatter', () => {
   let formatter: CommentFormatter;
@@ -418,7 +424,7 @@ describe('CommentFormatter', () => {
     });
 
     it('should preserve markdown structure when truncating', () => {
-      const content = '# Header\n\n' + 'Content\n'.repeat(10000);
+      const content = `# Header\n\n${'Content\n'.repeat(10000)}`;
       const result = formatter.truncateIfNeeded(content, 1000);
 
       expect(result).not.toContain('# Header\nContent'); // Should break at newline
@@ -529,11 +535,7 @@ describe('CommentFormatter', () => {
 // Helper functions
 
 function createSampleResults(): FormattedTestResults {
-  const tests = [
-    ...createPassedTests(2),
-    ...createFailedTests(1),
-    createSkippedTest(),
-  ];
+  const tests = [...createPassedTests(2), ...createFailedTests(1), createSkippedTest()];
 
   return {
     summary: {
@@ -776,12 +778,13 @@ function createSkippedTest(): TestResult {
 }
 
 function createHealedTests(count: number): HealedTest[] {
-  return Array.from({ length: count }, (_, i) =>
-    createHealedTest(`healed-${i}`, 'ai-powered')
-  );
+  return Array.from({ length: count }, (_, i) => createHealedTest(`healed-${i}`, 'ai-powered'));
 }
 
-function createHealedTest(name: string, strategy: 'ai-powered' | 'rule-based' | 'hybrid'): HealedTest {
+function createHealedTest(
+  name: string,
+  strategy: 'ai-powered' | 'rule-based' | 'hybrid'
+): HealedTest {
   return {
     test: createPassedTest(name),
     healingDescription: 'Field renamed from "price" to "cost"',

@@ -214,17 +214,11 @@ export class WorkerManager {
     try {
       // Set timeout
       const timeoutPromise = new Promise<TestExecutionResult>((_, reject) => {
-        setTimeout(
-          () => reject(new Error(`Task ${task.id} timed out`)),
-          this.config.workerTimeout
-        );
+        setTimeout(() => reject(new Error(`Task ${task.id} timed out`)), this.config.workerTimeout);
       });
 
       // Execute with timeout
-      const result = await Promise.race([
-        executor(task),
-        timeoutPromise,
-      ]);
+      const result = await Promise.race([executor(task), timeoutPromise]);
 
       // Update worker stats
       workerInstance.completedTasks++;
@@ -237,7 +231,6 @@ export class WorkerManager {
       this.totalExecutionTime += Date.now() - startTime;
 
       return result;
-
     } catch (error) {
       // Handle failure
       workerInstance.failedTasks++;
@@ -246,7 +239,6 @@ export class WorkerManager {
       workerInstance.lastActivity = new Date();
 
       throw error;
-
     } finally {
       this.runningTasks.delete(task.id);
       this.preventWorkerStarvation();
@@ -298,9 +290,7 @@ export class WorkerManager {
    * Find worker by allocation strategy
    */
   private findWorkerByStrategy(strategy: AllocationStrategy): Worker | undefined {
-    const idleWorkers = Array.from(this.workers.values()).filter(
-      (w) => w.state === WS.IDLE
-    );
+    const idleWorkers = Array.from(this.workers.values()).filter((w) => w.state === WS.IDLE);
 
     if (idleWorkers.length === 0) {
       return undefined;
@@ -365,18 +355,13 @@ export class WorkerManager {
    * Ensures tasks are distributed evenly across workers
    */
   private preventWorkerStarvation(): void {
-    const busyWorkers = Array.from(this.workers.values()).filter(
-      (w) => w.state === WS.BUSY
-    ).length;
+    const busyWorkers = Array.from(this.workers.values()).filter((w) => w.state === WS.BUSY).length;
 
     const idleWorkers = this.workers.size - busyWorkers;
 
     // If too many workers are idle and we're above minimum, remove some
     if (idleWorkers > 2 && this.workers.size > this.config.minWorkers) {
-      const workersToRemove = Math.min(
-        idleWorkers - 1,
-        this.workers.size - this.config.minWorkers
-      );
+      const workersToRemove = Math.min(idleWorkers - 1, this.workers.size - this.config.minWorkers);
 
       const idleWorkerInstances = Array.from(this.workers.values())
         .filter((w) => w.state === WS.IDLE)

@@ -59,12 +59,25 @@ export function getWorkerConfig(): WorkerConfig {
  */
 export function getRetryConfig(): RetryConfig {
   return {
-    maxRetries: parseInt(process.env[ENV_KEYS.MAX_RETRIES] || DEFAULT_RETRY_CONFIG.maxRetries.toString(), 10),
-    initialDelayMs: parseInt(process.env[ENV_KEYS.INITIAL_DELAY_MS] || DEFAULT_RETRY_CONFIG.initialDelayMs.toString(), 10),
-    maxDelayMs: parseInt(process.env[ENV_KEYS.MAX_DELAY_MS] || DEFAULT_RETRY_CONFIG.maxDelayMs.toString(), 10),
-    backoffMultiplier: parseFloat(process.env[ENV_KEYS.BACKOFF_MULTIPLIER] || DEFAULT_RETRY_CONFIG.backoffMultiplier.toString()),
+    maxRetries: parseInt(
+      process.env[ENV_KEYS.MAX_RETRIES] || DEFAULT_RETRY_CONFIG.maxRetries.toString(),
+      10
+    ),
+    initialDelayMs: parseInt(
+      process.env[ENV_KEYS.INITIAL_DELAY_MS] || DEFAULT_RETRY_CONFIG.initialDelayMs.toString(),
+      10
+    ),
+    maxDelayMs: parseInt(
+      process.env[ENV_KEYS.MAX_DELAY_MS] || DEFAULT_RETRY_CONFIG.maxDelayMs.toString(),
+      10
+    ),
+    backoffMultiplier: parseFloat(
+      process.env[ENV_KEYS.BACKOFF_MULTIPLIER] || DEFAULT_RETRY_CONFIG.backoffMultiplier.toString()
+    ),
     enableJitter: process.env[ENV_KEYS.ENABLE_JITTER] !== 'false',
-    jitterFactor: parseFloat(process.env[ENV_KEYS.JITTER_FACTOR] || DEFAULT_RETRY_CONFIG.jitterFactor.toString()),
+    jitterFactor: parseFloat(
+      process.env[ENV_KEYS.JITTER_FACTOR] || DEFAULT_RETRY_CONFIG.jitterFactor.toString()
+    ),
   };
 }
 
@@ -163,23 +176,25 @@ export function validateExecutorConfig(config: ExecutorConfig): string[] {
  * Print configuration summary
  */
 export function printConfigSummary(config: ExecutorConfig): void {
-  console.log('Executor Configuration:');
-  console.log('  Worker Configuration:');
-  console.log(`    Max Workers: ${config.worker.maxWorkers}`);
-  console.log(`    Min Workers: ${config.worker.minWorkers}`);
-  console.log(`    Memory Limit: ${config.worker.memoryLimitMB}MB`);
-  console.log(`    Worker Timeout: ${config.worker.workerTimeout}ms`);
-  console.log(`    Isolation: ${config.worker.isolation}`);
-  console.log('  Retry Configuration:');
-  console.log(`    Max Retries: ${config.retry.maxRetries}`);
-  console.log(`    Initial Delay: ${config.retry.initialDelayMs}ms`);
-  console.log(`    Max Delay: ${config.retry.maxDelayMs}ms`);
-  console.log(`    Backoff Multiplier: ${config.retry.backoffMultiplier}x`);
-  console.log(`    Jitter: ${config.retry.enableJitter ? `Enabled (${config.retry.jitterFactor * 100}%)` : 'Disabled'}`);
-  console.log('  Execution Configuration:');
-  console.log(`    Global Timeout: ${config.globalTimeout}ms`);
-  console.log(`    Action Timeout: ${config.actionTimeout}ms`);
-  console.log(`    Navigation Timeout: ${config.navigationTimeout}ms`);
-  console.log(`    Base URL: ${config.baseURL}`);
-  console.log(`    CI Mode: ${config.isCI ? 'Yes' : 'No'}`);
+  console.warn('Executor Configuration:');
+  console.warn('  Worker Configuration:');
+  console.warn(`    Max Workers: ${config.worker.maxWorkers}`);
+  console.warn(`    Min Workers: ${config.worker.minWorkers}`);
+  console.warn(`    Memory Limit: ${config.worker.memoryLimitMB}MB`);
+  console.warn(`    Worker Timeout: ${config.worker.workerTimeout}ms`);
+  console.warn(`    Isolation: ${config.worker.isolation}`);
+  console.warn('  Retry Configuration:');
+  console.warn(`    Max Retries: ${config.retry.maxRetries}`);
+  console.warn(`    Initial Delay: ${config.retry.initialDelayMs}ms`);
+  console.warn(`    Max Delay: ${config.retry.maxDelayMs}ms`);
+  console.warn(`    Backoff Multiplier: ${config.retry.backoffMultiplier}x`);
+  console.warn(
+    `    Jitter: ${config.retry.enableJitter ? `Enabled (${config.retry.jitterFactor * 100}%)` : 'Disabled'}`
+  );
+  console.warn('  Execution Configuration:');
+  console.warn(`    Global Timeout: ${config.globalTimeout}ms`);
+  console.warn(`    Action Timeout: ${config.actionTimeout}ms`);
+  console.warn(`    Navigation Timeout: ${config.navigationTimeout}ms`);
+  console.warn(`    Base URL: ${config.baseURL}`);
+  console.warn(`    CI Mode: ${config.isCI ? 'Yes' : 'No'}`);
 }

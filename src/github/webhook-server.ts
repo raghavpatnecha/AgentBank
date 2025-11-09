@@ -127,7 +127,9 @@ export class WebhookServer {
         const start = Date.now();
         res.on('finish', () => {
           const duration = Date.now() - start;
-          console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+          console.warn(
+            `[${new Date().toISOString()}] ${req.method} ${req.path} ${res.statusCode} ${duration}ms`
+          );
         });
         next();
       });
@@ -197,7 +199,7 @@ export class WebhookServer {
    * Clean up expired rate limit entries
    */
   private cleanupRateLimitStore(now: number): void {
-    Object.keys(this.rateLimitStore).forEach(ip => {
+    Object.keys(this.rateLimitStore).forEach((ip) => {
       if (now >= this.rateLimitStore[ip]!.resetTime) {
         delete this.rateLimitStore[ip];
       }
@@ -215,7 +217,7 @@ export class WebhookServer {
 
     // Webhook endpoint
     this.app.post(this.config.path, (req: Request, res: Response) => {
-      this.handleWebhook(req, res).catch(error => {
+      this.handleWebhook(req, res).catch((error) => {
         console.error('Webhook handler error:', error);
         if (!res.headersSent) {
           res.status(500).json({ error: 'Internal server error' });
@@ -284,13 +286,11 @@ export class WebhookServer {
     const jobs = Object.values(this.jobQueue);
     const status = req.query.status as JobStatus | undefined;
 
-    const filtered = status
-      ? jobs.filter(job => job.status === status)
-      : jobs;
+    const filtered = status ? jobs.filter((job) => job.status === status) : jobs;
 
     res.status(200).json({
       total: filtered.length,
-      jobs: filtered.map(job => ({
+      jobs: filtered.map((job) => ({
         id: job.id,
         repository: job.repository,
         prNumber: job.prNumber,
@@ -359,7 +359,8 @@ export class WebhookServer {
 
       // Track action
       if (webhookPayload.action) {
-        this.stats.byAction[webhookPayload.action] = (this.stats.byAction[webhookPayload.action] || 0) + 1;
+        this.stats.byAction[webhookPayload.action] =
+          (this.stats.byAction[webhookPayload.action] || 0) + 1;
       }
 
       // Handle different event types
@@ -369,7 +370,7 @@ export class WebhookServer {
         await this.handlePullRequest(req.body as PullRequestEvent);
       } else {
         // Unsupported event type - acknowledge but don't process
-        console.log(`Received unsupported event type: ${eventType}`);
+        console.warn(`Received unsupported event type: ${eventType}`);
       }
 
       this.stats.totalProcessed++;
@@ -393,26 +394,26 @@ export class WebhookServer {
   public async handleIssueComment(payload: IssueCommentEvent): Promise<void> {
     // Only process created comments
     if (payload.action !== 'created') {
-      console.log(`Ignoring ${payload.action} comment event`);
+      console.warn(`Ignoring ${payload.action} comment event`);
       return;
     }
 
     // Check if it's a pull request comment
     if (!payload.issue.pull_request) {
-      console.log('Comment is not on a pull request, ignoring');
+      console.warn('Comment is not on a pull request, ignoring');
       return;
     }
 
     // Check if comment author is a bot (prevent loops)
     if (payload.comment.user.type === 'Bot') {
-      console.log('Comment author is a bot, ignoring to prevent loops');
+      console.warn('Comment author is a bot, ignoring to prevent loops');
       return;
     }
 
     // Parse comment for commands
     const command = this.parser.parse(payload.comment.body);
     if (!command || !command.valid) {
-      console.log('No valid command found in comment');
+      console.warn('No valid command found in comment');
       return;
     }
 
@@ -424,7 +425,7 @@ export class WebhookServer {
       );
 
       if (!hasPermission) {
-        console.log(`User ${payload.comment.user.login} does not have permission`);
+        console.warn(`User ${payload.comment.user.login} does not have permission`);
         return;
       }
     }
@@ -458,7 +459,9 @@ export class WebhookServer {
    * to potentially trigger automatic tests.
    */
   public async handlePullRequest(payload: PullRequestEvent): Promise<void> {
-    console.log(`Received pull_request event: ${payload.action} for PR #${payload.pull_request.number}`);
+    console.warn(
+      `Received pull_request event: ${payload.action} for PR #${payload.pull_request.number}`
+    );
 
     // Could implement automatic testing on PR open/update here
     // For now, we just log the event
@@ -470,7 +473,7 @@ export class WebhookServer {
    * Adds a job to the queue for async processing.
    */
   public async queueTestExecution(job: TestJob): Promise<void> {
-    console.log(`Queuing test job: ${job.id} for ${job.repository}#${job.prNumber}`);
+    console.warn(`Queuing test job: ${job.id} for ${job.repository}#${job.prNumber}`);
 
     // Add to queue
     this.jobQueue[job.id] = job;
@@ -478,7 +481,7 @@ export class WebhookServer {
 
     // In a real implementation, this would publish to a message queue
     // or trigger a background worker. For now, we just store it.
-    console.log(`Job ${job.id} queued successfully`);
+    console.warn(`Job ${job.id} queued successfully`);
   }
 
   /**
@@ -510,9 +513,9 @@ export class WebhookServer {
     return new Promise((resolve, reject) => {
       try {
         this.server = this.app.listen(listenPort, () => {
-          console.log(`Webhook server listening on port ${listenPort}`);
-          console.log(`Webhook endpoint: POST ${this.config.path}`);
-          console.log(`Health check: GET ${this.config.healthPath}`);
+          console.warn(`Webhook server listening on port ${listenPort}`);
+          console.warn(`Webhook endpoint: POST ${this.config.path}`);
+          console.warn(`Health check: GET ${this.config.healthPath}`);
           this.stats.startTime = new Date();
           resolve();
         });
@@ -541,7 +544,7 @@ export class WebhookServer {
           console.error('Error shutting down server:', error);
           reject(error);
         } else {
-          console.log('Webhook server shut down successfully');
+          console.warn('Webhook server shut down successfully');
           this.server = null;
           resolve();
         }
@@ -586,7 +589,10 @@ export class WebhookServer {
 
     if (status === 'running' && !job.startedAt) {
       job.startedAt = new Date();
-    } else if ((status === 'completed' || status === 'failed' || status === 'cancelled') && !job.completedAt) {
+    } else if (
+      (status === 'completed' || status === 'failed' || status === 'cancelled') &&
+      !job.completedAt
+    ) {
       job.completedAt = new Date();
     }
   }
@@ -602,7 +608,7 @@ export class WebhookServer {
    * Clear all completed jobs
    */
   public clearCompletedJobs(): void {
-    Object.keys(this.jobQueue).forEach(jobId => {
+    Object.keys(this.jobQueue).forEach((jobId) => {
       const job = this.jobQueue[jobId]!;
       if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
         delete this.jobQueue[jobId];

@@ -270,9 +270,7 @@ describe('OpenAIClient', () => {
         usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
       };
 
-      mockCreate
-        .mockRejectedValueOnce({ status: 500 })
-        .mockResolvedValueOnce(mockResponse);
+      mockCreate.mockRejectedValueOnce({ status: 500 }).mockResolvedValueOnce(mockResponse);
 
       const promise = client.generateWithRetry('Test prompt');
 

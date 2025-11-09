@@ -5,7 +5,12 @@
  * Validates commands and extracts arguments for test execution.
  */
 
-import { ParsedCommand, CommandArgs, CommandType, ValidationResult } from '../types/webhook-types.js';
+import {
+  ParsedCommand,
+  CommandArgs,
+  CommandType,
+  ValidationResult,
+} from '../types/webhook-types.js';
 
 /**
  * Command configuration
@@ -35,8 +40,8 @@ const BOT_MENTION_PATTERN = /@api-test-agent\s+/i;
  * const command = parser.parse('@api-test-agent run --env staging');
  *
  * if (command && command.valid) {
- *   console.log('Command:', command.command);
- *   console.log('Environment:', command.args.env);
+ *   console.warn('Command:', command.command);
+ *   console.warn('Environment:', command.args.env);
  * }
  * ```
  */
@@ -86,7 +91,9 @@ export class CommentParser {
         args: {},
         rawCommand: commandText,
         valid: false,
-        errors: [`Unknown command: ${commandName}. Available commands: ${Object.keys(COMMANDS).join(', ')}`],
+        errors: [
+          `Unknown command: ${commandName}. Available commands: ${Object.keys(COMMANDS).join(', ')}`,
+        ],
       };
     }
 
@@ -202,7 +209,7 @@ export class CommentParser {
     // Split by -- to get argument pairs
     const parts = argsString.split(/\s+--/).filter(Boolean);
 
-    parts.forEach(part => {
+    parts.forEach((part) => {
       // Handle first part (might not start with --)
       const cleaned = part.replace(/^--/, '').trim();
       if (!cleaned) return;
@@ -306,8 +313,11 @@ export class CommentParser {
     }
 
     // Help and config commands should not have arguments
-    if ((command.command === 'help' || command.command === 'config') &&
-        Object.keys(command.args).length > 1) { // More than just 'command'
+    if (
+      (command.command === 'help' || command.command === 'config') &&
+      Object.keys(command.args).length > 1
+    ) {
+      // More than just 'command'
       warnings.push(`${command.command} command does not accept arguments`);
     }
 
@@ -335,7 +345,7 @@ export class CommentParser {
 
     // Check for valid file extensions
     const validExtensions = ['.yaml', '.yml', '.json'];
-    const hasValidExtension = validExtensions.some(ext => path.toLowerCase().endsWith(ext));
+    const hasValidExtension = validExtensions.some((ext) => path.toLowerCase().endsWith(ext));
 
     if (!hasValidExtension) {
       return false;
@@ -454,7 +464,7 @@ Examples:
       /^renovate/i,
     ];
 
-    return botPatterns.some(pattern => pattern.test(username));
+    return botPatterns.some((pattern) => pattern.test(username));
   }
 }
 

@@ -15,7 +15,7 @@ import {
   StatusCodeChangeRule,
   RenamePattern,
   FieldRenameDetector,
-  COMMON_STATUS_CODE_CHANGES
+  COMMON_STATUS_CODE_CHANGES,
 } from './transformation-rules.js';
 
 /**
@@ -35,8 +35,15 @@ export interface SpecDiff {
  * Individual change in spec
  */
 export interface Change {
-  type: 'field_renamed' | 'field_added' | 'field_removed' | 'type_changed' |
-        'path_changed' | 'status_code_changed' | 'parameter_added' | 'parameter_removed';
+  type:
+    | 'field_renamed'
+    | 'field_added'
+    | 'field_removed'
+    | 'type_changed'
+    | 'path_changed'
+    | 'status_code_changed'
+    | 'parameter_added'
+    | 'parameter_removed';
   location: string;
   oldValue?: unknown;
   newValue?: unknown;
@@ -67,7 +74,7 @@ export enum FailureType {
   ENDPOINT_NOT_FOUND = 'endpoint_not_found',
   TIMEOUT = 'timeout',
   NETWORK_ERROR = 'network_error',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 /**
@@ -101,7 +108,7 @@ export class RuleBasedHealer {
       rulesApplied: [],
       confidence: 0,
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     try {
@@ -145,9 +152,10 @@ export class RuleBasedHealer {
       }
 
       // Calculate overall confidence
-      const confidence = appliedRules.length > 0
-        ? appliedRules.reduce((sum, rule) => sum + rule.confidence, 0) / appliedRules.length
-        : 0;
+      const confidence =
+        appliedRules.length > 0
+          ? appliedRules.reduce((sum, rule) => sum + rule.confidence, 0) / appliedRules.length
+          : 0;
 
       result.success = appliedRules.length > 0;
       result.healedCode = healedCode;
@@ -160,7 +168,9 @@ export class RuleBasedHealer {
 
       return result;
     } catch (error) {
-      result.errors.push(`Healing failed: ${error instanceof Error ? error.message : String(error)}`);
+      result.errors.push(
+        `Healing failed: ${error instanceof Error ? error.message : String(error)}`
+      );
       return result;
     }
   }
@@ -173,8 +183,10 @@ export class RuleBasedHealer {
 
     for (const modified of specDiff.endpointsModified) {
       // Match by path and method
-      if (this.endpointMatches(test.endpoint, modified.path) &&
-          test.method.toUpperCase() === modified.method.toUpperCase()) {
+      if (
+        this.endpointMatches(test.endpoint, modified.path) &&
+        test.method.toUpperCase() === modified.method.toUpperCase()
+      ) {
         changes.push(...modified.changes);
       }
     }
@@ -259,7 +271,7 @@ export class RuleBasedHealer {
       context: (change.context || 'response') as 'request' | 'response' | 'both',
       confidence: pattern === RenamePattern.SIMILARITY_MATCH ? 0.7 : 0.95,
       description: `Rename field "${oldField}" to "${newField}" (${pattern})`,
-      applicable: true
+      applicable: true,
     };
   }
 
@@ -296,7 +308,7 @@ export class RuleBasedHealer {
       schema: fieldInfo.schema as FieldAdditionRule['schema'],
       confidence: 0.85,
       description: `Add new ${fieldInfo.required ? 'required' : 'optional'} field "${fieldInfo.name}"`,
-      applicable: true
+      applicable: true,
     };
   }
 
@@ -325,7 +337,7 @@ export class RuleBasedHealer {
       breaking: fieldInfo.required || false,
       confidence: 0.9,
       description: `Remove field "${fieldInfo.name}"`,
-      applicable: true
+      applicable: true,
     };
   }
 
@@ -356,7 +368,7 @@ export class RuleBasedHealer {
       changeType,
       confidence: 0.95,
       description: `Update path from "${oldPath}" to "${newPath}"`,
-      applicable: true
+      applicable: true,
     };
   }
 
@@ -382,7 +394,7 @@ export class RuleBasedHealer {
       reason: changeInfo?.reason as StatusCodeChangeRule['reason'],
       confidence: changeInfo ? 0.95 : 0.7,
       description: `Update status code from ${oldStatus} to ${newStatus}`,
-      applicable: true
+      applicable: true,
     };
   }
 
@@ -422,7 +434,7 @@ export class RuleBasedHealer {
       new RegExp(`\\.${this.escapeRegex(rule.oldField)}\\b`, 'g'),
       new RegExp(`\\['${this.escapeRegex(rule.oldField)}'\\]`, 'g'),
       new RegExp(`\\["${this.escapeRegex(rule.oldField)}"\\]`, 'g'),
-      new RegExp(`\\b${this.escapeRegex(rule.oldField)}:`, 'g')
+      new RegExp(`\\b${this.escapeRegex(rule.oldField)}:`, 'g'),
     ];
 
     for (const pattern of patterns) {
@@ -447,11 +459,7 @@ export class RuleBasedHealer {
     let result = code;
 
     // Find request body objects and add the new field
-    const bodyPatterns = [
-      /body:\s*\{([^}]+)\}/g,
-      /data:\s*\{([^}]+)\}/g,
-      /json:\s*\{([^}]+)\}/g
-    ];
+    const bodyPatterns = [/body:\s*\{([^}]+)\}/g, /data:\s*\{([^}]+)\}/g, /json:\s*\{([^}]+)\}/g];
 
     for (const pattern of bodyPatterns) {
       result = result.replace(pattern, (match, content) => {
@@ -492,7 +500,7 @@ export class RuleBasedHealer {
     const assertPatterns = [
       new RegExp(`expect\\([^)]*\\.${this.escapeRegex(rule.fieldName)}\\)\\.[^;]+;?\\s*`, 'g'),
       new RegExp(`expect\\([^)]*\\['${this.escapeRegex(rule.fieldName)}'\\]\\)\\.[^;]+;?\\s*`, 'g'),
-      new RegExp(`expect\\([^)]*\\["${this.escapeRegex(rule.fieldName)}"\\]\\)\\.[^;]+;?\\s*`, 'g')
+      new RegExp(`expect\\([^)]*\\["${this.escapeRegex(rule.fieldName)}"\\]\\)\\.[^;]+;?\\s*`, 'g'),
     ];
 
     for (const pattern of assertPatterns) {
@@ -513,7 +521,7 @@ export class RuleBasedHealer {
     const patterns = [
       new RegExp(`(['"\`])${escapedOldPath}\\1`, 'g'),
       new RegExp(`(['"\`])${escapedOldPath}/`, 'g'),
-      new RegExp(`/${escapedOldPath}(['"\`])`, 'g')
+      new RegExp(`/${escapedOldPath}(['"\`])`, 'g'),
     ];
 
     for (const pattern of patterns) {
@@ -536,7 +544,7 @@ export class RuleBasedHealer {
       new RegExp(`expect\\(.*?\\.status\\(\\)\\)\\.toBe\\(${rule.oldStatus}\\)`, 'g'),
       new RegExp(`expect\\(.*?\\.status\\(\\)\\)\\.toEqual\\(${rule.oldStatus}\\)`, 'g'),
       new RegExp(`status.*?===.*?${rule.oldStatus}`, 'g'),
-      new RegExp(`${rule.oldStatus}.*?===.*?status`, 'g')
+      new RegExp(`${rule.oldStatus}.*?===.*?status`, 'g'),
     ];
 
     for (const pattern of patterns) {
@@ -595,7 +603,9 @@ export class RuleBasedHealer {
    * Generate default value for a field type
    */
   private generateDefaultValue(type: string, schema?: unknown): unknown {
-    const schemaObj = schema as { format?: string; enum?: unknown[]; minimum?: number; maximum?: number } | undefined;
+    const schemaObj = schema as
+      | { format?: string; enum?: unknown[]; minimum?: number; maximum?: number }
+      | undefined;
 
     switch (type.toLowerCase()) {
       case 'string':

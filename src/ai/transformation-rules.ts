@@ -35,7 +35,7 @@ export enum RuleType {
   PATH_CHANGE = 'path_change',
   STATUS_CODE_CHANGE = 'status_code_change',
   TYPE_CHANGE = 'type_change',
-  NESTED_FIELD_CHANGE = 'nested_field_change'
+  NESTED_FIELD_CHANGE = 'nested_field_change',
 }
 
 /**
@@ -161,23 +161,28 @@ export interface StatusCodeChangeRule extends TransformationRule {
   endpoint: string;
 
   /** Change reason if detectable */
-  reason?: 'created_instead_of_ok' | 'no_content_instead_of_ok' | 'not_found' | 'unauthorized' | 'unknown';
+  reason?:
+    | 'created_instead_of_ok'
+    | 'no_content_instead_of_ok'
+    | 'not_found'
+    | 'unauthorized'
+    | 'unknown';
 }
 
 /**
  * Rename patterns for field names
  */
 export enum RenamePattern {
-  SNAKE_TO_CAMEL = 'snake_to_camel',        // user_id → userId
-  CAMEL_TO_SNAKE = 'camel_to_snake',        // userId → user_id
-  KEBAB_TO_CAMEL = 'kebab_to_camel',        // user-id → userId
-  CAMEL_TO_KEBAB = 'camel_to_kebab',        // userId → user-id
-  PASCAL_TO_CAMEL = 'pascal_to_camel',      // UserId → userId
-  CAMEL_TO_PASCAL = 'camel_to_pascal',      // userId → UserId
-  SNAKE_TO_PASCAL = 'snake_to_pascal',      // user_id → UserId
-  SIMILARITY_MATCH = 'similarity_match',     // username → userName (fuzzy)
-  ABBREVIATION = 'abbreviation',             // id → identifier
-  EXPANSION = 'expansion'                    // identifier → id
+  SNAKE_TO_CAMEL = 'snake_to_camel', // user_id → userId
+  CAMEL_TO_SNAKE = 'camel_to_snake', // userId → user_id
+  KEBAB_TO_CAMEL = 'kebab_to_camel', // user-id → userId
+  CAMEL_TO_KEBAB = 'camel_to_kebab', // userId → user-id
+  PASCAL_TO_CAMEL = 'pascal_to_camel', // UserId → userId
+  CAMEL_TO_PASCAL = 'camel_to_pascal', // userId → UserId
+  SNAKE_TO_PASCAL = 'snake_to_pascal', // user_id → UserId
+  SIMILARITY_MATCH = 'similarity_match', // username → userName (fuzzy)
+  ABBREVIATION = 'abbreviation', // id → identifier
+  EXPANSION = 'expansion', // identifier → id
 }
 
 /**
@@ -190,7 +195,7 @@ export const COMMON_RENAME_PATTERNS = [
       const converted = snakeToCamel(oldName);
       return converted === newName;
     },
-    transform: snakeToCamel
+    transform: snakeToCamel,
   },
   {
     pattern: RenamePattern.CAMEL_TO_SNAKE,
@@ -198,7 +203,7 @@ export const COMMON_RENAME_PATTERNS = [
       const converted = camelToSnake(oldName);
       return converted === newName;
     },
-    transform: camelToSnake
+    transform: camelToSnake,
   },
   {
     pattern: RenamePattern.KEBAB_TO_CAMEL,
@@ -206,7 +211,7 @@ export const COMMON_RENAME_PATTERNS = [
       const converted = kebabToCamel(oldName);
       return converted === newName;
     },
-    transform: kebabToCamel
+    transform: kebabToCamel,
   },
   {
     pattern: RenamePattern.CAMEL_TO_KEBAB,
@@ -214,7 +219,7 @@ export const COMMON_RENAME_PATTERNS = [
       const converted = camelToKebab(oldName);
       return converted === newName;
     },
-    transform: camelToKebab
+    transform: camelToKebab,
   },
   {
     pattern: RenamePattern.PASCAL_TO_CAMEL,
@@ -222,7 +227,7 @@ export const COMMON_RENAME_PATTERNS = [
       const converted = pascalToCamel(oldName);
       return converted === newName;
     },
-    transform: pascalToCamel
+    transform: pascalToCamel,
   },
   {
     pattern: RenamePattern.CAMEL_TO_PASCAL,
@@ -230,7 +235,7 @@ export const COMMON_RENAME_PATTERNS = [
       const converted = camelToPascal(oldName);
       return converted === newName;
     },
-    transform: camelToPascal
+    transform: camelToPascal,
   },
   {
     pattern: RenamePattern.SNAKE_TO_PASCAL,
@@ -238,8 +243,8 @@ export const COMMON_RENAME_PATTERNS = [
       const converted = snakeToPascal(oldName);
       return converted === newName;
     },
-    transform: snakeToPascal
-  }
+    transform: snakeToPascal,
+  },
 ];
 
 /**
@@ -254,7 +259,7 @@ export const COMMON_STATUS_CODE_CHANGES: Record<string, { reason: string; breaki
   '201-200': { reason: 'ok_instead_of_created', breaking: false },
   '201-204': { reason: 'no_content_instead_of_created', breaking: false },
   '204-200': { reason: 'ok_instead_of_no_content', breaking: false },
-  '404-200': { reason: 'endpoint_restored', breaking: false }
+  '404-200': { reason: 'endpoint_restored', breaking: false },
 };
 
 /**
@@ -266,7 +271,7 @@ export function snakeToCamel(str: string): string {
 }
 
 export function camelToSnake(str: string): string {
-  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
 
 export function kebabToCamel(str: string): string {
@@ -274,7 +279,7 @@ export function kebabToCamel(str: string): string {
 }
 
 export function camelToKebab(str: string): string {
-  return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+  return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 }
 
 export function pascalToCamel(str: string): string {
@@ -373,7 +378,7 @@ export class FieldRenameDetector {
           matrix[i]![j] = Math.min(
             sub + 1, // substitution
             ins + 1, // insertion
-            del + 1  // deletion
+            del + 1 // deletion
           );
         }
       }
@@ -493,11 +498,9 @@ export class SimilarityMatcher {
     }
 
     // Calculate Jaro similarity
-    const jaro = (
-      matches / str1.length +
-      matches / str2.length +
-      (matches - transpositions / 2) / matches
-    ) / 3;
+    const jaro =
+      (matches / str1.length + matches / str2.length + (matches - transpositions / 2) / matches) /
+      3;
 
     // Calculate Jaro-Winkler similarity with prefix bonus
     const prefixLength = this.commonPrefixLength(str1, str2, 4);

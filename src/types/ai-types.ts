@@ -693,9 +693,12 @@ export interface SuccessRateMetrics {
   rate: number;
 
   /** Metrics by failure type */
-  byFailureType: Record<FailureType, {
-    attempts: number;
-    successes: number;
-    rate: number;
-  }>;
+  byFailureType: Record<
+    FailureType,
+    {
+      attempts: number;
+      successes: number;
+      rate: number;
+    }
+  >;
 }

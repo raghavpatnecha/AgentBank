@@ -89,14 +89,17 @@ describe('Error Helper', () => {
         method: 'post',
         parameters: [],
         responses: new Map([
-          [400, {
-            description: 'Bad Request',
-            content: {
-              'application/json': {
-                schema: errorSchema,
+          [
+            400,
+            {
+              description: 'Bad Request',
+              content: {
+                'application/json': {
+                  schema: errorSchema,
+                },
               },
-            },
-          } as ResponseObject],
+            } as ResponseObject,
+          ],
         ]),
         security: [],
         tags: [],
@@ -151,7 +154,7 @@ describe('Error Helper', () => {
         method: 'get',
         parameters: [],
         responses: new Map(),
-        security: [{ 'bearerAuth': [] }],
+        security: [{ bearerAuth: [] }],
         tags: [],
         servers: [],
       };
@@ -258,9 +261,7 @@ describe('Error Helper', () => {
         path: '/users',
         method: 'post',
         parameters: [],
-        responses: new Map([
-          [400, { description: 'Bad Request', content: {} } as ResponseObject],
-        ]),
+        responses: new Map([[400, { description: 'Bad Request', content: {} } as ResponseObject]]),
         security: [],
         tags: [],
         servers: [],
@@ -297,7 +298,7 @@ describe('Error Helper', () => {
         method: 'get',
         parameters: [],
         responses: new Map(),
-        security: [{ 'apiKey': [] }],
+        security: [{ apiKey: [] }],
         tags: [],
         servers: [],
       };
@@ -310,9 +311,7 @@ describe('Error Helper', () => {
       const endpoint: ApiEndpoint = {
         path: '/users/{id}',
         method: 'get',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: new Map(),
         security: [],
         tags: [],
@@ -435,9 +434,7 @@ describe('Error Helper', () => {
       const endpoint: ApiEndpoint = {
         path: '/users/{id}',
         method: 'put',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
           content: {
@@ -453,7 +450,7 @@ describe('Error Helper', () => {
           },
         },
         responses: new Map(),
-        security: [{ 'bearerAuth': [] }],
+        security: [{ bearerAuth: [] }],
         tags: [],
         servers: [],
       };
@@ -462,7 +459,7 @@ describe('Error Helper', () => {
 
       expect(scenarios.length).toBeGreaterThan(0);
       // Should have scenarios for 400, 401, 403, 404, 422
-      const statusCodes = scenarios.map(s => s.statusCode);
+      const statusCodes = scenarios.map((s) => s.statusCode);
       expect(statusCodes).toContain(400);
       expect(statusCodes).toContain(401);
       expect(statusCodes).toContain(404);

@@ -290,10 +290,7 @@ export class TestGenerator {
   /**
    * Extract and normalize parameters
    */
-  private extractParameters(
-    operationParams?: any[],
-    pathParams?: any[]
-  ): any[] {
+  private extractParameters(operationParams?: any[], pathParams?: any[]): any[] {
     const params = [];
 
     if (pathParams) {
@@ -376,10 +373,10 @@ export class TestGenerator {
         tests,
         imports: ["import { test, expect } from '@playwright/test';"],
         metadata: {
-          endpoints: tests.map(t => t.endpoint),
-          testTypes: [...new Set(tests.map(t => t.type))],
+          endpoints: tests.map((t) => t.endpoint),
+          testTypes: [...new Set(tests.map((t) => t.type))],
           testCount: tests.length,
-          tags: [...new Set(tests.flatMap(t => t.metadata.tags))],
+          tags: [...new Set(tests.flatMap((t) => t.metadata.tags))],
           generatedAt: new Date().toISOString(),
         },
       });

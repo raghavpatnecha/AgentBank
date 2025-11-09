@@ -48,13 +48,7 @@ const DEFAULT_CONFIG: AggregatorConfig = {
   includeCoverage: false,
   slowTestThreshold: 5000, // 5 seconds
   sanitizeSensitiveData: true,
-  sensitivePatterns: [
-    /password/i,
-    /token/i,
-    /api[_-]?key/i,
-    /secret/i,
-    /auth/i,
-  ],
+  sensitivePatterns: [/password/i, /token/i, /api[_-]?key/i, /secret/i, /auth/i],
 };
 
 /**
@@ -118,7 +112,11 @@ export class DataAggregator {
 
     // Generate warnings and recommendations
     const warnings = this.generateWarnings(summary, healingMetrics, performanceMetrics);
-    const recommendations = this.generateRecommendations(summary, healingMetrics, performanceMetrics);
+    const recommendations = this.generateRecommendations(
+      summary,
+      healingMetrics,
+      performanceMetrics
+    );
 
     // Create the complete report
     const report: TestReport = {
@@ -153,14 +151,14 @@ export class DataAggregator {
    */
   calculateSummary(results: TestResult[]): TestSummary {
     const total = results.length;
-    const passed = results.filter(r => r.status === TestStatus.PASSED).length;
-    const failed = results.filter(r => r.status === TestStatus.FAILED).length;
-    const skipped = results.filter(r => r.status === TestStatus.SKIPPED).length;
-    const timeout = results.filter(r => r.status === TestStatus.TIMEOUT).length;
-    const error = results.filter(r => r.status === TestStatus.ERROR).length;
-    const selfHealed = results.filter(r => r.status === TestStatus.HEALED).length;
+    const passed = results.filter((r) => r.status === TestStatus.PASSED).length;
+    const failed = results.filter((r) => r.status === TestStatus.FAILED).length;
+    const skipped = results.filter((r) => r.status === TestStatus.SKIPPED).length;
+    const timeout = results.filter((r) => r.status === TestStatus.TIMEOUT).length;
+    const error = results.filter((r) => r.status === TestStatus.ERROR).length;
+    const selfHealed = results.filter((r) => r.status === TestStatus.HEALED).length;
 
-    const durations = results.map(r => r.duration);
+    const durations = results.map((r) => r.duration);
     const duration = durations.reduce((sum, d) => sum + d, 0);
     const averageDuration = total > 0 ? duration / total : 0;
     const fastestTest = total > 0 ? Math.min(...durations) : 0;
@@ -171,10 +169,16 @@ export class DataAggregator {
     const successRate = total > 0 ? (passed / total) * 100 : 0;
     const effectiveSuccessRate = total > 0 ? ((passed + selfHealed) / total) * 100 : 0;
 
-    const startTimes = results.map(r => new Date(r.startTime).getTime());
-    const endTimes = results.map(r => new Date(r.endTime).getTime());
-    const startTime = startTimes.length > 0 ? new Date(Math.min(...startTimes)).toISOString() : new Date().toISOString();
-    const endTime = endTimes.length > 0 ? new Date(Math.max(...endTimes)).toISOString() : new Date().toISOString();
+    const startTimes = results.map((r) => new Date(r.startTime).getTime());
+    const endTimes = results.map((r) => new Date(r.endTime).getTime());
+    const startTime =
+      startTimes.length > 0
+        ? new Date(Math.min(...startTimes)).toISOString()
+        : new Date().toISOString();
+    const endTime =
+      endTimes.length > 0
+        ? new Date(Math.max(...endTimes)).toISOString()
+        : new Date().toISOString();
 
     return {
       total,
@@ -250,9 +254,7 @@ export class DataAggregator {
     const startTime = lastResult?.startTime
       ? new Date(lastResult.startTime).toISOString()
       : new Date().toISOString();
-    const endTime = new Date(
-      new Date(startTime).getTime() + duration
-    ).toISOString();
+    const endTime = new Date(new Date(startTime).getTime() + duration).toISOString();
 
     const testResult: TestResult = {
       id,
@@ -354,7 +356,11 @@ export class DataAggregator {
     if (lowerMessage.includes('timeout') || lowerMessage.includes('timed out')) {
       return FailureType.TIMEOUT;
     }
-    if (lowerMessage.includes('network') || lowerMessage.includes('fetch') || lowerMessage.includes('connection')) {
+    if (
+      lowerMessage.includes('network') ||
+      lowerMessage.includes('fetch') ||
+      lowerMessage.includes('connection')
+    ) {
       return FailureType.NETWORK;
     }
     if (lowerMessage.includes('expect') || lowerMessage.includes('assert')) {
@@ -363,10 +369,18 @@ export class DataAggregator {
     if (lowerMessage.includes('validation') || lowerMessage.includes('invalid')) {
       return FailureType.VALIDATION;
     }
-    if (lowerMessage.includes('setup') || lowerMessage.includes('beforeall') || lowerMessage.includes('beforeeach')) {
+    if (
+      lowerMessage.includes('setup') ||
+      lowerMessage.includes('beforeall') ||
+      lowerMessage.includes('beforeeach')
+    ) {
       return FailureType.SETUP;
     }
-    if (lowerMessage.includes('teardown') || lowerMessage.includes('afterall') || lowerMessage.includes('aftereach')) {
+    if (
+      lowerMessage.includes('teardown') ||
+      lowerMessage.includes('afterall') ||
+      lowerMessage.includes('aftereach')
+    ) {
       return FailureType.TEARDOWN;
     }
 
@@ -379,10 +393,7 @@ export class DataAggregator {
    * @returns Whether failure is retryable
    */
   private isRetryable(type: FailureType): boolean {
-    return [
-      FailureType.TIMEOUT,
-      FailureType.NETWORK,
-    ].includes(type);
+    return [FailureType.TIMEOUT, FailureType.NETWORK].includes(type);
   }
 
   /**
@@ -393,7 +404,7 @@ export class DataAggregator {
    */
   private findHealingInfo(testName: string, filePath: string): TestHealingInfo | undefined {
     const attempt = this.healingData.find(
-      a => a.test.name === testName && a.test.filePath === filePath && a.success
+      (a) => a.test.name === testName && a.test.filePath === filePath && a.success
     );
 
     if (!attempt) {
@@ -426,7 +437,7 @@ export class DataAggregator {
 
     // Calculate from healing data
     const totalAttempts = this.healingData.length;
-    const successful = this.healingData.filter(a => a.success).length;
+    const successful = this.healingData.filter((a) => a.success).length;
     const failed = totalAttempts - successful;
     const successRate = totalAttempts > 0 ? (successful / totalAttempts) * 100 : 0;
 
@@ -442,23 +453,20 @@ export class DataAggregator {
     }
 
     const aiUsed = this.healingData.filter(
-      a => a.strategy === HealingStrategy.AI_POWERED || a.strategy === HealingStrategy.HYBRID
+      (a) => a.strategy === HealingStrategy.AI_POWERED || a.strategy === HealingStrategy.HYBRID
     ).length;
     const fallbackUsed = this.healingData.filter(
-      a => a.strategy === HealingStrategy.FALLBACK || a.strategy === HealingStrategy.RULE_BASED
+      (a) => a.strategy === HealingStrategy.FALLBACK || a.strategy === HealingStrategy.RULE_BASED
     ).length;
 
     const totalTokens = this.healingData.reduce((sum, a) => sum + (a.tokensUsed || 0), 0);
     const totalCost = this.healingData.reduce((sum, a) => sum + (a.estimatedCost || 0), 0);
 
-    const durations = this.healingData
-      .map(a => a.duration || 0)
-      .filter(d => d > 0);
-    const averageHealingTime = durations.length > 0
-      ? durations.reduce((sum, d) => sum + d, 0) / durations.length
-      : 0;
+    const durations = this.healingData.map((a) => a.duration || 0).filter((d) => d > 0);
+    const averageHealingTime =
+      durations.length > 0 ? durations.reduce((sum, d) => sum + d, 0) / durations.length : 0;
 
-    const cacheHits = this.healingData.filter(a => a.cacheHit).length;
+    const cacheHits = this.healingData.filter((a) => a.cacheHit).length;
     const cacheHitRate = totalAttempts > 0 ? (cacheHits / totalAttempts) * 100 : 0;
 
     const topPatterns = this.extractHealingPatterns();
@@ -525,12 +533,15 @@ export class DataAggregator {
    * @returns Array of healing patterns
    */
   private extractHealingPatterns(): HealingPattern[] {
-    const patterns = new Map<string, {
-      count: number;
-      successful: number;
-      totalTime: number;
-      failureType: FailureType;
-    }>();
+    const patterns = new Map<
+      string,
+      {
+        count: number;
+        successful: number;
+        totalTime: number;
+        failureType: FailureType;
+      }
+    >();
 
     for (const attempt of this.healingData) {
       const pattern = attempt.test.errorMessage.substring(0, 100);
@@ -572,7 +583,7 @@ export class DataAggregator {
       return this.getEmptyPerformanceMetrics();
     }
 
-    const durations = results.map(r => r.duration);
+    const durations = results.map((r) => r.duration);
     const averageDuration = durations.reduce((sum, d) => sum + d, 0) / durations.length;
 
     // Find slowest and fastest tests
@@ -605,11 +616,12 @@ export class DataAggregator {
 
     // Calculate response time metrics (for API tests)
     const responseTimes = results
-      .filter(r => r.response?.responseTime)
-      .map(r => r.response!.responseTime);
-    const averageResponseTime = responseTimes.length > 0
-      ? responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length
-      : 0;
+      .filter((r) => r.response?.responseTime)
+      .map((r) => r.response!.responseTime);
+    const averageResponseTime =
+      responseTimes.length > 0
+        ? responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length
+        : 0;
 
     // Calculate endpoint metrics
     const timeByEndpoint = this.calculateEndpointMetrics(results);
@@ -625,12 +637,12 @@ export class DataAggregator {
     };
 
     // Find timeout violations
-    const timeoutViolations = results.filter(r => r.status === TestStatus.TIMEOUT).length;
+    const timeoutViolations = results.filter((r) => r.status === TestStatus.TIMEOUT).length;
 
     // Find slow tests
     const slowTests = results
-      .filter(r => r.duration > this.config.slowTestThreshold)
-      .map(r => ({
+      .filter((r) => r.duration > this.config.slowTestThreshold)
+      .map((r) => ({
         name: r.name,
         duration: r.duration,
         threshold: this.config.slowTestThreshold,
@@ -676,11 +688,14 @@ export class DataAggregator {
    * @returns Endpoint metrics by URL
    */
   private calculateEndpointMetrics(results: TestResult[]): Record<string, EndpointMetrics> {
-    const endpointMap = new Map<string, {
-      times: number[];
-      statuses: number[];
-      method: string;
-    }>();
+    const endpointMap = new Map<
+      string,
+      {
+        times: number[];
+        statuses: number[];
+        method: string;
+      }
+    >();
 
     for (const result of results) {
       if (result.request && result.response) {
@@ -701,7 +716,7 @@ export class DataAggregator {
     const metrics: Record<string, EndpointMetrics> = {};
     for (const [endpoint, data] of endpointMap.entries()) {
       const times = data.times;
-      const successCount = data.statuses.filter(s => s >= 200 && s < 300).length;
+      const successCount = data.statuses.filter((s) => s >= 200 && s < 300).length;
 
       const statusCodes: Record<number, number> = {};
       for (const status of data.statuses) {
@@ -729,9 +744,7 @@ export class DataAggregator {
    * @returns Normalized URL
    */
   private normalizeUrl(url: string): string {
-    return url
-      .replace(/\/\d+/g, '/:id')
-      .replace(/\?.*$/, '');
+    return url.replace(/\/\d+/g, '/:id').replace(/\?.*$/, '');
   }
 
   /**
@@ -794,9 +807,8 @@ export class DataAggregator {
 
     // Calculate success rates
     for (const suite of Object.values(suites)) {
-      suite.summary.successRate = suite.summary.total > 0
-        ? (suite.summary.passed / suite.summary.total) * 100
-        : 0;
+      suite.summary.successRate =
+        suite.summary.total > 0 ? (suite.summary.passed / suite.summary.total) * 100 : 0;
     }
 
     return suites;
@@ -834,7 +846,7 @@ export class DataAggregator {
    * @returns CI information if running in CI
    */
   private detectCIEnvironment(): CIInfo | undefined {
-    const isCI = process.env.CI === 'true' || !!process.env.GITHUB_ACTIONS;
+    const isCI = process.env.CI === 'true' || Boolean(process.env.GITHUB_ACTIONS);
     if (!isCI) return undefined;
 
     const ci: CIInfo = {
@@ -850,9 +862,10 @@ export class DataAggregator {
         : undefined;
       ci.branch = process.env.GITHUB_REF_NAME;
       ci.commit = process.env.GITHUB_SHA;
-      ci.pr = process.env.GITHUB_EVENT_NAME === 'pull_request'
-        ? parseInt(process.env.GITHUB_REF?.split('/')[2] || '0', 10)
-        : undefined;
+      ci.pr =
+        process.env.GITHUB_EVENT_NAME === 'pull_request'
+          ? parseInt(process.env.GITHUB_REF?.split('/')[2] || '0', 10)
+          : undefined;
     }
 
     return ci;
@@ -894,7 +907,7 @@ export class DataAggregator {
     const allowedPrefixes = ['NODE_', 'PLAYWRIGHT_', 'TEST_'];
 
     for (const [key, value] of Object.entries(process.env)) {
-      if (value && allowedPrefixes.some(prefix => key.startsWith(prefix))) {
+      if (value && allowedPrefixes.some((prefix) => key.startsWith(prefix))) {
         safeEnvVars[key] = this.sanitizeString(value);
       }
     }
@@ -925,7 +938,10 @@ export class DataAggregator {
    * @param summary - Test summary
    * @returns Report severity
    */
-  private determineReportSeverity(summary: TestSummary, _healingMetrics: HealingMetrics): ReportSeverity {
+  private determineReportSeverity(
+    summary: TestSummary,
+    _healingMetrics: HealingMetrics
+  ): ReportSeverity {
     if (summary.failed === 0 && summary.error === 0 && summary.timeout === 0) {
       return ReportSeverity.SUCCESS;
     }
@@ -1040,7 +1056,8 @@ export class DataAggregator {
       errors.push('Report summary is required');
     } else {
       const sum = report.summary;
-      const calculatedTotal = sum.passed + sum.failed + sum.skipped + sum.timeout + sum.error + sum.selfHealed;
+      const calculatedTotal =
+        sum.passed + sum.failed + sum.skipped + sum.timeout + sum.error + sum.selfHealed;
       if (calculatedTotal !== sum.total) {
         errors.push(`Summary totals don't match: ${calculatedTotal} !== ${sum.total}`);
       }

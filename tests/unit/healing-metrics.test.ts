@@ -606,11 +606,7 @@ describe('HealingMetrics', () => {
 
       await metrics.storeHistory('/test/history.json');
 
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        '/test/history.json',
-        expect.any(String),
-        'utf-8'
-      );
+      expect(fs.writeFile).toHaveBeenCalledWith('/test/history.json', expect.any(String), 'utf-8');
     });
 
     it('should append to existing history', async () => {

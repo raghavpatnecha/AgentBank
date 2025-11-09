@@ -73,7 +73,9 @@ describe('environment', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
-        expect(validationError.errors.some(e => e.includes('API_BASE_URL is required'))).toBe(true);
+        expect(validationError.errors.some((e) => e.includes('API_BASE_URL is required'))).toBe(
+          true
+        );
       }
     });
 
@@ -497,7 +499,9 @@ describe('validator', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
-        expect(validationError.errors.some(e => e.includes('API_BASE_URL is required'))).toBe(true);
+        expect(validationError.errors.some((e) => e.includes('API_BASE_URL is required'))).toBe(
+          true
+        );
       }
     });
 
@@ -527,7 +531,7 @@ describe('validator', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
-        expect(validationError.errors.some(e => e.includes('must be a valid URL'))).toBe(true);
+        expect(validationError.errors.some((e) => e.includes('must be a valid URL'))).toBe(true);
       }
     });
 
@@ -558,7 +562,9 @@ describe('validator', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
-        expect(validationError.errors.some(e => e.includes('should use HTTPS in production'))).toBe(true);
+        expect(
+          validationError.errors.some((e) => e.includes('should use HTTPS in production'))
+        ).toBe(true);
       }
     });
 
@@ -588,7 +594,9 @@ describe('validator', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
-        expect(validationError.errors.some(e => e.includes('REQUEST_TIMEOUT should be between'))).toBe(true);
+        expect(
+          validationError.errors.some((e) => e.includes('REQUEST_TIMEOUT should be between'))
+        ).toBe(true);
       }
     });
 

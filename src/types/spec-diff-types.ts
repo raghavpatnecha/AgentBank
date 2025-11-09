@@ -19,7 +19,7 @@ export enum ChangeType {
   VALUE_CHANGED = 'value_changed',
   REQUIRED_CHANGED = 'required_changed',
   DEPRECATED_CHANGED = 'deprecated_changed',
-  ENUM_CHANGED = 'enum_changed'
+  ENUM_CHANGED = 'enum_changed',
 }
 
 /**
@@ -29,7 +29,7 @@ export enum ChangeSeverity {
   BREAKING = 'breaking',
   MAJOR = 'major',
   MINOR = 'minor',
-  PATCH = 'patch'
+  PATCH = 'patch',
 }
 
 /**

@@ -36,7 +36,7 @@ describe('EmailSender', () => {
     };
 
     // Mock nodemailer.createTransport
-    vi.mocked(nodemailer.createTransport).mockReturnValue(mockTransporter as any);
+    vi.mocked(nodemailer.createTransport).mockReturnValue(mockTransporter);
 
     // Default config
     defaultConfig = {
@@ -68,7 +68,7 @@ describe('EmailSender', () => {
         duration: 45200,
         startTime: new Date('2025-01-08T10:00:00Z'),
         endTime: new Date('2025-01-08T10:00:45Z'),
-        successRate: 0.90,
+        successRate: 0.9,
         averageDuration: 904,
         filesExecuted: ['test1.spec.ts', 'test2.spec.ts'],
         totalRetries: 5,
@@ -89,8 +89,8 @@ describe('EmailSender', () => {
           completionTokens: 1000,
           totalCost: 0.05,
           averageTokens: 500,
-          successRate: 0.40,
-          cacheHitRate: 0.20,
+          successRate: 0.4,
+          cacheHitRate: 0.2,
         },
         fallbackStats: {
           timesUsed: 0,
@@ -198,14 +198,18 @@ describe('EmailSender', () => {
       const invalidConfig = { ...defaultConfig };
       invalidConfig.to = [];
 
-      expect(() => new EmailSender(invalidConfig)).toThrow('At least one recipient (to) is required');
+      expect(() => new EmailSender(invalidConfig)).toThrow(
+        'At least one recipient (to) is required'
+      );
     });
 
     it('should throw error for invalid recipient email', () => {
       const invalidConfig = { ...defaultConfig };
       invalidConfig.to = ['invalid-email'];
 
-      expect(() => new EmailSender(invalidConfig)).toThrow('Invalid recipient email: invalid-email');
+      expect(() => new EmailSender(invalidConfig)).toThrow(
+        'Invalid recipient email: invalid-email'
+      );
     });
 
     it('should throw error for invalid CC email', () => {
@@ -547,7 +551,7 @@ describe('EmailSender', () => {
       const sender = new EmailSender(config);
 
       // Create large HTML report
-      const htmlReport = '<html><body>' + 'x'.repeat(1000) + '</body></html>';
+      const htmlReport = `<html><body>${'x'.repeat(1000)}</body></html>`;
 
       const attachment = await sender.attachReport(htmlReport);
 

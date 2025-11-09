@@ -49,7 +49,7 @@ export class ErrorCaseGenerator {
     }
 
     // Generate 405 Method Not Allowed tests (if explicitly in spec)
-    if (errorResponses.some(r => r.statusCode === 405)) {
+    if (errorResponses.some((r) => r.statusCode === 405)) {
       tests.push(...this.generate405Tests(endpoint));
     }
 
@@ -161,7 +161,7 @@ export class ErrorCaseGenerator {
     }
 
     // Test 3: Missing required query/path parameter
-    const requiredParam = endpoint.parameters.find(p => p.required);
+    const requiredParam = endpoint.parameters.find((p) => p.required);
     if (requiredParam) {
       tests.push({
         id: `${endpoint.operationId || endpoint.path}-400-missing-param`,
@@ -241,7 +241,7 @@ export class ErrorCaseGenerator {
       endpoint: endpoint.path,
       request: {
         headers: {
-          'Authorization': 'Bearer invalid-token-12345',
+          Authorization: 'Bearer invalid-token-12345',
         },
       },
       expectedResponse: {
@@ -276,7 +276,7 @@ export class ErrorCaseGenerator {
       endpoint: endpoint.path,
       request: {
         headers: {
-          'Authorization': 'Bearer valid-token-limited-scope',
+          Authorization: 'Bearer valid-token-limited-scope',
         },
       },
       expectedResponse: {
@@ -312,13 +312,14 @@ export class ErrorCaseGenerator {
     const tests: TestCase[] = [];
 
     // Find path parameters (typically resource IDs)
-    const pathParams = endpoint.parameters.filter(p => p.in === 'path');
+    const pathParams = endpoint.parameters.filter((p) => p.in === 'path');
 
     for (const param of pathParams) {
       const schema = param.schema as SchemaObject;
-      const nonExistentId = schema?.type === 'string'
-        ? 'nonexistent-id-99999999-aaaa-bbbb-cccc-dddddddddddd'
-        : 99999999;
+      const nonExistentId =
+        schema?.type === 'string'
+          ? 'nonexistent-id-99999999-aaaa-bbbb-cccc-dddddddddddd'
+          : 99999999;
 
       tests.push({
         id: `${endpoint.operationId || endpoint.path}-404-not-found`,
@@ -383,7 +384,7 @@ export class ErrorCaseGenerator {
       expectedResponse: {
         status: 405,
         headers: {
-          'Allow': /GET|POST|PUT|DELETE|PATCH/i,
+          Allow: /GET|POST|PUT|DELETE|PATCH/i,
         },
       },
       metadata: {

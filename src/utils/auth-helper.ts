@@ -24,10 +24,7 @@ export interface AuthConfig {
 /**
  * Generate authentication header from config and token
  */
-export function generateAuthHeader(
-  config: AuthConfig,
-  token: string
-): Record<string, string> {
+export function generateAuthHeader(config: AuthConfig, token: string): Record<string, string> {
   const headers: Record<string, string> = {};
 
   switch (config.type) {
@@ -67,10 +64,7 @@ export function generateAuthHeader(
 /**
  * Generate query parameters for API key in query
  */
-export function generateAuthQuery(
-  config: AuthConfig,
-  token: string
-): Record<string, string> {
+export function generateAuthQuery(config: AuthConfig, token: string): Record<string, string> {
   const query: Record<string, string> = {};
 
   if (config.type === 'apiKey' && config.location === 'query' && config.name) {

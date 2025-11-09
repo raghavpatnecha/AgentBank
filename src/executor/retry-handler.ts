@@ -91,13 +91,12 @@ export class RetryHandler {
         this.recordRetryAttempt(taskId, attempt + 1, result.error!, backoff.delayMs);
 
         // Log retry
-        console.log(
+        console.warn(
           `Retrying test ${taskId} (attempt ${attempt + 1}/${maxRetries}) after ${backoff.delayMs}ms delay`
         );
 
         // Wait before retry
         await sleep(backoff.delayMs);
-
       } catch (error) {
         // Unexpected error during execution
         const execError = error instanceof Error ? error : new Error(String(error));
@@ -236,12 +235,15 @@ export class RetryHandler {
     const averageRetries = flakyTests.length > 0 ? totalRetries / flakyTests.length : 0;
 
     // Find most flaky test
-    const mostFlakyTest = flakyTests.reduce((most, current) => {
-      if (!most || current.failureCount > most.failureCount) {
-        return current;
-      }
-      return most;
-    }, undefined as FlakyTest | undefined);
+    const mostFlakyTest = flakyTests.reduce(
+      (most, current) => {
+        if (!most || current.failureCount > most.failureCount) {
+          return current;
+        }
+        return most;
+      },
+      undefined as FlakyTest | undefined
+    );
 
     return {
       generatedAt: new Date(),

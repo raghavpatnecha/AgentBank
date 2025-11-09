@@ -31,10 +31,7 @@ export function generateFileStructure(
 /**
  * Generate directories needed for test structure
  */
-function generateDirectories(
-  files: GeneratedTestFile[],
-  outputDir: string
-): string[] {
+function generateDirectories(files: GeneratedTestFile[], outputDir: string): string[] {
   const directories = new Set<string>();
 
   // Add root directory
@@ -97,10 +94,7 @@ export function generateIndexFile(files: GeneratedTestFile[]): string {
 /**
  * Generate additional helper files
  */
-function generateAdditionalFiles(
-  files: GeneratedTestFile[],
-  outputDir: string
-): AdditionalFile[] {
+function generateAdditionalFiles(files: GeneratedTestFile[], outputDir: string): AdditionalFile[] {
   const additionalFiles: AdditionalFile[] = [];
 
   // Generate index file
@@ -395,12 +389,12 @@ export function generateTestSuite(
 export function visualizeStructure(structure: FileStructure): string {
   const lines: string[] = [];
 
-  lines.push(structure.root + '/');
+  lines.push(`${structure.root}/`);
 
   // Add directories
   const dirs = structure.directories
     .filter((d) => d !== structure.root)
-    .map((d) => d.replace(structure.root + '/', ''));
+    .map((d) => d.replace(`${structure.root}/`, ''));
 
   for (const dir of dirs) {
     lines.push(`├── ${dir}/`);
@@ -413,7 +407,7 @@ export function visualizeStructure(structure: FileStructure): string {
 
   // Add additional files
   for (const file of structure.additionalFiles) {
-    const relativePath = file.path.replace(structure.root + '/', '');
+    const relativePath = file.path.replace(`${structure.root}/`, '');
     lines.push(`├── ${relativePath}`);
   }
 

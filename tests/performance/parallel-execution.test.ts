@@ -58,7 +58,7 @@ describe('Parallel Execution Performance', () => {
 
       const executor = async (task: TestTask): Promise<TestExecutionResult> => {
         // Simulate test execution with random duration
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 50 + 10));
+        await new Promise((resolve) => setTimeout(resolve, Math.random() * 50 + 10));
         return {
           taskId: task.id,
           success: true,
@@ -74,14 +74,14 @@ describe('Parallel Execution Performance', () => {
       const duration = Date.now() - startTime;
 
       expect(results.length).toBe(taskCount);
-      expect(results.every(r => r.success)).toBe(true);
+      expect(results.every((r) => r.success)).toBe(true);
 
       // Should complete in reasonable time with parallelization
       // Sequential would take ~1500ms (50 * 30ms avg), parallel should be much faster
       expect(duration).toBeLessThan(1000);
 
       console.log(`Executed ${taskCount} tasks in ${duration}ms`);
-      console.log(`Throughput: ${(taskCount / duration * 1000).toFixed(2)} tasks/sec`);
+      console.log(`Throughput: ${((taskCount / duration) * 1000).toFixed(2)} tasks/sec`);
     }, 15000);
 
     it('should handle mixed serial and parallel tasks', async () => {
@@ -118,7 +118,7 @@ describe('Parallel Execution Performance', () => {
       }
 
       const executor = async (task: TestTask): Promise<TestExecutionResult> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         return {
           taskId: task.id,
           success: true,
@@ -171,7 +171,7 @@ describe('Parallel Execution Performance', () => {
         }
 
         const executor = async (task: TestTask): Promise<TestExecutionResult> => {
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise((resolve) => setTimeout(resolve, 10));
           return {
             taskId: task.id,
             success: true,
@@ -192,7 +192,7 @@ describe('Parallel Execution Performance', () => {
 
       // Duration should decrease as worker count increases
       console.log('Scalability results:');
-      results.forEach(r => {
+      results.forEach((r) => {
         console.log(`  ${r.workers} workers: ${r.duration}ms`);
       });
 
@@ -223,7 +223,7 @@ describe('Parallel Execution Performance', () => {
       }
 
       const executor = async (task: TestTask): Promise<TestExecutionResult> => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise((resolve) => setTimeout(resolve, 5));
         return {
           taskId: task.id,
           success: true,
@@ -239,7 +239,9 @@ describe('Parallel Execution Performance', () => {
       const stats = manager.getStatistics();
       expect(stats.totalMemoryUsageMB).toBeLessThan(512 * stats.totalWorkers);
 
-      console.log(`Memory usage: ${stats.totalMemoryUsageMB}MB across ${stats.totalWorkers} workers`);
+      console.log(
+        `Memory usage: ${stats.totalMemoryUsageMB}MB across ${stats.totalWorkers} workers`
+      );
     }, 15000);
 
     it('should handle worker lifecycle correctly', async () => {
@@ -264,7 +266,7 @@ describe('Parallel Execution Performance', () => {
       }
 
       const executor = async (task: TestTask): Promise<TestExecutionResult> => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         return {
           taskId: task.id,
           success: true,
@@ -314,7 +316,7 @@ describe('Parallel Execution Performance', () => {
         const attempt = Math.floor(attemptCount / flakyTaskCount);
         const success = attempt > 0;
 
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         return {
           taskId: task.id,
@@ -335,7 +337,7 @@ describe('Parallel Execution Performance', () => {
       const results = await manager.executeTasks(executorWithRetry);
       const duration = Date.now() - startTime;
 
-      const successfulResults = results.filter(r => r.success);
+      const successfulResults = results.filter((r) => r.success);
       const flakyTests = retryHandler.getAllFlakyTests();
 
       console.log(`Retry performance: ${duration}ms for ${flakyTaskCount} tasks`);
@@ -423,7 +425,7 @@ describe('Parallel Execution Performance', () => {
 
       const executor = async (task: TestTask): Promise<TestExecutionResult> => {
         // Simulate variable execution time
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 20 + 5));
+        await new Promise((resolve) => setTimeout(resolve, Math.random() * 20 + 5));
 
         // 5% failure rate
         const success = Math.random() > 0.05;

@@ -11,7 +11,7 @@ import {
   FailedTest,
   FailureType,
   SpecDiff,
-  Change
+  Change,
 } from '../../src/ai/rule-based-healer.js';
 import {
   RuleType,
@@ -24,7 +24,7 @@ import {
   camelToKebab,
   pascalToCamel,
   camelToPascal,
-  snakeToPascal
+  snakeToPascal,
 } from '../../src/ai/transformation-rules.js';
 
 describe('Case Conversion Utilities', () => {
@@ -190,7 +190,7 @@ describe('RuleBasedHealer - Field Rename Detection', () => {
       location: 'response.body.user',
       oldValue: 'user_id',
       newValue: 'userId',
-      context: 'response'
+      context: 'response',
     };
 
     const rule = healer.detectFieldRename(change);
@@ -207,7 +207,7 @@ describe('RuleBasedHealer - Field Rename Detection', () => {
       type: 'field_renamed',
       location: 'response.body',
       oldValue: 'userName',
-      newValue: 'UserName'
+      newValue: 'UserName',
     };
 
     const rule = healer.detectFieldRename(change);
@@ -219,7 +219,7 @@ describe('RuleBasedHealer - Field Rename Detection', () => {
       type: 'field_renamed',
       location: 'response.body',
       oldValue: 'user-name',
-      newValue: 'userName'
+      newValue: 'userName',
     };
 
     const rule = healer.detectFieldRename(change);
@@ -231,7 +231,7 @@ describe('RuleBasedHealer - Field Rename Detection', () => {
       type: 'field_renamed',
       location: 'response.body',
       oldValue: 'username',
-      newValue: 'userName'
+      newValue: 'userName',
     };
 
     const rule = healer.detectFieldRename(change);
@@ -244,7 +244,7 @@ describe('RuleBasedHealer - Field Rename Detection', () => {
       type: 'field_renamed',
       location: 'response.body',
       oldValue: 123,
-      newValue: 456
+      newValue: 456,
     };
 
     const rule = healer.detectFieldRename(change);
@@ -266,8 +266,8 @@ describe('RuleBasedHealer - Field Addition Detection', () => {
       newValue: {
         name: 'age',
         type: 'integer',
-        required: true
-      }
+        required: true,
+      },
     };
 
     const rule = healer.detectFieldAddition(change);
@@ -286,8 +286,8 @@ describe('RuleBasedHealer - Field Addition Detection', () => {
       newValue: {
         name: 'description',
         type: 'string',
-        required: false
-      }
+        required: false,
+      },
     };
 
     const rule = healer.detectFieldAddition(change);
@@ -302,8 +302,8 @@ describe('RuleBasedHealer - Field Addition Detection', () => {
       newValue: {
         name: 'email',
         type: 'string',
-        schema: { format: 'email' }
-      }
+        schema: { format: 'email' },
+      },
     };
 
     const rule = healer.detectFieldAddition(change);
@@ -318,8 +318,8 @@ describe('RuleBasedHealer - Field Addition Detection', () => {
       newValue: {
         name: 'website',
         type: 'string',
-        schema: { format: 'uri' }
-      }
+        schema: { format: 'uri' },
+      },
     };
 
     const rule = healer.detectFieldAddition(change);
@@ -333,8 +333,8 @@ describe('RuleBasedHealer - Field Addition Detection', () => {
       newValue: {
         name: 'status',
         type: 'string',
-        schema: { enum: ['active', 'inactive', 'pending'] }
-      }
+        schema: { enum: ['active', 'inactive', 'pending'] },
+      },
     };
 
     const rule = healer.detectFieldAddition(change);
@@ -345,7 +345,7 @@ describe('RuleBasedHealer - Field Addition Detection', () => {
     const change: Change = {
       type: 'field_added',
       location: 'request.body',
-      newValue: null
+      newValue: null,
     };
 
     const rule = healer.detectFieldAddition(change);
@@ -366,8 +366,8 @@ describe('RuleBasedHealer - Field Removal Detection', () => {
       location: 'response.body',
       oldValue: {
         name: 'deprecated_field',
-        required: false
-      }
+        required: false,
+      },
     };
 
     const rule = healer.detectFieldRemoval(change);
@@ -383,8 +383,8 @@ describe('RuleBasedHealer - Field Removal Detection', () => {
       location: 'response.body',
       oldValue: {
         name: 'required_field',
-        required: true
-      }
+        required: true,
+      },
     };
 
     const rule = healer.detectFieldRemoval(change);
@@ -395,7 +395,7 @@ describe('RuleBasedHealer - Field Removal Detection', () => {
     const change: Change = {
       type: 'field_removed',
       location: 'response.body',
-      oldValue: 'invalid'
+      oldValue: 'invalid',
     };
 
     const rule = healer.detectFieldRemoval(change);
@@ -415,7 +415,7 @@ describe('RuleBasedHealer - Path Change Detection', () => {
       type: 'path_changed',
       location: 'endpoint',
       oldValue: '/users',
-      newValue: '/v2/users'
+      newValue: '/v2/users',
     };
 
     const rule = healer.detectPathChange(change);
@@ -431,7 +431,7 @@ describe('RuleBasedHealer - Path Change Detection', () => {
       type: 'path_changed',
       location: 'endpoint',
       oldValue: '/users',
-      newValue: '/accounts'
+      newValue: '/accounts',
     };
 
     const rule = healer.detectPathChange(change);
@@ -443,7 +443,7 @@ describe('RuleBasedHealer - Path Change Detection', () => {
       type: 'path_changed',
       location: 'endpoint',
       oldValue: '/users',
-      newValue: '/api/v1/users'
+      newValue: '/api/v1/users',
     };
 
     const rule = healer.detectPathChange(change);
@@ -464,7 +464,7 @@ describe('RuleBasedHealer - Status Code Change Detection', () => {
       failureMessage: '',
       endpoint: '/users',
       method: 'POST',
-      failureType: FailureType.STATUS_CODE_CHANGED
+      failureType: FailureType.STATUS_CODE_CHANGED,
     };
   });
 
@@ -473,7 +473,7 @@ describe('RuleBasedHealer - Status Code Change Detection', () => {
       type: 'status_code_changed',
       location: 'response',
       oldValue: 200,
-      newValue: 201
+      newValue: 201,
     };
 
     const rule = healer.detectStatusCodeChange(change, testInfo);
@@ -490,7 +490,7 @@ describe('RuleBasedHealer - Status Code Change Detection', () => {
       type: 'status_code_changed',
       location: 'response',
       oldValue: 200,
-      newValue: 404
+      newValue: 404,
     };
 
     const rule = healer.detectStatusCodeChange(change, testInfo);
@@ -502,7 +502,7 @@ describe('RuleBasedHealer - Status Code Change Detection', () => {
       type: 'status_code_changed',
       location: 'response',
       oldValue: 200,
-      newValue: 204
+      newValue: 204,
     };
 
     const rule = healer.detectStatusCodeChange(change, testInfo);
@@ -514,7 +514,7 @@ describe('RuleBasedHealer - Status Code Change Detection', () => {
       type: 'status_code_changed',
       location: 'response',
       oldValue: 200,
-      newValue: 418 // I'm a teapot
+      newValue: 418, // I'm a teapot
     };
 
     const rule = healer.detectStatusCodeChange(change, testInfo);
@@ -541,7 +541,7 @@ describe('RuleBasedHealer - Apply Field Rename', () => {
       context: 'response' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldRename(rule, code);
@@ -559,7 +559,7 @@ describe('RuleBasedHealer - Apply Field Rename', () => {
       context: 'response' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldRename(rule, code);
@@ -577,7 +577,7 @@ describe('RuleBasedHealer - Apply Field Rename', () => {
       context: 'response' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldRename(rule, code);
@@ -595,7 +595,7 @@ describe('RuleBasedHealer - Apply Field Rename', () => {
       context: 'request' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldRename(rule, code);
@@ -617,7 +617,7 @@ describe('RuleBasedHealer - Apply Field Rename', () => {
       context: 'both' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldRename(rule, code);
@@ -650,7 +650,7 @@ describe('RuleBasedHealer - Apply Field Addition', () => {
       location: 'request.body',
       confidence: 0.85,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldAddition(rule, code);
@@ -668,7 +668,7 @@ describe('RuleBasedHealer - Apply Field Addition', () => {
       location: 'request.body',
       confidence: 0.85,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldAddition(rule, code);
@@ -686,7 +686,7 @@ describe('RuleBasedHealer - Apply Field Addition', () => {
       location: 'request.body',
       confidence: 0.85,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldAddition(rule, code);
@@ -711,7 +711,7 @@ describe('RuleBasedHealer - Apply Field Removal', () => {
       breaking: false,
       confidence: 0.9,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldRemoval(rule, code);
@@ -734,7 +734,7 @@ describe('RuleBasedHealer - Apply Field Removal', () => {
       breaking: false,
       confidence: 0.9,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyFieldRemoval(rule, code);
@@ -761,7 +761,7 @@ describe('RuleBasedHealer - Apply Path Change', () => {
       changeType: 'versioned' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyPathChange(rule, code);
@@ -778,7 +778,7 @@ describe('RuleBasedHealer - Apply Path Change', () => {
       changeType: 'versioned' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyPathChange(rule, code);
@@ -795,7 +795,7 @@ describe('RuleBasedHealer - Apply Path Change', () => {
       changeType: 'versioned' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyPathChange(rule, code);
@@ -815,7 +815,7 @@ describe('RuleBasedHealer - Apply Path Change', () => {
       changeType: 'versioned' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyPathChange(rule, code);
@@ -841,7 +841,7 @@ describe('RuleBasedHealer - Apply Status Code Change', () => {
       reason: 'created_instead_of_ok' as const,
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyStatusCodeChange(rule, code);
@@ -858,7 +858,7 @@ describe('RuleBasedHealer - Apply Status Code Change', () => {
       endpoint: '/users/123',
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyStatusCodeChange(rule, code);
@@ -878,7 +878,7 @@ describe('RuleBasedHealer - Apply Status Code Change', () => {
       endpoint: '/users',
       confidence: 0.95,
       description: 'test',
-      applicable: true
+      applicable: true,
     };
 
     const result = healer.applyStatusCodeChange(rule, code);
@@ -963,23 +963,27 @@ describe('RuleBasedHealer - Integration Tests', () => {
       failureMessage: 'Expected property user_id not found',
       endpoint: '/users/1',
       method: 'GET',
-      failureType: FailureType.FIELD_MISSING
+      failureType: FailureType.FIELD_MISSING,
     };
 
     const specDiff: SpecDiff = {
       endpointsAdded: [],
       endpointsRemoved: [],
-      endpointsModified: [{
-        path: '/users/{id}',
-        method: 'GET',
-        changes: [{
-          type: 'field_renamed',
-          location: 'response.body',
-          oldValue: 'user_id',
-          newValue: 'userId',
-          context: 'response'
-        }]
-      }]
+      endpointsModified: [
+        {
+          path: '/users/{id}',
+          method: 'GET',
+          changes: [
+            {
+              type: 'field_renamed',
+              location: 'response.body',
+              oldValue: 'user_id',
+              newValue: 'userId',
+              context: 'response',
+            },
+          ],
+        },
+      ],
     };
 
     const result = healer.healTest(test, specDiff);
@@ -1002,22 +1006,26 @@ describe('RuleBasedHealer - Integration Tests', () => {
       failureMessage: 'Expected status 200 but got 201',
       endpoint: '/users',
       method: 'POST',
-      failureType: FailureType.STATUS_CODE_CHANGED
+      failureType: FailureType.STATUS_CODE_CHANGED,
     };
 
     const specDiff: SpecDiff = {
       endpointsAdded: [],
       endpointsRemoved: [],
-      endpointsModified: [{
-        path: '/users',
-        method: 'POST',
-        changes: [{
-          type: 'status_code_changed',
-          location: 'response',
-          oldValue: 200,
-          newValue: 201
-        }]
-      }]
+      endpointsModified: [
+        {
+          path: '/users',
+          method: 'POST',
+          changes: [
+            {
+              type: 'status_code_changed',
+              location: 'response',
+              oldValue: 200,
+              newValue: 201,
+            },
+          ],
+        },
+      ],
     };
 
     const result = healer.healTest(test, specDiff);
@@ -1043,40 +1051,42 @@ describe('RuleBasedHealer - Integration Tests', () => {
       failureMessage: 'Multiple failures',
       endpoint: '/users',
       method: 'POST',
-      failureType: FailureType.FIELD_MISSING
+      failureType: FailureType.FIELD_MISSING,
     };
 
     const specDiff: SpecDiff = {
       endpointsAdded: [],
       endpointsRemoved: [],
-      endpointsModified: [{
-        path: '/users',
-        method: 'POST',
-        changes: [
-          {
-            type: 'field_renamed',
-            location: 'response.body',
-            oldValue: 'user_id',
-            newValue: 'userId',
-            context: 'response'
-          },
-          {
-            type: 'status_code_changed',
-            location: 'response',
-            oldValue: 200,
-            newValue: 201
-          },
-          {
-            type: 'field_added',
-            location: 'request.body',
-            newValue: {
-              name: 'age',
-              type: 'integer',
-              required: true
-            }
-          }
-        ]
-      }]
+      endpointsModified: [
+        {
+          path: '/users',
+          method: 'POST',
+          changes: [
+            {
+              type: 'field_renamed',
+              location: 'response.body',
+              oldValue: 'user_id',
+              newValue: 'userId',
+              context: 'response',
+            },
+            {
+              type: 'status_code_changed',
+              location: 'response',
+              oldValue: 200,
+              newValue: 201,
+            },
+            {
+              type: 'field_added',
+              location: 'request.body',
+              newValue: {
+                name: 'age',
+                type: 'integer',
+                required: true,
+              },
+            },
+          ],
+        },
+      ],
     };
 
     const result = healer.healTest(test, specDiff);
@@ -1095,17 +1105,19 @@ describe('RuleBasedHealer - Integration Tests', () => {
       failureMessage: 'Test failed',
       endpoint: '/products',
       method: 'GET',
-      failureType: FailureType.UNKNOWN
+      failureType: FailureType.UNKNOWN,
     };
 
     const specDiff: SpecDiff = {
       endpointsAdded: [],
       endpointsRemoved: [],
-      endpointsModified: [{
-        path: '/users',
-        method: 'GET',
-        changes: []
-      }]
+      endpointsModified: [
+        {
+          path: '/users',
+          method: 'GET',
+          changes: [],
+        },
+      ],
     };
 
     const result = healer.healTest(test, specDiff);
@@ -1121,13 +1133,13 @@ describe('RuleBasedHealer - Integration Tests', () => {
       failureMessage: '',
       endpoint: '/test',
       method: 'GET',
-      failureType: FailureType.UNKNOWN
+      failureType: FailureType.UNKNOWN,
     };
 
     const specDiff: SpecDiff = {
       endpointsAdded: [],
       endpointsRemoved: [],
-      endpointsModified: []
+      endpointsModified: [],
     };
 
     const result = healer.healTest(test, specDiff);

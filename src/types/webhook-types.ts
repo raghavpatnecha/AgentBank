@@ -156,7 +156,16 @@ export interface IssueCommentEvent extends WebhookPayload {
  * Pull request event payload
  */
 export interface PullRequestEvent extends WebhookPayload {
-  action: 'opened' | 'closed' | 'reopened' | 'synchronize' | 'edited' | 'assigned' | 'unassigned' | 'labeled' | 'unlabeled';
+  action:
+    | 'opened'
+    | 'closed'
+    | 'reopened'
+    | 'synchronize'
+    | 'edited'
+    | 'assigned'
+    | 'unassigned'
+    | 'labeled'
+    | 'unlabeled';
 
   /**
    * The pull request

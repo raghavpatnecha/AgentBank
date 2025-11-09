@@ -317,7 +317,7 @@ export class HealingMetrics {
     // Success rate visualization
     if (this.config.enableVisualizations) {
       md += '## Success Rate\n\n';
-      md += this.generateASCIIChart(summary.successRate) + '\n\n';
+      md += `${this.generateASCIIChart(summary.successRate)}\n\n`;
     }
 
     // By Failure Type
@@ -412,7 +412,9 @@ export class HealingMetrics {
       // Write to file
       await fs.writeFile(path, JSON.stringify(history, null, 2), 'utf-8');
     } catch (error) {
-      throw new Error(`Failed to store history: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to store history: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -429,7 +431,9 @@ export class HealingMetrics {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return []; // File doesn't exist
       }
-      throw new Error(`Failed to load history: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to load history: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -474,11 +478,14 @@ export class HealingMetrics {
    * Start auto-save timer
    */
   private startAutoSave(): void {
-    this.autoSaveTimer = setInterval(() => {
-      this.storeHistory().catch((error) => {
-        console.error('Auto-save failed:', error);
-      });
-    }, this.config.autoSaveInterval * 60 * 1000);
+    this.autoSaveTimer = setInterval(
+      () => {
+        this.storeHistory().catch((error) => {
+          console.error('Auto-save failed:', error);
+        });
+      },
+      this.config.autoSaveInterval * 60 * 1000
+    );
   }
 
   /**

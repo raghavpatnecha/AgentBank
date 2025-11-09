@@ -8,7 +8,11 @@ import {
   SelfHealingOrchestrator,
   SimpleFailureAnalyzer,
 } from '../../src/ai/self-healing-orchestrator.js';
-import { TestRegenerator, PromptBuilder, type OpenAIClient } from '../../src/ai/test-regenerator.js';
+import {
+  TestRegenerator,
+  PromptBuilder,
+  type OpenAIClient,
+} from '../../src/ai/test-regenerator.js';
 import type {
   HealingComponents,
   SelfHealingConfig,
@@ -33,7 +37,10 @@ class MockOpenAIClient implements OpenAIClient {
     this.customResponse = response;
   }
 
-  async createCompletion(prompt: string, options?: any): Promise<{
+  async createCompletion(
+    prompt: string,
+    options?: any
+  ): Promise<{
     text: string;
     tokensUsed: number;
     model: string;
@@ -42,7 +49,9 @@ class MockOpenAIClient implements OpenAIClient {
       throw new Error('AI API Error');
     }
 
-    const code = this.customResponse || `
+    const code =
+      this.customResponse ||
+      `
 import { test, expect } from '@playwright/test';
 
 test('regenerated test', async ({ request }) => {
@@ -54,7 +63,7 @@ test('regenerated test', async ({ request }) => {
 `;
 
     return {
-      text: '```typescript\n' + code + '\n```',
+      text: `\`\`\`typescript\n${code}\n\`\`\``,
       tokensUsed: 150,
       model: 'gpt-4',
     };
@@ -179,7 +188,7 @@ describe('SelfHealingOrchestrator', () => {
 
       // Create many failed tests
       const testResults = Array.from({ length: 10 }, (_, i) =>
-        createFailedTestResult({ id: `test-${i}` }),
+        createFailedTestResult({ id: `test-${i}` })
       );
 
       const report = await orchestrator.healFailedTests(testResults);
@@ -223,10 +232,7 @@ describe('SelfHealingOrchestrator', () => {
     });
 
     it('should handle all passing tests', async () => {
-      const testResults = [
-        createPassedTestResult(),
-        createPassedTestResult(),
-      ];
+      const testResults = [createPassedTestResult(), createPassedTestResult()];
 
       const report = await orchestrator.healFailedTests(testResults);
 
@@ -237,10 +243,7 @@ describe('SelfHealingOrchestrator', () => {
 
   describe('detectFailedTests', () => {
     it('should detect failed status tests', async () => {
-      const results = [
-        createFailedTestResult(),
-        createPassedTestResult(),
-      ];
+      const results = [createFailedTestResult(), createPassedTestResult()];
 
       const failed = await orchestrator.detectFailedTests(results);
 
@@ -248,9 +251,7 @@ describe('SelfHealingOrchestrator', () => {
     });
 
     it('should detect error status tests', async () => {
-      const results = [
-        createTestResult({ status: 'error' as TestStatus }),
-      ];
+      const results = [createTestResult({ status: 'error' as TestStatus })];
 
       const failed = await orchestrator.detectFailedTests(results);
 
@@ -266,9 +267,7 @@ describe('SelfHealingOrchestrator', () => {
     });
 
     it('should ignore skipped tests', async () => {
-      const results = [
-        createTestResult({ status: 'skipped' as TestStatus }),
-      ];
+      const results = [createTestResult({ status: 'skipped' as TestStatus })];
 
       const failed = await orchestrator.detectFailedTests(results);
 

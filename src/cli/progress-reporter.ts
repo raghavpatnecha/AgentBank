@@ -21,7 +21,7 @@ export class ProgressReporter {
    * @param message - Operation message
    */
   start(message: string): void {
-    console.log(`\n${this.icon('start')} ${message}`);
+    console.warn(`\n${this.icon('start')} ${message}`);
   }
 
   /**
@@ -30,7 +30,7 @@ export class ProgressReporter {
    */
   update(message: string): void {
     if (this.isVerbose) {
-      console.log(`  ${this.icon('progress')} ${message}`);
+      console.warn(`  ${this.icon('progress')} ${message}`);
     }
   }
 
@@ -39,7 +39,7 @@ export class ProgressReporter {
    * @param message - Success message
    */
   success(message: string): void {
-    console.log(`${this.icon('success')} ${message}`);
+    console.warn(`${this.icon('success')} ${message}`);
   }
 
   /**
@@ -63,7 +63,7 @@ export class ProgressReporter {
    * @param message - Info message
    */
   info(message: string): void {
-    console.log(`${this.icon('info')} ${message}`);
+    console.warn(`${this.icon('info')} ${message}`);
   }
 
   /**
@@ -73,24 +73,24 @@ export class ProgressReporter {
   summary(stats: GenerationStatistics): void {
     const duration = this.formatDuration(stats.generationTime);
 
-    console.log('\n' + this.separator());
-    console.log(`${this.icon('summary')} Generation Summary`);
-    console.log(this.separator());
-    console.log(`  Total endpoints:     ${stats.endpointsProcessed}`);
-    console.log(`  Total tests:         ${this.getTotalTests(stats)}`);
+    console.warn(`\n${this.separator()}`);
+    console.warn(`${this.icon('summary')} Generation Summary`);
+    console.warn(this.separator());
+    console.warn(`  Total endpoints:     ${stats.endpointsProcessed}`);
+    console.warn(`  Total tests:         ${this.getTotalTests(stats)}`);
 
     // Test breakdown by type
     if (Object.keys(stats.testsByType).length > 0) {
-      console.log('  Test breakdown:');
+      console.warn('  Test breakdown:');
       for (const [type, count] of Object.entries(stats.testsByType)) {
-        console.log(`    - ${this.formatTestType(type)}: ${count}`);
+        console.warn(`    - ${this.formatTestType(type)}: ${count}`);
       }
     }
 
-    console.log(`  Files generated:     ${stats.filesGenerated}`);
-    console.log(`  Lines of code:       ${stats.linesOfCode.toLocaleString()}`);
-    console.log(`  Generation time:     ${duration}`);
-    console.log(this.separator() + '\n');
+    console.warn(`  Files generated:     ${stats.filesGenerated}`);
+    console.warn(`  Lines of code:       ${stats.linesOfCode.toLocaleString()}`);
+    console.warn(`  Generation time:     ${duration}`);
+    console.warn(`${this.separator()}\n`);
   }
 
   /**
@@ -150,7 +150,7 @@ export class ProgressReporter {
   private formatTestType(type: string): string {
     return type
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
 
@@ -174,7 +174,7 @@ export class ProgressReporter {
    */
   verbose(message: string): void {
     if (this.isVerbose) {
-      console.log(`  ${message}`);
+      console.warn(`  ${message}`);
     }
   }
 
@@ -200,11 +200,11 @@ export class ProgressReporter {
    */
   list(items: string[], title?: string): void {
     if (title) {
-      console.log(`\n${title}:`);
+      console.warn(`\n${title}:`);
     }
 
     for (const item of items) {
-      console.log(`  • ${item}`);
+      console.warn(`  • ${item}`);
     }
   }
 
@@ -219,6 +219,6 @@ export class ProgressReporter {
    * Add spacing
    */
   spacing(): void {
-    console.log('');
+    console.warn('');
   }
 }

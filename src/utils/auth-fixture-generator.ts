@@ -4,11 +4,7 @@
  */
 
 import type { AuthScheme } from '../types/openapi-types.js';
-import {
-  authSchemeToConfig,
-  getEnvVarName,
-  getAuthFixtureName,
-} from './auth-helper.js';
+import { authSchemeToConfig, getEnvVarName, getAuthFixtureName } from './auth-helper.js';
 
 /**
  * Options for fixture generation
@@ -29,11 +25,7 @@ export function generateAuthFixture(
   schemes: AuthScheme[],
   options: FixtureGenerationOptions = {}
 ): string {
-  const {
-    includeTypes = true,
-    useESM = true,
-    addComments = true,
-  } = options;
+  const { includeTypes = true, useESM = true, addComments = true } = options;
 
   const lines: string[] = [];
 
@@ -121,10 +113,7 @@ export function generateAuthFixture(
 /**
  * Generate fixture implementation for a single auth scheme
  */
-function generateFixtureImplementation(
-  scheme: AuthScheme,
-  addComments: boolean
-): string {
+function generateFixtureImplementation(scheme: AuthScheme, addComments: boolean): string {
   const fixtureName = getAuthFixtureName(scheme);
   const config = authSchemeToConfig(scheme);
   const envVarName = getEnvVarName(scheme);

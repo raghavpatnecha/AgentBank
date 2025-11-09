@@ -130,9 +130,7 @@ export class JUnitReporter implements Reporter {
     const suiteFailures = tests.filter((t) => t.status === 'failed').length;
     const suiteErrors = tests.filter((t) => t.status === 'error').length;
     const suiteSkipped = tests.filter((t) => t.status === 'skipped').length;
-    const suiteTime = this.millisecondsToSeconds(
-      tests.reduce((sum, t) => sum + t.duration, 0)
-    );
+    const suiteTime = this.millisecondsToSeconds(tests.reduce((sum, t) => sum + t.duration, 0));
 
     // Get timestamp from first test or report
     const timestamp = tests[0]?.startTime || data.generatedAt;
@@ -231,7 +229,9 @@ export class JUnitReporter implements Reporter {
 
     // Add custom properties
     for (const [key, value] of Object.entries(this.config.properties)) {
-      lines.push(`      <property name="${this.escapeXML(key)}" value="${this.escapeXML(value)}"/>`);
+      lines.push(
+        `      <property name="${this.escapeXML(key)}" value="${this.escapeXML(value)}"/>`
+      );
     }
 
     lines.push('    </properties>');

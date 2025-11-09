@@ -31,7 +31,7 @@ import {
   OpenAPIOperation,
   OpenAPIParameter,
   OpenAPISchema,
-  OpenAPISecurityScheme
+  OpenAPISecurityScheme,
 } from '../types/spec-diff-types.js';
 
 /**
@@ -43,7 +43,7 @@ const DEFAULT_OPTIONS: ComparisonOptions = {
   ignoreDeprecated: false,
   strictTypeChecking: true,
   trackFieldRenames: true,
-  renameSimilarityThreshold: 0.8
+  renameSimilarityThreshold: 0.8,
 };
 
 /**
@@ -93,10 +93,12 @@ export class SpecDiffAnalyzer {
         filepath: absolutePath,
         format,
         size: stats.size,
-        parseTime
+        parseTime,
       };
     } catch (error) {
-      throw new Error(`Failed to load spec from ${filepath}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to load spec from ${filepath}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -127,14 +129,18 @@ export class SpecDiffAnalyzer {
       schemas,
       auth,
       metadata,
-      allChanges
+      allChanges,
     };
   }
 
   /**
    * Detect endpoint changes (added, removed, modified)
    */
-  detectEndpointChanges(oldSpec: OpenAPISpec, newSpec: OpenAPISpec, allChanges: Change[]): EndpointChanges {
+  detectEndpointChanges(
+    oldSpec: OpenAPISpec,
+    newSpec: OpenAPISpec,
+    allChanges: Change[]
+  ): EndpointChanges {
     const added: EndpointChange[] = [];
     const removed: EndpointChange[] = [];
     const modified: EndpointChange[] = [];
@@ -155,7 +161,7 @@ export class SpecDiffAnalyzer {
               path: pathKey,
               changeType: 'added',
               changes: [],
-              newOperation: operation
+              newOperation: operation,
             };
             added.push(change);
 
@@ -164,7 +170,7 @@ export class SpecDiffAnalyzer {
               path: `paths.${pathKey}.${method}`,
               newValue: operation,
               severity: ChangeSeverity.MINOR,
-              description: `Added endpoint: ${method.toUpperCase()} ${pathKey}`
+              description: `Added endpoint: ${method.toUpperCase()} ${pathKey}`,
             };
             allChanges.push(changeRecord);
             change.changes.push(changeRecord);
@@ -186,7 +192,7 @@ export class SpecDiffAnalyzer {
               path: pathKey,
               changeType: 'removed',
               changes: [],
-              oldOperation: operation
+              oldOperation: operation,
             };
             removed.push(change);
 
@@ -195,7 +201,7 @@ export class SpecDiffAnalyzer {
               path: `paths.${pathKey}.${method}`,
               oldValue: operation,
               severity: ChangeSeverity.BREAKING,
-              description: `Removed endpoint: ${method.toUpperCase()} ${pathKey}`
+              description: `Removed endpoint: ${method.toUpperCase()} ${pathKey}`,
             };
             allChanges.push(changeRecord);
             change.changes.push(changeRecord);
@@ -222,7 +228,7 @@ export class SpecDiffAnalyzer {
               path: pathKey,
               changeType: 'removed',
               changes: [],
-              oldOperation
+              oldOperation,
             };
             removed.push(change);
 
@@ -231,13 +237,17 @@ export class SpecDiffAnalyzer {
               path: `paths.${pathKey}.${method}`,
               oldValue: oldOperation,
               severity: ChangeSeverity.BREAKING,
-              description: `Removed method ${method.toUpperCase()} from ${pathKey}`
+              description: `Removed method ${method.toUpperCase()} from ${pathKey}`,
             };
             allChanges.push(changeRecord);
             change.changes.push(changeRecord);
           } else if (oldOperation && newOperation) {
             // Check for modifications
-            const changes = this.compareOperations(oldOperation, newOperation, `paths.${pathKey}.${method}`);
+            const changes = this.compareOperations(
+              oldOperation,
+              newOperation,
+              `paths.${pathKey}.${method}`
+            );
             if (changes.length > 0) {
               const change: EndpointChange = {
                 method,
@@ -245,7 +255,7 @@ export class SpecDiffAnalyzer {
                 changeType: 'modified',
                 changes,
                 oldOperation,
-                newOperation
+                newOperation,
               };
               modified.push(change);
               allChanges.push(...changes);
@@ -264,7 +274,7 @@ export class SpecDiffAnalyzer {
               path: pathKey,
               changeType: 'added',
               changes: [],
-              newOperation
+              newOperation,
             };
             added.push(change);
 
@@ -273,7 +283,7 @@ export class SpecDiffAnalyzer {
               path: `paths.${pathKey}.${method}`,
               newValue: newOperation,
               severity: ChangeSeverity.MINOR,
-              description: `Added method ${method.toUpperCase()} to ${pathKey}`
+              description: `Added method ${method.toUpperCase()} to ${pathKey}`,
             };
             allChanges.push(changeRecord);
             change.changes.push(changeRecord);
@@ -286,14 +296,18 @@ export class SpecDiffAnalyzer {
       added,
       removed,
       modified,
-      total: added.length + removed.length + modified.length
+      total: added.length + removed.length + modified.length,
     };
   }
 
   /**
    * Detect parameter changes across all endpoints
    */
-  detectParameterChanges(oldSpec: OpenAPISpec, newSpec: OpenAPISpec, allChanges: Change[]): ParameterChanges {
+  detectParameterChanges(
+    oldSpec: OpenAPISpec,
+    newSpec: OpenAPISpec,
+    allChanges: Change[]
+  ): ParameterChanges {
     const added: ParameterChange[] = [];
     const removed: ParameterChange[] = [];
     const modified: ParameterChange[] = [];
@@ -318,7 +332,7 @@ export class SpecDiffAnalyzer {
 
         // Find added parameters
         for (const newParam of newParams) {
-          const oldParam = oldParams.find(p => p.name === newParam.name && p.in === newParam.in);
+          const oldParam = oldParams.find((p) => p.name === newParam.name && p.in === newParam.in);
           if (!oldParam) {
             const change: ParameterChange = {
               endpoint: pathKey,
@@ -327,7 +341,7 @@ export class SpecDiffAnalyzer {
               location: newParam.in,
               changeType: ChangeType.FIELD_ADDED,
               newParameter: newParam,
-              changes: []
+              changes: [],
             };
 
             const changeRecord: Change = {
@@ -335,7 +349,7 @@ export class SpecDiffAnalyzer {
               path: `paths.${pathKey}.${method}.parameters[${newParam.name}]`,
               newValue: newParam,
               severity: newParam.required ? ChangeSeverity.BREAKING : ChangeSeverity.MINOR,
-              description: `Added ${newParam.required ? 'required' : 'optional'} parameter '${newParam.name}' in ${newParam.in}`
+              description: `Added ${newParam.required ? 'required' : 'optional'} parameter '${newParam.name}' in ${newParam.in}`,
             };
 
             change.changes.push(changeRecord);
@@ -346,7 +360,7 @@ export class SpecDiffAnalyzer {
 
         // Find removed or modified parameters
         for (const oldParam of oldParams) {
-          const newParam = newParams.find(p => p.name === oldParam.name && p.in === oldParam.in);
+          const newParam = newParams.find((p) => p.name === oldParam.name && p.in === oldParam.in);
 
           if (!newParam) {
             // Parameter removed
@@ -357,7 +371,7 @@ export class SpecDiffAnalyzer {
               location: oldParam.in,
               changeType: ChangeType.FIELD_REMOVED,
               oldParameter: oldParam,
-              changes: []
+              changes: [],
             };
 
             const changeRecord: Change = {
@@ -365,7 +379,7 @@ export class SpecDiffAnalyzer {
               path: `paths.${pathKey}.${method}.parameters[${oldParam.name}]`,
               oldValue: oldParam,
               severity: ChangeSeverity.BREAKING,
-              description: `Removed parameter '${oldParam.name}' from ${oldParam.in}`
+              description: `Removed parameter '${oldParam.name}' from ${oldParam.in}`,
             };
 
             change.changes.push(changeRecord);
@@ -373,7 +387,11 @@ export class SpecDiffAnalyzer {
             allChanges.push(changeRecord);
           } else {
             // Check for modifications
-            const paramChanges = this.compareParameters(oldParam, newParam, `paths.${pathKey}.${method}.parameters[${oldParam.name}]`);
+            const paramChanges = this.compareParameters(
+              oldParam,
+              newParam,
+              `paths.${pathKey}.${method}.parameters[${oldParam.name}]`
+            );
 
             if (paramChanges.length > 0) {
               const change: ParameterChange = {
@@ -384,17 +402,17 @@ export class SpecDiffAnalyzer {
                 changeType: ChangeType.TYPE_CHANGED,
                 oldParameter: oldParam,
                 newParameter: newParam,
-                changes: paramChanges
+                changes: paramChanges,
               };
 
               modified.push(change);
               allChanges.push(...paramChanges);
 
               // Track specific change types
-              if (paramChanges.some(c => c.path.includes('.required'))) {
+              if (paramChanges.some((c) => c.path.includes('.required'))) {
                 requiredChanged.push(change);
               }
-              if (paramChanges.some(c => c.path.includes('.schema.type'))) {
+              if (paramChanges.some((c) => c.path.includes('.schema.type'))) {
                 typeChanged.push(change);
               }
             }
@@ -409,14 +427,18 @@ export class SpecDiffAnalyzer {
       modified,
       requiredChanged,
       typeChanged,
-      total: added.length + removed.length + modified.length
+      total: added.length + removed.length + modified.length,
     };
   }
 
   /**
    * Detect schema changes in components
    */
-  detectSchemaChanges(oldSpec: OpenAPISpec, newSpec: OpenAPISpec, allChanges: Change[]): SchemaChanges {
+  detectSchemaChanges(
+    oldSpec: OpenAPISpec,
+    newSpec: OpenAPISpec,
+    allChanges: Change[]
+  ): SchemaChanges {
     const added: SchemaChange[] = [];
     const removed: SchemaChange[] = [];
     const modified: SchemaChange[] = [];
@@ -440,7 +462,7 @@ export class SpecDiffAnalyzer {
           changeType: ChangeType.FIELD_ADDED,
           newSchema: newSchemas[schemaName],
           changes: [],
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         const changeRecord: Change = {
@@ -449,7 +471,7 @@ export class SpecDiffAnalyzer {
           newValue: newSchemas[schemaName],
           severity: ChangeSeverity.MINOR,
           description: `Added schema '${schemaName}'`,
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         change.changes.push(changeRecord);
@@ -469,7 +491,7 @@ export class SpecDiffAnalyzer {
           changeType: ChangeType.FIELD_REMOVED,
           oldSchema: oldSchemas[schemaName],
           changes: [],
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         const changeRecord: Change = {
@@ -478,7 +500,7 @@ export class SpecDiffAnalyzer {
           oldValue: oldSchemas[schemaName],
           severity: ChangeSeverity.BREAKING,
           description: `Removed schema '${schemaName}'`,
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         change.changes.push(changeRecord);
@@ -495,7 +517,11 @@ export class SpecDiffAnalyzer {
         if (!oldSchema || !newSchema) continue;
         const affectedEndpoints = this.findEndpointsUsingSchema(newSpec, schemaName);
 
-        const schemaChanges = this.compareSchemas(oldSchema, newSchema, `components.schemas.${schemaName}`);
+        const schemaChanges = this.compareSchemas(
+          oldSchema,
+          newSchema,
+          `components.schemas.${schemaName}`
+        );
 
         if (schemaChanges.length > 0) {
           const change: SchemaChange = {
@@ -505,17 +531,19 @@ export class SpecDiffAnalyzer {
             oldSchema,
             newSchema,
             changes: schemaChanges,
-            affectedEndpoints
+            affectedEndpoints,
           };
 
           modified.push(change);
           allChanges.push(...schemaChanges);
 
           // Track specific change types
-          if (schemaChanges.some(c => c.path.includes('.properties'))) {
+          if (schemaChanges.some((c) => c.path.includes('.properties'))) {
             propertyChanges.push(change);
           }
-          if (schemaChanges.some(c => c.path.includes('.type') && !c.path.includes('.properties'))) {
+          if (
+            schemaChanges.some((c) => c.path.includes('.type') && !c.path.includes('.properties'))
+          ) {
             typeChanges.push(change);
           }
         }
@@ -528,7 +556,7 @@ export class SpecDiffAnalyzer {
       modified,
       propertyChanges,
       typeChanges,
-      total: added.length + removed.length + modified.length
+      total: added.length + removed.length + modified.length,
     };
   }
 
@@ -559,7 +587,7 @@ export class SpecDiffAnalyzer {
           schemeType: newScheme.type,
           newScheme: newScheme,
           changes: [],
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         const changeRecord: Change = {
@@ -568,7 +596,7 @@ export class SpecDiffAnalyzer {
           newValue: newScheme,
           severity: ChangeSeverity.MINOR,
           description: `Added security scheme '${schemeName}' (${newScheme.type})`,
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         change.changes.push(changeRecord);
@@ -590,7 +618,7 @@ export class SpecDiffAnalyzer {
           schemeType: oldScheme.type,
           oldScheme: oldScheme,
           changes: [],
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         const changeRecord: Change = {
@@ -599,7 +627,7 @@ export class SpecDiffAnalyzer {
           oldValue: oldScheme,
           severity: ChangeSeverity.BREAKING,
           description: `Removed security scheme '${schemeName}'`,
-          affectedEndpoints
+          affectedEndpoints,
         };
 
         change.changes.push(changeRecord);
@@ -616,7 +644,11 @@ export class SpecDiffAnalyzer {
         if (!oldScheme || !newScheme) continue;
         const affectedEndpoints = this.findEndpointsUsingAuth(newSpec, schemeName);
 
-        const schemeChanges = this.compareSecuritySchemes(oldScheme, newScheme, `components.securitySchemes.${schemeName}`);
+        const schemeChanges = this.compareSecuritySchemes(
+          oldScheme,
+          newScheme,
+          `components.securitySchemes.${schemeName}`
+        );
 
         if (schemeChanges.length > 0) {
           const change: AuthChange = {
@@ -626,7 +658,7 @@ export class SpecDiffAnalyzer {
             oldScheme,
             newScheme,
             changes: schemeChanges,
-            affectedEndpoints
+            affectedEndpoints,
           };
 
           modified.push(change);
@@ -639,14 +671,18 @@ export class SpecDiffAnalyzer {
       added,
       removed,
       modified,
-      total: added.length + removed.length + modified.length
+      total: added.length + removed.length + modified.length,
     };
   }
 
   /**
    * Detect metadata changes (info, servers, etc.)
    */
-  private detectMetadataChanges(oldSpec: OpenAPISpec, newSpec: OpenAPISpec, allChanges: Change[]): MetadataChanges {
+  private detectMetadataChanges(
+    oldSpec: OpenAPISpec,
+    newSpec: OpenAPISpec,
+    allChanges: Change[]
+  ): MetadataChanges {
     const metadata: MetadataChanges = {};
 
     // Title
@@ -657,21 +693,24 @@ export class SpecDiffAnalyzer {
         oldValue: oldSpec.info.title,
         newValue: newSpec.info.title,
         severity: ChangeSeverity.PATCH,
-        description: `API title changed from '${oldSpec.info.title}' to '${newSpec.info.title}'`
+        description: `API title changed from '${oldSpec.info.title}' to '${newSpec.info.title}'`,
       };
       metadata.title = change;
       allChanges.push(change);
     }
 
     // Description
-    if (oldSpec.info.description !== newSpec.info.description && !this.options.ignoreDescriptionChanges) {
+    if (
+      oldSpec.info.description !== newSpec.info.description &&
+      !this.options.ignoreDescriptionChanges
+    ) {
       const change: Change = {
         type: ChangeType.VALUE_CHANGED,
         path: 'info.description',
         oldValue: oldSpec.info.description,
         newValue: newSpec.info.description,
         severity: ChangeSeverity.PATCH,
-        description: 'API description changed'
+        description: 'API description changed',
       };
       metadata.description = change;
       allChanges.push(change);
@@ -685,7 +724,7 @@ export class SpecDiffAnalyzer {
         oldValue: oldSpec.info.version,
         newValue: newSpec.info.version,
         severity: ChangeSeverity.PATCH,
-        description: `API version changed from '${oldSpec.info.version}' to '${newSpec.info.version}'`
+        description: `API version changed from '${oldSpec.info.version}' to '${newSpec.info.version}'`,
       };
       metadata.version = change;
       allChanges.push(change);
@@ -735,11 +774,15 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
     }
 
     if (diff.endpoints.removed.length > 0) {
-      recommendations.push(`${diff.endpoints.removed.length} endpoint(s) removed - ensure clients are updated`);
+      recommendations.push(
+        `${diff.endpoints.removed.length} endpoint(s) removed - ensure clients are updated`
+      );
     }
 
     if (diff.schemas.modified.length > 0) {
-      recommendations.push(`${diff.schemas.modified.length} schema(s) modified - validate data contracts`);
+      recommendations.push(
+        `${diff.schemas.modified.length} schema(s) modified - validate data contracts`
+      );
     }
 
     // Generate migration notes
@@ -757,7 +800,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
       majorChanges,
       minorChanges,
       recommendations,
-      migrationNotes
+      migrationNotes,
     };
   }
 
@@ -766,7 +809,16 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
    */
   private getHttpMethods(pathItem: any): HttpMethod[] {
     const methods: HttpMethod[] = [];
-    const httpMethods: HttpMethod[] = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
+    const httpMethods: HttpMethod[] = [
+      'get',
+      'post',
+      'put',
+      'patch',
+      'delete',
+      'options',
+      'head',
+      'trace',
+    ];
 
     for (const method of httpMethods) {
       if (pathItem[method]) {
@@ -780,7 +832,11 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
   /**
    * Helper: Compare two operations
    */
-  private compareOperations(oldOp: OpenAPIOperation, newOp: OpenAPIOperation, basePath: string): Change[] {
+  private compareOperations(
+    oldOp: OpenAPIOperation,
+    newOp: OpenAPIOperation,
+    basePath: string
+  ): Change[] {
     const changes: Change[] = [];
 
     // Compare deprecated status
@@ -791,7 +847,9 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
         oldValue: oldOp.deprecated,
         newValue: newOp.deprecated,
         severity: newOp.deprecated ? ChangeSeverity.MAJOR : ChangeSeverity.MINOR,
-        description: newOp.deprecated ? 'Endpoint marked as deprecated' : 'Endpoint no longer deprecated'
+        description: newOp.deprecated
+          ? 'Endpoint marked as deprecated'
+          : 'Endpoint no longer deprecated',
       });
     }
 
@@ -804,7 +862,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
           oldValue: oldOp.summary,
           newValue: newOp.summary,
           severity: ChangeSeverity.PATCH,
-          description: 'Summary changed'
+          description: 'Summary changed',
         });
       }
     }
@@ -815,7 +873,11 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
   /**
    * Helper: Compare two parameters
    */
-  private compareParameters(oldParam: OpenAPIParameter, newParam: OpenAPIParameter, basePath: string): Change[] {
+  private compareParameters(
+    oldParam: OpenAPIParameter,
+    newParam: OpenAPIParameter,
+    basePath: string
+  ): Change[] {
     const changes: Change[] = [];
 
     // Required status changed
@@ -826,13 +888,17 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
         oldValue: oldParam.required,
         newValue: newParam.required,
         severity: newParam.required ? ChangeSeverity.BREAKING : ChangeSeverity.MINOR,
-        description: `Parameter '${newParam.name}' is now ${newParam.required ? 'required' : 'optional'}`
+        description: `Parameter '${newParam.name}' is now ${newParam.required ? 'required' : 'optional'}`,
       });
     }
 
     // Schema changed
     if (oldParam.schema && newParam.schema) {
-      const schemaChanges = this.compareSchemas(oldParam.schema, newParam.schema, `${basePath}.schema`);
+      const schemaChanges = this.compareSchemas(
+        oldParam.schema,
+        newParam.schema,
+        `${basePath}.schema`
+      );
       changes.push(...schemaChanges);
     } else if (oldParam.schema && !newParam.schema) {
       changes.push({
@@ -840,7 +906,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
         path: `${basePath}.schema`,
         oldValue: oldParam.schema,
         severity: ChangeSeverity.BREAKING,
-        description: 'Parameter schema removed'
+        description: 'Parameter schema removed',
       });
     } else if (!oldParam.schema && newParam.schema) {
       changes.push({
@@ -848,7 +914,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
         path: `${basePath}.schema`,
         newValue: newParam.schema,
         severity: ChangeSeverity.MINOR,
-        description: 'Parameter schema added'
+        description: 'Parameter schema added',
       });
     }
 
@@ -858,7 +924,11 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
   /**
    * Helper: Deep comparison of schemas
    */
-  private compareSchemas(oldSchema: OpenAPISchema, newSchema: OpenAPISchema, basePath: string): Change[] {
+  private compareSchemas(
+    oldSchema: OpenAPISchema,
+    newSchema: OpenAPISchema,
+    basePath: string
+  ): Change[] {
     const changes: Change[] = [];
 
     // Type changed
@@ -869,7 +939,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
         oldValue: oldSchema.type,
         newValue: newSchema.type,
         severity: ChangeSeverity.BREAKING,
-        description: `Type changed from '${oldSchema.type}' to '${newSchema.type}'`
+        description: `Type changed from '${oldSchema.type}' to '${newSchema.type}'`,
       });
     }
 
@@ -885,7 +955,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
           oldValue: oldRequired,
           newValue: newRequired,
           severity: ChangeSeverity.BREAKING,
-          description: `Field '${field}' is now required`
+          description: `Field '${field}' is now required`,
         });
       }
     }
@@ -903,7 +973,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
             path: `${basePath}.properties.${prop}`,
             newValue: newSchema.properties[prop],
             severity: ChangeSeverity.MINOR,
-            description: `Added property '${prop}'`
+            description: `Added property '${prop}'`,
           });
         }
       }
@@ -916,7 +986,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
             path: `${basePath}.properties.${prop}`,
             oldValue: oldSchema.properties[prop],
             severity: ChangeSeverity.BREAKING,
-            description: `Removed property '${prop}'`
+            description: `Removed property '${prop}'`,
           });
         }
       }
@@ -950,7 +1020,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
           oldValue: oldEnums,
           newValue: newEnums,
           severity: ChangeSeverity.BREAKING,
-          description: 'Enum values changed'
+          description: 'Enum values changed',
         });
       }
     }
@@ -961,7 +1031,11 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
   /**
    * Helper: Compare security schemes
    */
-  private compareSecuritySchemes(oldScheme: OpenAPISecurityScheme, newScheme: OpenAPISecurityScheme, basePath: string): Change[] {
+  private compareSecuritySchemes(
+    oldScheme: OpenAPISecurityScheme,
+    newScheme: OpenAPISecurityScheme,
+    basePath: string
+  ): Change[] {
     const changes: Change[] = [];
 
     if (oldScheme.type !== newScheme.type) {
@@ -971,7 +1045,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
         oldValue: oldScheme.type,
         newValue: newScheme.type,
         severity: ChangeSeverity.BREAKING,
-        description: `Auth type changed from '${oldScheme.type}' to '${newScheme.type}'`
+        description: `Auth type changed from '${oldScheme.type}' to '${newScheme.type}'`,
       });
     }
 
@@ -1030,11 +1104,15 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
   /**
    * Helper: Generate summary statistics
    */
-  private generateSummary(allChanges: Change[], endpoints: EndpointChanges, schemas: SchemaChanges): DiffSummary {
-    const breakingChanges = allChanges.filter(c => c.severity === ChangeSeverity.BREAKING).length;
-    const majorChanges = allChanges.filter(c => c.severity === ChangeSeverity.MAJOR).length;
-    const minorChanges = allChanges.filter(c => c.severity === ChangeSeverity.MINOR).length;
-    const patchChanges = allChanges.filter(c => c.severity === ChangeSeverity.PATCH).length;
+  private generateSummary(
+    allChanges: Change[],
+    endpoints: EndpointChanges,
+    schemas: SchemaChanges
+  ): DiffSummary {
+    const breakingChanges = allChanges.filter((c) => c.severity === ChangeSeverity.BREAKING).length;
+    const majorChanges = allChanges.filter((c) => c.severity === ChangeSeverity.MAJOR).length;
+    const minorChanges = allChanges.filter((c) => c.severity === ChangeSeverity.MINOR).length;
+    const patchChanges = allChanges.filter((c) => c.severity === ChangeSeverity.PATCH).length;
 
     return {
       totalChanges: allChanges.length,
@@ -1048,7 +1126,7 @@ Backward compatible: ${diff.summary.isBackwardCompatible ? 'Yes' : 'No'}`;
       schemasAdded: schemas.added.length,
       schemasRemoved: schemas.removed.length,
       schemasModified: schemas.modified.length,
-      isBackwardCompatible: breakingChanges === 0
+      isBackwardCompatible: breakingChanges === 0,
     };
   }
 }

@@ -96,7 +96,9 @@ describe('CLI Config Loader', () => {
         organizationStrategy: 'invalid-strategy' as any,
       };
 
-      await expect(loadConfig(undefined, cliOptions)).rejects.toThrow(/Invalid organization strategy/);
+      await expect(loadConfig(undefined, cliOptions)).rejects.toThrow(
+        /Invalid organization strategy/
+      );
     });
 
     it('should validate required fields', async () => {

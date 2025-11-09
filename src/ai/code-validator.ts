@@ -32,7 +32,7 @@ export class CodeValidator {
         code,
         ts.ScriptTarget.Latest,
         true,
-        ts.ScriptKind.TS,
+        ts.ScriptKind.TS
       );
 
       // Check for syntax errors
@@ -41,7 +41,7 @@ export class CodeValidator {
       for (const diagnostic of diagnostics) {
         if (diagnostic.file) {
           const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
-            diagnostic.start || 0,
+            diagnostic.start || 0
           );
 
           errors.push({
@@ -70,11 +70,13 @@ export class CodeValidator {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         valid: false,
-        errors: [{
-          message: `Parse error: ${errorMessage}`,
-          line: 0,
-          column: 0,
-        }],
+        errors: [
+          {
+            message: `Parse error: ${errorMessage}`,
+            line: 0,
+            column: 0,
+          },
+        ],
         parser: 'typescript',
       };
     }
@@ -86,7 +88,9 @@ export class CodeValidator {
   validatePlaywrightImports(code: string): boolean {
     // Check for essential Playwright imports
     const hasTestImport = /import\s+{[^}]*test[^}]*}\s+from\s+['"]@playwright\/test['"]/.test(code);
-    const hasExpectImport = /import\s+{[^}]*expect[^}]*}\s+from\s+['"]@playwright\/test['"]/.test(code);
+    const hasExpectImport = /import\s+{[^}]*expect[^}]*}\s+from\s+['"]@playwright\/test['"]/.test(
+      code
+    );
 
     // At minimum, we need test and expect
     return hasTestImport && hasExpectImport;
@@ -222,7 +226,7 @@ export class CodeValidator {
         code,
         ts.ScriptTarget.Latest,
         true,
-        ts.ScriptKind.TS,
+        ts.ScriptKind.TS
       );
 
       // Create a compiler host
@@ -273,14 +277,16 @@ export class CodeValidator {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        errors: [{
-          message: `Compilation error: ${errorMessage}`,
-          file: 'temp.ts',
-          line: 0,
-          column: 0,
-          code: 0,
-          category: ts.DiagnosticCategory.Error,
-        }],
+        errors: [
+          {
+            message: `Compilation error: ${errorMessage}`,
+            file: 'temp.ts',
+            line: 0,
+            column: 0,
+            code: 0,
+            category: ts.DiagnosticCategory.Error,
+          },
+        ],
         warnings: [],
       };
     }
@@ -304,7 +310,7 @@ export class CodeValidator {
 
       if (diagnostic.file && diagnostic.start !== undefined) {
         const { line: l, character } = diagnostic.file.getLineAndCharacterOfPosition(
-          diagnostic.start,
+          diagnostic.start
         );
         line = l + 1;
         column = character + 1;
@@ -342,7 +348,7 @@ export class CodeValidator {
 
       if (diagnostic.file && diagnostic.start !== undefined) {
         const { line: l, character } = diagnostic.file.getLineAndCharacterOfPosition(
-          diagnostic.start,
+          diagnostic.start
         );
         line = l + 1;
         column = character + 1;
@@ -385,11 +391,7 @@ export class CodeValidator {
     };
 
     const valid =
-      syntax.valid &&
-      imports.valid &&
-      structure.valid &&
-      assertions.valid &&
-      compilation.success;
+      syntax.valid && imports.valid && structure.valid && assertions.valid && compilation.success;
 
     return {
       valid,

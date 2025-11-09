@@ -112,7 +112,7 @@ export function redactHeaders(
   config: SensitiveDataFilterConfig = DEFAULT_FILTER_CONFIG
 ): Record<string, string | string[]> {
   const redacted: Record<string, string | string[]> = {};
-  const sensitiveHeadersLower = config.sensitiveHeaders.map(h => h.toLowerCase());
+  const sensitiveHeadersLower = config.sensitiveHeaders.map((h) => h.toLowerCase());
 
   for (const [key, value] of Object.entries(headers)) {
     if (sensitiveHeadersLower.includes(key.toLowerCase())) {
@@ -143,12 +143,12 @@ export function redactObject(
 
   // Handle arrays
   if (Array.isArray(data)) {
-    return data.map(item => redactObject(item, config));
+    return data.map((item) => redactObject(item, config));
   }
 
   // Handle objects
   const redacted: Record<string, unknown> = {};
-  const sensitiveFieldsLower = config.sensitiveFields.map(f => f.toLowerCase());
+  const sensitiveFieldsLower = config.sensitiveFields.map((f) => f.toLowerCase());
 
   for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
     // Check if field name is sensitive

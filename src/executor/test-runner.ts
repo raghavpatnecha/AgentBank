@@ -3,6 +3,8 @@
  * Executes Playwright tests and captures results
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -105,7 +107,7 @@ export class PlaywrightTestRunner {
       this.isRunning = false;
 
       // Wait a bit for graceful shutdown
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Force kill if still running
       if (this.currentProcess.killed === false) {
@@ -181,10 +183,7 @@ export class PlaywrightTestRunner {
   /**
    * Run Playwright tests as child process
    */
-  private async runPlaywrightTests(
-    command: string[],
-    options: ExecutionOptions
-  ): Promise<void> {
+  private async runPlaywrightTests(command: string[], options: ExecutionOptions): Promise<void> {
     return new Promise((resolve, reject) => {
       const [cmd, ...args] = command;
 
@@ -260,7 +259,7 @@ export class PlaywrightTestRunner {
     // Example: "[1/25] test.spec.ts:10:5 › should pass"
 
     const runningMatch = output.match(/Running (\d+) tests/);
-    if (runningMatch && runningMatch[1]) {
+    if (runningMatch?.[1]) {
       const total = parseInt(runningMatch[1], 10);
       this.emitProgress({
         type: ProgressEventType.START,
@@ -272,7 +271,7 @@ export class PlaywrightTestRunner {
     }
 
     const progressMatch = output.match(/\[(\d+)\/(\d+)\]/);
-    if (progressMatch && progressMatch[1] && progressMatch[2]) {
+    if (progressMatch?.[1] && progressMatch[2]) {
       const completed = parseInt(progressMatch[1], 10);
       const total = parseInt(progressMatch[2], 10);
       this.emitProgress({
@@ -347,10 +346,7 @@ export class PlaywrightTestRunner {
   /**
    * Convert Playwright test result to our format
    */
-  private convertPlaywrightTestResult(
-    pwTest: any,
-    filePath: string
-  ): TestResult {
+  private convertPlaywrightTestResult(pwTest: any, filePath: string): TestResult {
     const testId = this.generateTestId(pwTest, filePath);
     const status = this.convertStatus(pwTest.status);
 

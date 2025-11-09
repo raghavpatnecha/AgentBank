@@ -60,7 +60,7 @@ interface RepositoryPermission {
  *
  * const hasPermission = await checker.hasWriteAccess('username', 'owner/repo');
  * if (!hasPermission) {
- *   console.log('User does not have permission');
+ *   console.warn('User does not have permission');
  * }
  * ```
  */
@@ -178,7 +178,7 @@ export class PermissionChecker {
         return 'none';
       }
 
-      const data = await response.json() as RepositoryPermission;
+      const data = (await response.json()) as RepositoryPermission;
       return data.permission;
     } catch (error) {
       console.error('Error getting permission level:', error);
@@ -199,7 +199,7 @@ export class PermissionChecker {
    * const result = await checker.checkPermissions('octocat', 'owner/repo');
    *
    * if (!result.hasPermission) {
-   *   console.log('Denied:', result.reason);
+   *   console.warn('Denied:', result.reason);
    * }
    * ```
    */
@@ -282,7 +282,7 @@ export class PermissionChecker {
       /^renovate/i,
     ];
 
-    return botPatterns.some(pattern => pattern.test(username));
+    return botPatterns.some((pattern) => pattern.test(username));
   }
 
   /**
@@ -315,8 +315,8 @@ export class PermissionChecker {
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'Authorization': `Bearer ${this.config.token}`,
+          Accept: 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${this.config.token}`,
           'User-Agent': 'api-test-agent',
           ...options.headers,
         },
