@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Complex Schemas Test
+  version: 1.0.0
+
+paths:
+  /test:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplexObject'
+      responses:
+        '200':
+          description: Success
+
+components:
+  schemas:
+    ComplexObject:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        nested:
+          $ref: '#/components/schemas/NestedObject'
+        arrayOfObjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimpleObject'
+        composition:
+          oneOf:
+            - $ref: '#/components/schemas/TypeA'
+            - $ref: '#/components/schemas/TypeB'
+
+    NestedObject:
+      type: object
+      properties:
+        level1:
+          type: object
+          properties:
+            level2:
+              type: object
+              properties:
+                level3:
+                  type: string
+
+    SimpleObject:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+
+    TypeA:
+      type: object
+      required:
+        - typeA
+      properties:
+        typeA:
+          type: string
+        commonField:
+          type: string
+
+    TypeB:
+      type: object
+      required:
+        - typeB
+      properties:
+        typeB:
+          type: number
+        commonField:
+          type: string
+
+    AllOfExample:
+      allOf:
+        - $ref: '#/components/schemas/SimpleObject'
+        - type: object
+          properties:
+            additionalProp:
+              type: string
+
+    AnyOfExample:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean

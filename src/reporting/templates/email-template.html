@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="format-detection" content="date=no">
+  <meta name="format-detection" content="address=no">
+  <meta name="format-detection" content="email=no">
+  <title>API Test Report - {{STATUS}}</title>
+
+  <style type="text/css">
+    /* Reset styles */
+    body, table, td, a {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    table, td {
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+
+    /* Base styles */
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #3f3f46;
+    }
+
+    /* Container */
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header .subtitle {
+      margin: 8px 0 0 0;
+      color: #e0e7ff;
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-block;
+      margin: 16px 0 0 0;
+      padding: 8px 24px;
+      background-color: {{STATUS_COLOR}};
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Content */
+    .content {
+      padding: 32px 24px;
+    }
+
+    .greeting {
+      margin: 0 0 24px 0;
+      font-size: 16px;
+      color: #3f3f46;
+      line-height: 1.6;
+    }
+
+    /* Summary section */
+    .summary-section {
+      margin: 32px 0;
+      padding: 24px;
+      background-color: #f9fafb;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .summary-title {
+      margin: 0 0 20px 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: #18181b;
+      display: flex;
+      align-items: center;
+    }
+
+    .summary-title::before {
+      content: '📊';
+      margin-right: 8px;
+      font-size: 24px;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: table;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .stat-row {
+      display: table-row;
+    }
+
+    .stat-cell {
+      display: table-cell;
+      padding: 12px 0;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: middle;
+    }
+
+    .stat-row:last-child .stat-cell {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #71717a;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      text-align: right;
+      font-size: 20px;
+      font-weight: 700;
+      color: #18181b;
+    }
+
+    .stat-icon {
+      margin-right: 4px;
+      font-size: 16px;
+    }
+
+    /* Color-coded values */
+    .success-value {
+      color: #22c55e;
+    }
+
+    .error-value {
+      color: #ef4444;
+    }
+
+    .warning-value {
+      color: #f59e0b;
+    }
+
+    .info-value {
+      color: #3b82f6;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      margin: 20px 0;
+      padding: 4px;
+      background-color: #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 12px;
+      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+      border-radius: 6px;
+      width: {{SUCCESS_RATE}}%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-label {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #52525b;
+    }
+
+    /* Environment details */
+    .environment-section {
+      margin: 32px 0;
+      padding: 20px;
+      background-color: #fefce8;
+      border-left: 4px solid #facc15;
+      border-radius: 8px;
+    }
+
+    .environment-title {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: #713f12;
+      display: flex;
+      align-items: center;
+    }
+
+    .environment-title::before {
+      content: '⚙️';
+      margin-right: 8px;
+    }
+
+    .environment-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .environment-list li {
+      padding: 6px 0;
+      font-size: 14px;
+      color: #854d0e;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .env-label {
+      font-weight: 500;
+    }
+
+    .env-value {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+    }
+
+    /* CTA Button */
+    .cta-section {
+      margin: 32px 0;
+      text-align: center;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Footer */
+    .footer {
+      padding: 24px;
+      background-color: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+    }
+
+    .footer-text {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #71717a;
+    }
+
+    .footer-link {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+
+    .footer-branding {
+      margin: 16px 0 0 0;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #a1a1aa;
+    }
+
+    /* Divider */
+    .divider {
+      margin: 32px 0;
+      height: 1px;
+      background-color: #e5e7eb;
+    }
+
+    /* Mobile responsive */
+    @media only screen and (max-width: 600px) {
+      .content {
+        padding: 24px 16px !important;
+      }
+
+      .header {
+        padding: 24px 16px !important;
+      }
+
+      .header h1 {
+        font-size: 24px !important;
+      }
+
+      .summary-section {
+        padding: 16px !important;
+      }
+
+      .stat-value {
+        font-size: 18px !important;
+      }
+
+      .cta-button {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      .email-container {
+        background-color: #18181b !important;
+      }
+
+      .content {
+        color: #e4e4e7 !important;
+      }
+
+      .greeting {
+        color: #e4e4e7 !important;
+      }
+
+      .summary-section {
+        background-color: #27272a !important;
+        border-color: #3f3f46 !important;
+      }
+
+      .summary-title,
+      .stat-value {
+        color: #fafafa !important;
+      }
+
+      .stat-label {
+        color: #a1a1aa !important;
+      }
+
+      .stat-cell {
+        border-color: #3f3f46 !important;
+      }
+
+      .environment-section {
+        background-color: #422006 !important;
+        border-color: #facc15 !important;
+      }
+
+      .environment-title,
+      .environment-list li {
+        color: #fef3c7 !important;
+      }
+
+      .footer {
+        background-color: #27272a !important;
+        border-color: #3f3f46 !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 24px 0;">
+        <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+
+          <!-- Header -->
+          <tr>
+            <td class="header">
+              <h1>{{PROJECT_NAME}}</h1>
+              <p class="subtitle">Automated API Testing Report</p>
+              <div class="status-badge">{{STATUS_EMOJI}} {{STATUS}}</div>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td class="content">
+              <!-- Greeting -->
+              <p class="greeting">
+                Hi Team,<br><br>
+                Your API tests for <strong>{{ENVIRONMENT}}</strong> have completed
+                <strong style="color: {{STATUS_COLOR}};">{{STATUS}}</strong>.
+              </p>
+
+              <!-- Test Summary -->
+              <div class="summary-section">
+                <h2 class="summary-title">Test Summary</h2>
+
+                <table role="presentation" class="stats-grid" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr class="stat-row">
+                    <td class="stat-cell">
+                      <span class="stat-label">Total Tests</span>
+                    </td>
+                    <td class="stat-cell stat-value info-value">
+                      {{TOTAL_TESTS}}
+                    </td>
+                  </tr>
+                  <tr class="stat-row">
+                    <td class="stat-cell">
+                      <span class="stat-label"><span class="stat-icon">✅</span> Passed</span>
+                    </td>
+                    <td class="stat-cell stat-value success-value">
+                      {{PASSED}}
+                    </td>
+                  </tr>
+                  <tr class="stat-row">
+                    <td class="stat-cell">
+                      <span class="stat-label"><span class="stat-icon">❌</span> Failed</span>
+                    </td>
+                    <td class="stat-cell stat-value error-value">
+                      {{FAILED}}
+                    </td>
+                  </tr>
+                  <tr class="stat-row">
+                    <td class="stat-cell">
+                      <span class="stat-label"><span class="stat-icon">🔧</span> Self-Healed</span>
+                    </td>
+                    <td class="stat-cell stat-value warning-value">
+                      {{SELF_HEALED}}
+                    </td>
+                  </tr>
+                  <tr class="stat-row">
+                    <td class="stat-cell">
+                      <span class="stat-label"><span class="stat-icon">⏱️</span> Duration</span>
+                    </td>
+                    <td class="stat-cell stat-value">
+                      {{DURATION}}s
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                  <div class="progress-bar"></div>
+                </div>
+                <div class="progress-label">
+                  Success Rate: {{SUCCESS_RATE}}%
+                </div>
+              </div>
+
+              <!-- View Full Report CTA -->
+              <div class="cta-section" style="display: {{SHOW_REPORT_LINK}};">
+                <a href="{{REPORT_URL}}" class="cta-button" target="_blank">
+                  📄 View Full Report
+                </a>
+              </div>
+
+              <!-- Divider -->
+              <div class="divider"></div>
+
+              <!-- Environment Details -->
+              <div class="environment-section">
+                <h3 class="environment-title">Environment Details</h3>
+                <ul class="environment-list">
+                  <li>
+                    <span class="env-label">Base URL:</span>
+                    <span class="env-value">{{BASE_URL}}</span>
+                  </li>
+                  <li>
+                    <span class="env-label">Environment:</span>
+                    <span class="env-value">{{ENVIRONMENT}}</span>
+                  </li>
+                  <li>
+                    <span class="env-label">Timestamp:</span>
+                    <span class="env-value">{{TIMESTAMP}}</span>
+                  </li>
+                  <li>
+                    <span class="env-label">Node Version:</span>
+                    <span class="env-value">{{NODE_VERSION}}</span>
+                  </li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer">
+              <p class="footer-text">
+                This is an automated report from {{PROJECT_NAME}}.
+              </p>
+              <p class="footer-text">
+                Questions? Contact
+                <a href="mailto:{{SUPPORT_EMAIL}}" class="footer-link">{{SUPPORT_EMAIL}}</a>
+              </p>
+              <div class="footer-branding">
+                <p style="margin: 0;">
+                  Powered by <strong>API Test Agent</strong>
+                  <br>
+                  AI-Powered API Testing with Self-Healing Capabilities
+                </p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

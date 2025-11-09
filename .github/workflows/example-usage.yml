@@ -1,0 +1,384 @@
+name: API Testing - Example Usage
+
+# This workflow demonstrates various ways to use the API Test Agent action
+# It shows basic usage, advanced configuration, matrix testing, and more
+
+on:
+  # Trigger on pull requests
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'openapi.yaml'
+      - 'openapi.json'
+      - 'api/**'
+      - 'src/**'
+
+  # Trigger on push to main branches
+  push:
+    branches: [ main, develop ]
+
+  # Manual trigger with environment selection
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      spec-path:
+        description: 'Path to OpenAPI spec'
+        required: false
+        default: 'openapi.yaml'
+
+  # Scheduled runs
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Set permissions for GitHub token
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  issues: write
+
+# Environment variables available to all jobs
+env:
+  NODE_VERSION: '20.x'
+  COVERAGE_THRESHOLD: 80
+
+jobs:
+  # Job 1: Basic API testing on development environment
+  test-dev-basic:
+    name: Basic Tests - Development
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run API tests
+        uses: ./.github/actions/api-test-agent
+        with:
+          spec-path: 'openapi.yaml'
+          environment: 'dev'
+          api-base-url: 'https://api-dev.example.com'
+          auth-token: ${{ secrets.DEV_API_TOKEN }}
+          output-path: './test-results'
+          coverage-threshold: 80
+
+      - name: Display test results
+        if: always()
+        run: |
+          echo "Tests completed with status: ${{ steps.test.outputs.status }}"
+          echo "Total: ${{ steps.test.outputs.total-count }}"
+          echo "Passed: ${{ steps.test.outputs.success-count }}"
+          echo "Failed: ${{ steps.test.outputs.failure-count }}"
+
+  # Job 2: Advanced testing with self-healing enabled
+  test-staging-advanced:
+    name: Advanced Tests - Staging (Self-Healing)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: test-dev-basic
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run API tests with self-healing
+        id: api-tests
+        uses: ./.github/actions/api-test-agent
+        with:
+          spec-path: 'openapi.yaml'
+          environment: 'staging'
+          api-base-url: 'https://api-staging.example.com'
+          auth-token: ${{ secrets.STAGING_API_TOKEN }}
+          auth-type: 'bearer'
+          output-path: './test-results-staging'
+          test-timeout: 60000
+          retries: 3
+          parallel-workers: 8
+          enable-self-healing: 'true'
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          coverage-threshold: 85
+          generate-html-report: 'true'
+          upload-artifacts: 'true'
+          custom-headers: '{"X-API-Version": "v1", "X-Client-ID": "ci-pipeline"}'
+
+      - name: Check self-healing effectiveness
+        if: always()
+        run: |
+          HEALED=${{ steps.api-tests.outputs.healed-tests }}
+          FAILED=${{ steps.api-tests.outputs.failure-count }}
+
+          echo "🔧 Auto-healed tests: $HEALED"
+
+          if [ "$HEALED" -gt 0 ]; then
+            echo "✅ Self-healing successfully fixed $HEALED test(s)"
+          fi
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "⚠️  $FAILED test(s) still failing after self-healing attempts"
+          fi
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-test-results
+          path: ./test-results-staging
+
+  # Job 3: Matrix testing across multiple environments
+  test-matrix:
+    name: Matrix Tests - ${{ matrix.environment }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+
+    strategy:
+      # Don't cancel other jobs if one fails
+      fail-fast: false
+
+      # Test matrix configuration
+      matrix:
+        environment: [dev, staging]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ['18.x', '20.x']
+        spec-file:
+          - path: 'openapi.yaml'
+            name: 'main-api'
+          - path: 'api/v2/openapi.yaml'
+            name: 'v2-api'
+
+        # Exclude certain combinations to reduce test time
+        exclude:
+          - environment: staging
+            os: windows-latest
+          - environment: staging
+            node-version: '18.x'
+
+        include:
+          # Add special production test on ubuntu only
+          - environment: production
+            os: ubuntu-latest
+            node-version: '20.x'
+            spec-file:
+              path: 'openapi.yaml'
+              name: 'main-api'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Get API base URL
+        id: api-url
+        run: |
+          case "${{ matrix.environment }}" in
+            dev)
+              echo "url=https://api-dev.example.com" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "url=https://api-staging.example.com" >> $GITHUB_OUTPUT
+              ;;
+            production)
+              echo "url=https://api.example.com" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Run API tests - ${{ matrix.spec-file.name }}
+        id: test
+        uses: ./.github/actions/api-test-agent
+        with:
+          spec-path: ${{ matrix.spec-file.path }}
+          environment: ${{ matrix.environment }}
+          api-base-url: ${{ steps.api-url.outputs.url }}
+          auth-token: ${{ secrets[format('{0}_API_TOKEN', matrix.environment)] }}
+          parallel-workers: 4
+          coverage-threshold: 75
+          fail-on-error: 'false'
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "### Test Results - ${{ matrix.environment }} - ${{ matrix.spec-file.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total | ${{ steps.test.outputs.total-count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | ${{ steps.test.outputs.success-count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ steps.test.outputs.failure-count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage | ${{ steps.test.outputs.coverage-percentage }}% |" >> $GITHUB_STEP_SUMMARY
+
+  # Job 4: API contract testing
+  test-contract-validation:
+    name: API Contract Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch base branch for comparison
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
+      - name: Check for spec changes
+        id: spec-changes
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "openapi"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "⚠️  OpenAPI specification has changed"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes to OpenAPI specification"
+          fi
+
+      - name: Validate contract changes
+        if: steps.spec-changes.outputs.changed == 'true'
+        uses: ./.github/actions/api-test-agent
+        with:
+          spec-path: 'openapi.yaml'
+          environment: 'staging'
+          api-base-url: 'https://api-staging.example.com'
+          auth-token: ${{ secrets.STAGING_API_TOKEN }}
+          test-filter: 'contract'
+          coverage-threshold: 100
+          fail-on-error: 'true'
+
+  # Job 5: Performance and load testing
+  test-performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run performance tests
+        id: perf-test
+        uses: ./.github/actions/api-test-agent
+        with:
+          spec-path: 'openapi.yaml'
+          environment: 'staging'
+          api-base-url: 'https://api-staging.example.com'
+          auth-token: ${{ secrets.STAGING_API_TOKEN }}
+          test-filter: 'performance'
+          parallel-workers: 16
+          test-timeout: 120000
+          fail-on-error: 'false'
+
+      - name: Analyze performance metrics
+        if: always()
+        run: |
+          echo "### Performance Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Total tests: ${{ steps.perf-test.outputs.total-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Passed: ${{ steps.perf-test.outputs.success-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Failed: ${{ steps.perf-test.outputs.failure-count }}" >> $GITHUB_STEP_SUMMARY
+
+  # Job 6: Security testing
+  test-security:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run security-focused tests
+        id: security-test
+        uses: ./.github/actions/api-test-agent
+        with:
+          spec-path: 'openapi.yaml'
+          environment: 'dev'
+          api-base-url: 'https://api-dev.example.com'
+          auth-token: ${{ secrets.DEV_API_TOKEN }}
+          test-filter: 'security,auth'
+          coverage-threshold: 95
+          fail-on-error: 'true'
+
+      - name: Check authentication tests
+        if: always()
+        run: |
+          if [ "${{ steps.security-test.outputs.failure-count }}" -gt 0 ]; then
+            echo "::error::Security tests failed - review authentication mechanisms"
+            exit 1
+          fi
+
+  # Job 7: Smoke tests for quick validation
+  test-smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        uses: ./.github/actions/api-test-agent
+        with:
+          spec-path: 'openapi.yaml'
+          environment: 'dev'
+          api-base-url: 'https://api-dev.example.com'
+          auth-token: ${{ secrets.DEV_API_TOKEN }}
+          test-filter: 'smoke,critical'
+          parallel-workers: 2
+          coverage-threshold: 50
+          generate-html-report: 'false'
+          upload-artifacts: 'false'
+
+  # Job 8: Final summary
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-dev-basic, test-staging-advanced, test-matrix]
+    if: always()
+
+    steps:
+      - name: Generate overall summary
+        run: |
+          echo "# API Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Basic Tests: ${{ needs.test-dev-basic.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Advanced Tests: ${{ needs.test-staging-advanced.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Matrix Tests: ${{ needs.test-matrix.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Determine overall status
+          if [ "${{ needs.test-dev-basic.result }}" == "success" ] && \
+             [ "${{ needs.test-staging-advanced.result }}" == "success" ]; then
+            echo "✅ **Overall Status: PASSED**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Overall Status: FAILED**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Send notification (optional)
+        if: failure()
+        run: |
+          echo "Tests failed - notification would be sent here"
+          # Add your notification logic (Slack, email, etc.)

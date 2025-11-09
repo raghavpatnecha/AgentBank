@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info:
+  title: Invalid Spec
+  version: 1.0.0
+
+paths:
+  /test:
+    get:
+      # Missing required 'responses' field
+      summary: This is invalid

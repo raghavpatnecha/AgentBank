@@ -1,0 +1,124 @@
+version: '3.8'
+
+# CI/CD optimized docker-compose configuration
+# Usage: docker-compose -f docker-compose.ci.yml up --abort-on-container-exit
+
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+      # Use cache from registry if available
+      cache_from:
+        - ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE:-api-test-agent}:latest
+        - ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE:-api-test-agent}:${GITHUB_SHA:-latest}
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE:-api-test-agent}:${GITHUB_SHA:-latest}
+
+    # Resource limits for CI
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # CI environment variables
+    environment:
+      - NODE_ENV=test
+      - CI=true
+      - PLAYWRIGHT_WORKERS=2
+      - PLAYWRIGHT_TIMEOUT=60000
+      - TEST_OUTPUT_DIR=/app/tests/generated
+      - TEST_REPORT_DIR=/app/test-results
+      - FORCE_COLOR=1
+      - NO_COLOR=0
+
+      # GitHub Actions specific
+      - GITHUB_ACTIONS=${GITHUB_ACTIONS:-false}
+      - GITHUB_WORKFLOW=${GITHUB_WORKFLOW:-}
+      - GITHUB_RUN_ID=${GITHUB_RUN_ID:-}
+      - GITHUB_RUN_NUMBER=${GITHUB_RUN_NUMBER:-}
+      - GITHUB_SHA=${GITHUB_SHA:-}
+      - GITHUB_REF=${GITHUB_REF:-}
+
+    # Volume mounts (minimal for CI)
+    volumes:
+      # Only mount result directories
+      - ./test-results:/app/test-results
+      - ./coverage:/app/coverage
+      - ./playwright-report:/app/playwright-report
+
+    # Network configuration
+    networks:
+      - ci-network
+
+    # Run tests and exit
+    command: >
+      sh -c "
+        echo '=== Running tests in CI mode ===' &&
+        npm run test:coverage -- --run --reporter=verbose &&
+        echo '=== Running Playwright tests ===' &&
+        npm run test:playwright -- --reporter=list &&
+        echo '=== Tests completed successfully ==='
+      "
+
+    # Exit on failure
+    restart: "no"
+
+    # No health check in CI (faster startup)
+
+    # Minimal logging for CI
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "1"
+
+  # Lint service for parallel execution
+  lint:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+      cache_from:
+        - ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE:-api-test-agent}:latest
+
+    environment:
+      - NODE_ENV=test
+      - CI=true
+
+    command: npm run lint
+
+    restart: "no"
+
+    networks:
+      - ci-network
+
+  # Type check service for parallel execution
+  typecheck:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runner
+      cache_from:
+        - ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE:-api-test-agent}:latest
+
+    environment:
+      - NODE_ENV=test
+      - CI=true
+
+    command: npm run typecheck
+
+    restart: "no"
+
+    networks:
+      - ci-network
+
+networks:
+  ci-network:
+    driver: bridge

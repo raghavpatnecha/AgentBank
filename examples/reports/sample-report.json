@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-08T10:30:00.000Z",
+  "summary": {
+    "total": 50,
+    "passed": 45,
+    "failed": 3,
+    "skipped": 2,
+    "selfHealed": 2,
+    "duration": 45200,
+    "successRate": 90
+  },
+  "environment": {
+    "baseUrl": "https://api.staging.example.com",
+    "environment": "staging",
+    "timestamp": "2025-01-08T10:30:00.000Z",
+    "nodeVersion": "v20.10.0",
+    "osInfo": "Linux 5.15.0"
+  },
+  "tests": [
+    {
+      "id": "test-1",
+      "name": "GET /users - Retrieve all users",
+      "suite": "Users API",
+      "status": "passed",
+      "duration": 125,
+      "request": {
+        "method": "GET",
+        "url": "/users"
+      },
+      "response": {
+        "status": 200
+      }
+    }
+  ],
+  "selfHealing": {
+    "totalAttempts": 2,
+    "successful": 2,
+    "failed": 0,
+    "successRate": 100
+  },
+  "performance": {
+    "averageResponseTime": 156,
+    "slowestTest": {
+      "name": "GET /orders",
+      "duration": 1200
+    },
+    "fastestTest": {
+      "name": "GET /health",
+      "duration": 12
+    }
+  }
+}

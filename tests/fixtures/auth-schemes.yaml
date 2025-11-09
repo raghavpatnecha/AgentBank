@@ -1,0 +1,107 @@
+openapi: 3.0.3
+info:
+  title: Authentication Schemes Test
+  version: 1.0.0
+
+paths:
+  /bearer:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - bearerAuth: []
+
+  /api-key-header:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - apiKeyHeader: []
+
+  /api-key-query:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - apiKeyQuery: []
+
+  /basic:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - basicAuth: []
+
+  /oauth2:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - oauth2: [read:data, write:data]
+
+  /openid:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - openId: []
+
+  /multiple:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - bearerAuth: []
+          apiKeyHeader: []
+        - oauth2: [read:data]
+
+  /optional:
+    get:
+      responses:
+        '200':
+          description: Success
+      security:
+        - bearerAuth: []
+        - {}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+    apiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+    apiKeyQuery:
+      type: apiKey
+      in: query
+      name: api_key
+
+    basicAuth:
+      type: http
+      scheme: basic
+
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read:data: Read data
+            write:data: Write data
+
+    openId:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
