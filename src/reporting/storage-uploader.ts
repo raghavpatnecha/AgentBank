@@ -5,11 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type {
-  UploadConfig,
-  UploadResult,
-  UploadResults,
-} from '../types/reporting-types.js';
+import type { UploadConfig, UploadResult, UploadResults } from '../types/reporting-types.js';
 
 export class StorageUploader {
   constructor(private config: UploadConfig) {}
@@ -36,14 +32,14 @@ export class StorageUploader {
 
         const result = await this.uploadFile(filePath, format);
         uploads.push(result);
-        
+
         if (result.success && result.size) {
           totalSize += result.size;
         }
       }
 
-      const allSuccess = uploads.every(u => u.success);
-      
+      const allSuccess = uploads.every((u) => u.success);
+
       return {
         success: allSuccess,
         uploads,
@@ -108,10 +104,10 @@ export class StorageUploader {
     // Mock implementation - in production would use AWS SDK
     const key = `${this.config.s3.prefix || ''}${path.basename(filePath)}`;
     const url = `https://${this.config.s3.bucket}.s3.${this.config.s3.region}.amazonaws.com/${key}`;
-    
+
     // Simulate upload
-    console.log(`[Mock] Uploading to S3: ${url}`);
-    
+    console.warn(`[Mock] Uploading to S3: ${url}`);
+
     return url;
   }
 
@@ -123,9 +119,9 @@ export class StorageUploader {
     // Mock implementation - in production would use Google Cloud Storage SDK
     const key = `${this.config.gcs.prefix || ''}${path.basename(filePath)}`;
     const url = `https://storage.googleapis.com/${this.config.gcs.bucket}/${key}`;
-    
-    console.log(`[Mock] Uploading to GCS: ${url}`);
-    
+
+    console.warn(`[Mock] Uploading to GCS: ${url}`);
+
     return url;
   }
 
@@ -137,9 +133,9 @@ export class StorageUploader {
     // Mock implementation - in production would use Azure Storage SDK
     const key = `${this.config.azure.prefix || ''}${path.basename(filePath)}`;
     const url = `https://${this.config.azure.accountName}.blob.core.windows.net/${this.config.azure.containerName}/${key}`;
-    
-    console.log(`[Mock] Uploading to Azure: ${url}`);
-    
+
+    console.warn(`[Mock] Uploading to Azure: ${url}`);
+
     return url;
   }
 
@@ -149,8 +145,8 @@ export class StorageUploader {
     }
 
     // Mock implementation - in production would use fetch or axios
-    console.log(`[Mock] Uploading to HTTP: ${this.config.http.endpoint}`);
-    
+    console.warn(`[Mock] Uploading to HTTP: ${this.config.http.endpoint}`);
+
     return `${this.config.http.endpoint}/${path.basename(filePath)}`;
   }
 

@@ -239,10 +239,7 @@ export class CommentFormatter {
         .join('\n');
 
       sections.push(
-        this.createCollapsibleSection(
-          `Show ${remaining.length} more passed tests`,
-          remainingList
-        )
+        this.createCollapsibleSection(`Show ${remaining.length} more passed tests`, remainingList)
       );
     }
 
@@ -311,7 +308,7 @@ export class CommentFormatter {
     // Stack trace
     if (test.error?.stack) {
       const stackLines = test.error.stack.split('\n').slice(0, 10); // Limit to 10 lines
-      details.push('**Stack Trace**:\n```\n' + stackLines.join('\n') + '\n```\n');
+      details.push(`**Stack Trace**:\n\`\`\`\n${stackLines.join('\n')}\n\`\`\`\n`);
     }
 
     // Location
@@ -381,10 +378,7 @@ export class CommentFormatter {
       const remaining = tests.slice(displayCount);
       const remainingList = remaining.map((t) => `- \`${t.name}\``).join('\n');
       lines.push(
-        this.createCollapsibleSection(
-          `Show ${remaining.length} more skipped tests`,
-          remainingList
-        )
+        this.createCollapsibleSection(`Show ${remaining.length} more skipped tests`, remainingList)
       );
     }
 
@@ -403,7 +397,9 @@ export class CommentFormatter {
     sections.push('### 📈 Performance Metrics\n');
 
     // Average response time
-    sections.push(`- **Average Response Time**: ${this.formatDuration(metrics.averageResponseTime)}`);
+    sections.push(
+      `- **Average Response Time**: ${this.formatDuration(metrics.averageResponseTime)}`
+    );
 
     // Slowest endpoint
     if (metrics.slowestEndpoint) {
@@ -480,10 +476,10 @@ export class CommentFormatter {
     const truncated = content.substring(0, maxLength - 200);
     const lastNewline = truncated.lastIndexOf('\n');
 
-    return (
-      truncated.substring(0, lastNewline) +
-      '\n\n---\n\n⚠️ **Comment truncated** - Content exceeded GitHub\'s maximum comment length. View full results in the [HTML report].\n'
-    );
+    return `${truncated.substring(
+      0,
+      lastNewline
+    )}\n\n---\n\n⚠️ **Comment truncated** - Content exceeded GitHub's maximum comment length. View full results in the [HTML report].\n`;
   }
 
   /**
@@ -520,7 +516,7 @@ export class CommentFormatter {
       return '';
     }
 
-    return links.join(' | ') + '\n';
+    return `${links.join(' | ')}\n`;
   }
 
   /**
@@ -643,7 +639,7 @@ export class CommentFormatter {
       sections.push(this.formatHealedTests(results.healedTests));
     }
 
-    sections.push('\n' + this.formatLinks(results));
+    sections.push(`\n${this.formatLinks(results)}`);
     sections.push(this.formatFooter());
 
     return sections.join('\n');

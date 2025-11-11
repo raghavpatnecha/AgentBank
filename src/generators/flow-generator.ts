@@ -86,10 +86,7 @@ export class FlowGenerator {
   private bodyGenerator: RequestBodyGenerator;
   private options: Required<FlowGeneratorOptions>;
 
-  constructor(
-    bodyGenerator: RequestBodyGenerator,
-    options: FlowGeneratorOptions = {}
-  ) {
+  constructor(bodyGenerator: RequestBodyGenerator, options: FlowGeneratorOptions = {}) {
     this.bodyGenerator = bodyGenerator;
     this.options = {
       includeCRUD: options.includeCRUD ?? true,
@@ -321,9 +318,7 @@ export class FlowGenerator {
    */
   private detectListFilterFlows(endpoints: ApiEndpoint[]): WorkflowFlow[] {
     const flows: WorkflowFlow[] = [];
-    const listEndpoints = endpoints.filter(
-      (e) => e.method === 'get' && !this.hasIdParameter(e)
-    );
+    const listEndpoints = endpoints.filter((e) => e.method === 'get' && !this.hasIdParameter(e));
 
     for (const listEndpoint of listEndpoints) {
       // Check if this endpoint supports query parameters for filtering
@@ -395,8 +390,9 @@ export class FlowGenerator {
    */
   private getExpectedStatus(endpoint: ApiEndpoint, operation: string): number {
     // Check the endpoint's responses for success status
-    const successStatuses = Array.from(endpoint.responses.keys())
-      .filter((status) => typeof status === 'number' && status >= 200 && status < 300);
+    const successStatuses = Array.from(endpoint.responses.keys()).filter(
+      (status) => typeof status === 'number' && status >= 200 && status < 300
+    );
 
     if (successStatuses.length > 0) {
       return successStatuses[0] as number;
@@ -447,20 +443,30 @@ export class FlowGenerator {
       const method = step.endpoint.method.toLowerCase();
 
       // For steps that need the captured data, generate path with substitution
-      const pathWithParams = step.order > 1 && flow.steps[0]?.dataPass
-        ? this.generatePathWithParams(step.endpoint.path, flow.steps[0].dataPass)
-        : step.endpoint.path;
+      const pathWithParams =
+        step.order > 1 && flow.steps[0]?.dataPass
+          ? this.generatePathWithParams(step.endpoint.path, flow.steps[0].dataPass)
+          : step.endpoint.path;
 
       // Generate request
-      if (step.endpoint.requestBody && (method === 'post' || method === 'put' || method === 'patch')) {
+      if (
+        step.endpoint.requestBody &&
+        (method === 'post' || method === 'put' || method === 'patch')
+      ) {
         const bodySchema = this.extractBodySchema(step.endpoint);
         const bodyData = bodySchema ? this.bodyGenerator.generateBody(bodySchema) : {};
 
-        lines.push(`${indent}const ${step.order}Res = await request.${method}(\`${pathWithParams}\`, {`);
-        lines.push(`${indent}  data: ${JSON.stringify(bodyData, null, 2).split('\n').join(`\n${indent}  `)}`);
+        lines.push(
+          `${indent}const ${step.order}Res = await request.${method}(\`${pathWithParams}\`, {`
+        );
+        lines.push(
+          `${indent}  data: ${JSON.stringify(bodyData, null, 2).split('\n').join(`\n${indent}  `)}`
+        );
         lines.push(`${indent}});`);
       } else {
-        lines.push(`${indent}const ${step.order}Res = await request.${method}(\`${pathWithParams}\`);`);
+        lines.push(
+          `${indent}const ${step.order}Res = await request.${method}(\`${pathWithParams}\`);`
+        );
       }
 
       // Add status assertion
@@ -486,7 +492,7 @@ export class FlowGenerator {
   private generatePathWithParams(path: string, dataPassVar?: string): string {
     if (!dataPassVar) return path;
     // Replace path parameters with template literal syntax
-    return path.replace(/\{[^}]+\}/g, '${' + dataPassVar + '}');
+    return path.replace(/\{[^}]+\}/g, `\${${dataPassVar}}`);
   }
 
   /**
@@ -497,7 +503,7 @@ export class FlowGenerator {
 
     const content = endpoint.requestBody.content;
     const jsonContent = content['application/json'];
-    if (!jsonContent || !jsonContent.schema) return null;
+    if (!jsonContent?.schema) return null;
 
     return jsonContent.schema;
   }

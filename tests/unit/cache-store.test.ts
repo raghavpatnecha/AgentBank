@@ -19,9 +19,7 @@ vi.mock('fs/promises');
 describe('CacheStore', () => {
   let cache: CacheStore;
 
-  const createMockHealingContext = (
-    overrides: Partial<HealingContext> = {}
-  ): HealingContext => ({
+  const createMockHealingContext = (overrides: Partial<HealingContext> = {}): HealingContext => ({
     failureType: FailureType.ASSERTION,
     specDiff: { added: ['field1'], removed: [] },
     testCode: 'expect(response.status).toBe(200)',
@@ -536,11 +534,7 @@ describe('CacheStore', () => {
       await cache.set('key1', 'value1');
       await cache.exportCache('/test/cache.json');
 
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        '/test/cache.json',
-        expect.any(String),
-        'utf-8'
-      );
+      expect(fs.writeFile).toHaveBeenCalledWith('/test/cache.json', expect.any(String), 'utf-8');
     });
 
     it('should include all cache items', async () => {
@@ -575,9 +569,7 @@ describe('CacheStore', () => {
     it('should handle write errors', async () => {
       vi.mocked(fs.writeFile).mockRejectedValue(new Error('Permission denied'));
 
-      await expect(cache.exportCache('/test/cache.json')).rejects.toThrow(
-        'Failed to export cache'
-      );
+      await expect(cache.exportCache('/test/cache.json')).rejects.toThrow('Failed to export cache');
     });
   });
 
@@ -660,9 +652,7 @@ describe('CacheStore', () => {
     it('should handle read errors', async () => {
       vi.mocked(fs.readFile).mockRejectedValue(new Error('File not found'));
 
-      await expect(cache.importCache('/test/cache.json')).rejects.toThrow(
-        'Failed to import cache'
-      );
+      await expect(cache.importCache('/test/cache.json')).rejects.toThrow('Failed to import cache');
     });
   });
 

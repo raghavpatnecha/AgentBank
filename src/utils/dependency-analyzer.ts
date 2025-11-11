@@ -111,9 +111,7 @@ export function findCRUDSets(endpoints: ApiEndpoint[]): CRUDSet[] {
   }
 
   // Filter out incomplete CRUD sets (must have at least create and read)
-  return Array.from(resourceMap.values()).filter(
-    (set) => set.create || (set.read && set.list)
-  );
+  return Array.from(resourceMap.values()).filter((set) => set.create || (set.read && set.list));
 }
 
 /**
@@ -212,8 +210,10 @@ export function extractResourceName(endpoint: ApiEndpoint): string | null {
   // Try operation ID first (most specific)
   if (endpoint.operationId) {
     // Extract resource from operationId (e.g., 'getUser' -> 'user')
-    const match = endpoint.operationId.match(/(?:get|post|put|patch|delete|list|create|update|remove)(.+)/i);
-    if (match && match[1]) {
+    const match = endpoint.operationId.match(
+      /(?:get|post|put|patch|delete|list|create|update|remove)(.+)/i
+    );
+    if (match?.[1]) {
       return match[1].toLowerCase();
     }
   }
@@ -232,8 +232,12 @@ export function extractResourceName(endpoint: ApiEndpoint): string | null {
 
   // Find the first meaningful non-parameter part
   for (const part of parts) {
-    if (!part.startsWith('{') && !part.endsWith('}') &&
-        part.length > 0 && !skipSegments.includes(part.toLowerCase())) {
+    if (
+      !part.startsWith('{') &&
+      !part.endsWith('}') &&
+      part.length > 0 &&
+      !skipSegments.includes(part.toLowerCase())
+    ) {
       return part;
     }
   }
@@ -305,7 +309,9 @@ export function isDeleteEndpoint(endpoint: ApiEndpoint): boolean {
 /**
  * Get CRUD operation type for endpoint
  */
-export function getCRUDOperation(endpoint: ApiEndpoint): 'create' | 'read' | 'update' | 'delete' | 'list' | null {
+export function getCRUDOperation(
+  endpoint: ApiEndpoint
+): 'create' | 'read' | 'update' | 'delete' | 'list' | null {
   if (isCreateEndpoint(endpoint)) return 'create';
   if (isDetailEndpoint(endpoint)) return 'read';
   if (isUpdateEndpoint(endpoint)) return 'update';

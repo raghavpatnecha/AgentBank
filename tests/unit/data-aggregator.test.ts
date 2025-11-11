@@ -60,9 +60,7 @@ describe('DataAggregator', () => {
 
   describe('setHealingData', () => {
     it('should set healing attempts', () => {
-      const attempts: HealingAttempt[] = [
-        createMockHealingAttempt({ success: true }),
-      ];
+      const attempts: HealingAttempt[] = [createMockHealingAttempt({ success: true })];
       aggregator.setHealingData(attempts);
       expect(aggregator).toBeDefined();
     });
@@ -101,9 +99,7 @@ describe('DataAggregator', () => {
     });
 
     it('should include all report sections', async () => {
-      const results = createMockPlaywrightResults([
-        createMockPlaywrightTest({ status: 'passed' }),
-      ]);
+      const results = createMockPlaywrightResults([createMockPlaywrightTest({ status: 'passed' })]);
 
       const report = await aggregator.aggregateResults(results);
 
@@ -712,7 +708,7 @@ describe('DataAggregator', () => {
       const validation = aggregator.validateReportData(report);
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors.some(e => e.includes("don't match"))).toBe(true);
+      expect(validation.errors.some((e) => e.includes("don't match"))).toBe(true);
     });
 
     it('should detect invalid success rate', () => {
@@ -784,9 +780,7 @@ describe('DataAggregator', () => {
     });
 
     it('should handle tests with extremely long durations', () => {
-      const testResults = [
-        createMockTestResult({ duration: 999999999 }),
-      ];
+      const testResults = [createMockTestResult({ duration: 999999999 })];
 
       const summary = aggregator.calculateSummary(testResults);
 
@@ -845,7 +839,7 @@ describe('DataAggregator', () => {
 
       const report = await aggregator.aggregateResults(results);
 
-      expect(report.warnings.some(w => w.includes('success rate'))).toBe(true);
+      expect(report.warnings.some((w) => w.includes('success rate'))).toBe(true);
     });
 
     it('should generate warnings for timeouts', async () => {
@@ -855,7 +849,7 @@ describe('DataAggregator', () => {
 
       const report = await aggregator.aggregateResults(results);
 
-      expect(report.warnings.some(w => w.includes('timed out'))).toBe(true);
+      expect(report.warnings.some((w) => w.includes('timed out'))).toBe(true);
     });
   });
 
@@ -863,13 +857,11 @@ describe('DataAggregator', () => {
 
   describe('recommendation generation', () => {
     it('should recommend fixing failing tests', async () => {
-      const results = createMockPlaywrightResults([
-        createMockPlaywrightTest({ status: 'failed' }),
-      ]);
+      const results = createMockPlaywrightResults([createMockPlaywrightTest({ status: 'failed' })]);
 
       const report = await aggregator.aggregateResults(results);
 
-      expect(report.recommendations.some(r => r.includes('failing tests'))).toBe(true);
+      expect(report.recommendations.some((r) => r.includes('failing tests'))).toBe(true);
     });
 
     it('should recommend optimizing slow tests', async () => {
@@ -879,7 +871,7 @@ describe('DataAggregator', () => {
 
       const report = await aggregator.aggregateResults(results);
 
-      expect(report.recommendations.some(r => r.includes('slow tests'))).toBe(true);
+      expect(report.recommendations.some((r) => r.includes('slow tests'))).toBe(true);
     });
   });
 });

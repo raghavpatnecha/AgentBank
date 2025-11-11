@@ -22,7 +22,7 @@ const VALIDATION_RULES: ValidationRule[] = [
   // Required: API_BASE_URL
   {
     field: 'apiBaseUrl',
-    validate: (config) => !!config.apiBaseUrl && config.apiBaseUrl.trim().length > 0,
+    validate: (config) => Boolean(config.apiBaseUrl) && config.apiBaseUrl.trim().length > 0,
     errorMessage: 'API_BASE_URL is required and cannot be empty',
   },
 
@@ -38,7 +38,8 @@ const VALIDATION_RULES: ValidationRule[] = [
         return false;
       }
     },
-    errorMessage: 'API_BASE_URL must be a valid URL (e.g., http://localhost:3000 or https://api.example.com)',
+    errorMessage:
+      'API_BASE_URL must be a valid URL (e.g., http://localhost:3000 or https://api.example.com)',
   },
 
   // API_BASE_URL should use https in production
@@ -62,45 +63,46 @@ const VALIDATION_RULES: ValidationRule[] = [
     field: 'authentication',
     validate: (config) => {
       if (!config.isProduction) return true;
-      return !!(config.apiKey || config.authToken || config.oauth || config.basicAuth);
+      return Boolean(config.apiKey || config.authToken || config.oauth || config.basicAuth);
     },
-    errorMessage: 'At least one authentication method (API_KEY, API_TOKEN, OAuth2, or Basic Auth) should be configured in production',
+    errorMessage:
+      'At least one authentication method (API_KEY, API_TOKEN, OAuth2, or Basic Auth) should be configured in production',
   },
 
   // OAuth2: All OAuth fields required if any is set
   {
     field: 'oauth',
     validate: (config) => {
-      const hasAnyOAuth = !!(
+      const hasAnyOAuth = Boolean(
         process.env.OAUTH_CLIENT_ID ||
-        process.env.OAUTH_CLIENT_SECRET ||
-        process.env.OAUTH_TOKEN_URL
+          process.env.OAUTH_CLIENT_SECRET ||
+          process.env.OAUTH_TOKEN_URL
       );
 
       if (!hasAnyOAuth) return true; // No OAuth configured, that's fine
 
       // If any OAuth field is set, all must be set
-      return !!(
-        config.oauth?.clientId &&
-        config.oauth?.clientSecret &&
-        config.oauth?.tokenUrl
+      return Boolean(
+        config.oauth?.clientId && config.oauth?.clientSecret && config.oauth?.tokenUrl
       );
     },
-    errorMessage: 'OAuth2 configuration incomplete: OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, and OAUTH_TOKEN_URL must all be set together',
+    errorMessage:
+      'OAuth2 configuration incomplete: OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, and OAUTH_TOKEN_URL must all be set together',
   },
 
   // Basic Auth: Both username and password required if any is set
   {
     field: 'basicAuth',
     validate: (config) => {
-      const hasAnyBasicAuth = !!(process.env.API_USERNAME || process.env.API_PASSWORD);
+      const hasAnyBasicAuth = Boolean(process.env.API_USERNAME || process.env.API_PASSWORD);
 
       if (!hasAnyBasicAuth) return true; // No Basic Auth configured, that's fine
 
       // If any Basic Auth field is set, both must be set
-      return !!(config.basicAuth?.username && config.basicAuth?.password);
+      return Boolean(config.basicAuth?.username && config.basicAuth?.password);
     },
-    errorMessage: 'Basic Auth configuration incomplete: API_USERNAME and API_PASSWORD must both be set together',
+    errorMessage:
+      'Basic Auth configuration incomplete: API_USERNAME and API_PASSWORD must both be set together',
   },
 
   // REQUEST_TIMEOUT must be positive
@@ -220,14 +222,10 @@ export function validateEnvironment(config: EnvironmentConfig): void {
 
   // If there are errors, throw ValidationError with all collected errors
   if (errors.length > 0) {
-    throw new ValidationError(
-      'Environment configuration validation failed',
-      errors,
-      {
-        configFields: Object.keys(config),
-        errorCount: errors.length,
-      }
-    );
+    throw new ValidationError('Environment configuration validation failed', errors, {
+      configFields: Object.keys(config),
+      errorCount: errors.length,
+    });
   }
 }
 

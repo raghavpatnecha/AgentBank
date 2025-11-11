@@ -139,7 +139,9 @@ describe('ResponseValidatorGenerator', () => {
 
       const code = generator.generateValidation(schema);
 
-      expect(code).toContain('toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)');
+      expect(code).toContain(
+        'toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)'
+      );
     });
 
     it('should validate URL format', () => {
@@ -370,7 +372,7 @@ describe('ResponseValidatorGenerator', () => {
 
       const code = customGen.generateValidation(schema);
 
-      expect(code).not.toContain("expect(typeof");
+      expect(code).not.toContain('expect(typeof');
     });
 
     it('should skip comments when disabled', () => {

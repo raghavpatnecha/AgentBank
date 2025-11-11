@@ -81,13 +81,15 @@ paths:
 
       vi.mocked(fs.readdir).mockResolvedValue([]);
 
-      vi.mocked(fs.readFile).mockImplementation(async (filePath: Parameters<typeof fs.readFile>[0]) => {
-        const pathStr = String(filePath);
-        if (pathStr.includes('openapi.yaml')) {
-          return 'openapi: 3.0.0\ninfo:\n  title: API\n  version: 1.0.0\npaths: {}';
+      vi.mocked(fs.readFile).mockImplementation(
+        async (filePath: Parameters<typeof fs.readFile>[0]) => {
+          const pathStr = String(filePath);
+          if (pathStr.includes('openapi.yaml')) {
+            return 'openapi: 3.0.0\ninfo:\n  title: API\n  version: 1.0.0\npaths: {}';
+          }
+          return 'swagger: "2.0"\ninfo:\n  title: API\n  version: 1.0.0\npaths: {}';
         }
-        return 'swagger: "2.0"\ninfo:\n  title: API\n  version: 1.0.0\npaths: {}';
-      });
+      );
 
       const specs = await detector.detectSpecFiles({ repoPath });
 

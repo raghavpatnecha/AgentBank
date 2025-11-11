@@ -45,42 +45,51 @@ describe('Error and Edge Case Test Generation Integration', () => {
         const tests = errorGenerator.generateTests(endpoint);
 
         // Should generate at least some tests for most endpoints
-        if (endpoint.requestBody || endpoint.parameters.length > 0 || endpoint.security.length > 0) {
+        if (
+          endpoint.requestBody ||
+          endpoint.parameters.length > 0 ||
+          endpoint.security.length > 0
+        ) {
           expect(tests.length).toBeGreaterThan(0);
         }
       }
     });
 
     it('should generate 400 tests for endpoints with request bodies', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post' && e.path === '/pet');
+      const postEndpoint = endpoints.find((e) => e.method === 'post' && e.path === '/pet');
       expect(postEndpoint).toBeDefined();
 
       const tests = errorGenerator.generateTests(postEndpoint!);
 
-      const test400 = tests.find(t => t.expectedResponse.status === 400 ||
-        (Array.isArray(t.expectedResponse.status) && t.expectedResponse.status.includes(400)));
+      const test400 = tests.find(
+        (t) =>
+          t.expectedResponse.status === 400 ||
+          (Array.isArray(t.expectedResponse.status) && t.expectedResponse.status.includes(400))
+      );
       expect(test400).toBeDefined();
       expect(test400?.type).toBe('error-case');
     });
 
     it('should generate 401 tests for authenticated endpoints', () => {
-      const authenticatedEndpoint = endpoints.find(e => e.security.length > 0);
+      const authenticatedEndpoint = endpoints.find((e) => e.security.length > 0);
       expect(authenticatedEndpoint).toBeDefined();
 
       const tests = errorGenerator.generateTests(authenticatedEndpoint!);
 
-      const test401 = tests.find(t => t.expectedResponse.status === 401);
+      const test401 = tests.find((t) => t.expectedResponse.status === 401);
       expect(test401).toBeDefined();
       expect(test401?.metadata.tags).toContain('auth');
     });
 
     it('should generate 404 tests for endpoints with path parameters', () => {
-      const getByIdEndpoint = endpoints.find(e => e.path.includes('{petId}') && e.method === 'get');
+      const getByIdEndpoint = endpoints.find(
+        (e) => e.path.includes('{petId}') && e.method === 'get'
+      );
       expect(getByIdEndpoint).toBeDefined();
 
       const tests = errorGenerator.generateTests(getByIdEndpoint!);
 
-      const test404 = tests.find(t => t.expectedResponse.status === 404);
+      const test404 = tests.find((t) => t.expectedResponse.status === 404);
       expect(test404).toBeDefined();
       expect(test404?.request.pathParams).toBeDefined();
     });
@@ -96,7 +105,7 @@ describe('Error and Edge Case Test Generation Integration', () => {
       const endpoint = endpoints[0];
       const tests = errorGenerator.generateTests(endpoint!);
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.id).toBeDefined();
         expect(test.name).toBeDefined();
         expect(test.description).toBeDefined();
@@ -113,11 +122,11 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should include descriptive test names', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post');
+      const postEndpoint = endpoints.find((e) => e.method === 'post');
       if (postEndpoint) {
         const tests = errorGenerator.generateTests(postEndpoint);
 
-        tests.forEach(test => {
+        tests.forEach((test) => {
           expect(test.name).toContain(postEndpoint.method.toUpperCase());
           expect(test.name).toContain(postEndpoint.path);
           expect(test.name).toMatch(/\d{3}/); // Should contain status code
@@ -128,7 +137,7 @@ describe('Error and Edge Case Test Generation Integration', () => {
 
   describe('Edge Case Generation', () => {
     it('should generate edge case tests for endpoints with request bodies', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post' && e.requestBody);
+      const postEndpoint = endpoints.find((e) => e.method === 'post' && e.requestBody);
       expect(postEndpoint).toBeDefined();
 
       const tests = edgeGenerator.generateTests(postEndpoint!);
@@ -138,11 +147,11 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should generate boundary value tests', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post' && e.path === '/pet');
+      const postEndpoint = endpoints.find((e) => e.method === 'post' && e.path === '/pet');
       if (postEndpoint) {
         const tests = edgeGenerator.generateTests(postEndpoint);
 
-        const boundaryTest = tests.find(t => t.metadata.tags.includes('boundary'));
+        const boundaryTest = tests.find((t) => t.metadata.tags.includes('boundary'));
         // Boundary tests may not always be generated if no constraints exist
         if (boundaryTest) {
           expect(boundaryTest.type).toBe('edge-case');
@@ -151,11 +160,11 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should generate special character tests', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post' && e.requestBody);
+      const postEndpoint = endpoints.find((e) => e.method === 'post' && e.requestBody);
       if (postEndpoint) {
         const tests = edgeGenerator.generateTests(postEndpoint);
 
-        const specialCharsTest = tests.find(t => t.metadata.tags.includes('special-characters'));
+        const specialCharsTest = tests.find((t) => t.metadata.tags.includes('special-characters'));
         if (specialCharsTest) {
           expect(specialCharsTest.metadata.tags).toContain('security');
         }
@@ -163,14 +172,15 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should generate empty value tests', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post' && e.requestBody);
+      const postEndpoint = endpoints.find((e) => e.method === 'post' && e.requestBody);
       if (postEndpoint) {
         const tests = edgeGenerator.generateTests(postEndpoint);
 
-        const emptyTest = tests.find(t =>
-          t.metadata.tags.includes('empty-value') ||
-          t.metadata.tags.includes('empty-array') ||
-          t.metadata.tags.includes('empty-string')
+        const emptyTest = tests.find(
+          (t) =>
+            t.metadata.tags.includes('empty-value') ||
+            t.metadata.tags.includes('empty-array') ||
+            t.metadata.tags.includes('empty-string')
         );
         if (emptyTest) {
           expect(emptyTest.type).toBe('edge-case');
@@ -179,11 +189,11 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should generate large payload tests', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post' && e.requestBody);
+      const postEndpoint = endpoints.find((e) => e.method === 'post' && e.requestBody);
       if (postEndpoint) {
         const tests = edgeGenerator.generateTests(postEndpoint);
 
-        const largeTest = tests.find(t => t.metadata.tags.includes('large-payload'));
+        const largeTest = tests.find((t) => t.metadata.tags.includes('large-payload'));
         if (largeTest) {
           expect(largeTest.expectedResponse.status).toBeDefined();
         }
@@ -191,11 +201,11 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should generate valid test cases with all required fields', () => {
-      const postEndpoint = endpoints.find(e => e.method === 'post' && e.requestBody);
+      const postEndpoint = endpoints.find((e) => e.method === 'post' && e.requestBody);
       if (postEndpoint) {
         const tests = edgeGenerator.generateTests(postEndpoint);
 
-        tests.forEach(test => {
+        tests.forEach((test) => {
           expect(test.id).toBeDefined();
           expect(test.name).toBeDefined();
           expect(test.description).toBeDefined();
@@ -232,14 +242,14 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should cover multiple error types', () => {
-      const allTests = endpoints.flatMap(e => errorGenerator.generateTests(e));
+      const allTests = endpoints.flatMap((e) => errorGenerator.generateTests(e));
 
       const statusCodes = new Set<number>();
-      allTests.forEach(test => {
+      allTests.forEach((test) => {
         if (Array.isArray(test.expectedResponse.status)) {
-          test.expectedResponse.status.forEach(code => statusCodes.add(code));
+          test.expectedResponse.status.forEach((code) => statusCodes.add(code));
         } else {
-          statusCodes.add(test.expectedResponse.status as number);
+          statusCodes.add(test.expectedResponse.status);
         }
       });
 
@@ -249,11 +259,11 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should cover multiple edge case types', () => {
-      const allTests = endpoints.flatMap(e => edgeGenerator.generateTests(e));
+      const allTests = endpoints.flatMap((e) => edgeGenerator.generateTests(e));
 
       const edgeTypes = new Set<string>();
-      allTests.forEach(test => {
-        test.metadata.tags.forEach(tag => {
+      allTests.forEach((test) => {
+        test.metadata.tags.forEach((tag) => {
           if (tag !== 'edge-case') {
             edgeTypes.add(tag);
           }
@@ -267,18 +277,18 @@ describe('Error and Edge Case Test Generation Integration', () => {
 
     it('should generate unique test IDs', () => {
       const allTests = [
-        ...endpoints.flatMap(e => errorGenerator.generateTests(e)),
-        ...endpoints.flatMap(e => edgeGenerator.generateTests(e)),
+        ...endpoints.flatMap((e) => errorGenerator.generateTests(e)),
+        ...endpoints.flatMap((e) => edgeGenerator.generateTests(e)),
       ];
 
-      const ids = allTests.map(t => t.id);
+      const ids = allTests.map((t) => t.id);
       const uniqueIds = new Set(ids);
 
       expect(uniqueIds.size).toBe(ids.length);
     });
 
     it('should generate realistic and diverse test scenarios', () => {
-      const postPetEndpoint = endpoints.find(e => e.path === '/pet' && e.method === 'post');
+      const postPetEndpoint = endpoints.find((e) => e.path === '/pet' && e.method === 'post');
       if (postPetEndpoint) {
         const errorTests = errorGenerator.generateTests(postPetEndpoint);
         const edgeTests = edgeGenerator.generateTests(postPetEndpoint);
@@ -288,7 +298,7 @@ describe('Error and Edge Case Test Generation Integration', () => {
         expect(allScenarios.length).toBeGreaterThan(3);
 
         // Check that scenarios test different things
-        const descriptions = allScenarios.map(t => t.description);
+        const descriptions = allScenarios.map((t) => t.description);
         const uniqueDescriptions = new Set(descriptions);
         expect(uniqueDescriptions.size).toBe(descriptions.length);
       }
@@ -297,28 +307,28 @@ describe('Error and Edge Case Test Generation Integration', () => {
 
   describe('Generated Test Quality', () => {
     it('should include appropriate priority levels', () => {
-      const allTests = endpoints.flatMap(e => errorGenerator.generateTests(e));
+      const allTests = endpoints.flatMap((e) => errorGenerator.generateTests(e));
 
-      const priorities = new Set(allTests.map(t => t.metadata.priority));
+      const priorities = new Set(allTests.map((t) => t.metadata.priority));
       expect(priorities.size).toBeGreaterThan(0);
 
       // Auth tests should be critical
-      const authTest = allTests.find(t => t.metadata.tags.includes('auth'));
+      const authTest = allTests.find((t) => t.metadata.tags.includes('auth'));
       if (authTest) {
         expect(['critical', 'high']).toContain(authTest.metadata.priority);
       }
     });
 
     it('should tag tests appropriately', () => {
-      const errorTests = endpoints.flatMap(e => errorGenerator.generateTests(e));
-      const edgeTests = endpoints.flatMap(e => edgeGenerator.generateTests(e));
+      const errorTests = endpoints.flatMap((e) => errorGenerator.generateTests(e));
+      const edgeTests = endpoints.flatMap((e) => edgeGenerator.generateTests(e));
 
-      errorTests.forEach(test => {
+      errorTests.forEach((test) => {
         expect(test.metadata.tags).toContain('error');
         expect(test.metadata.tags.length).toBeGreaterThan(1);
       });
 
-      edgeTests.forEach(test => {
+      edgeTests.forEach((test) => {
         expect(test.metadata.tags).toContain('edge-case');
         expect(test.metadata.tags.length).toBeGreaterThan(1);
       });
@@ -326,19 +336,19 @@ describe('Error and Edge Case Test Generation Integration', () => {
 
     it('should set stability to stable for all tests', () => {
       const allTests = [
-        ...endpoints.flatMap(e => errorGenerator.generateTests(e)),
-        ...endpoints.flatMap(e => edgeGenerator.generateTests(e)),
+        ...endpoints.flatMap((e) => errorGenerator.generateTests(e)),
+        ...endpoints.flatMap((e) => edgeGenerator.generateTests(e)),
       ];
 
-      allTests.forEach(test => {
+      allTests.forEach((test) => {
         expect(test.metadata.stability).toBe('stable');
       });
     });
 
     it('should include generation metadata', () => {
-      const allTests = endpoints.flatMap(e => errorGenerator.generateTests(e));
+      const allTests = endpoints.flatMap((e) => errorGenerator.generateTests(e));
 
-      allTests.forEach(test => {
+      allTests.forEach((test) => {
         expect(test.metadata.generatedAt).toBeDefined();
         expect(test.metadata.generatorVersion).toBe('2.0.0');
         expect(new Date(test.metadata.generatedAt).getTime()).toBeGreaterThan(0);
@@ -348,9 +358,9 @@ describe('Error and Edge Case Test Generation Integration', () => {
 
   describe('Security and Attack Vectors', () => {
     it('should include XSS test scenarios', () => {
-      const edgeTests = endpoints.flatMap(e => edgeGenerator.generateTests(e));
+      const edgeTests = endpoints.flatMap((e) => edgeGenerator.generateTests(e));
 
-      const xssTest = edgeTests.find(t => t.metadata.tags.includes('xss'));
+      const xssTest = edgeTests.find((t) => t.metadata.tags.includes('xss'));
       if (xssTest) {
         expect(xssTest.metadata.tags).toContain('security');
         if (xssTest.request.body?.data) {
@@ -361,9 +371,9 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should include SQL injection test scenarios', () => {
-      const edgeTests = endpoints.flatMap(e => edgeGenerator.generateTests(e));
+      const edgeTests = endpoints.flatMap((e) => edgeGenerator.generateTests(e));
 
-      const sqlTest = edgeTests.find(t => t.metadata.tags.includes('sql-injection'));
+      const sqlTest = edgeTests.find((t) => t.metadata.tags.includes('sql-injection'));
       if (sqlTest) {
         expect(sqlTest.metadata.tags).toContain('security');
         if (sqlTest.request.body?.data) {
@@ -374,9 +384,9 @@ describe('Error and Edge Case Test Generation Integration', () => {
     });
 
     it('should test Unicode and internationalization', () => {
-      const edgeTests = endpoints.flatMap(e => edgeGenerator.generateTests(e));
+      const edgeTests = endpoints.flatMap((e) => edgeGenerator.generateTests(e));
 
-      const unicodeTest = edgeTests.find(t => t.metadata.tags.includes('unicode'));
+      const unicodeTest = edgeTests.find((t) => t.metadata.tags.includes('unicode'));
       if (unicodeTest) {
         expect(unicodeTest.metadata.tags).toContain('internationalization');
       }

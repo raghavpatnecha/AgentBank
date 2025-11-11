@@ -77,11 +77,15 @@ export function createLoggerConfigFromEnv(): LoggerConfig {
     file: process.env.LOG_FILE === 'true',
     filePath: process.env.LOG_FILE_PATH,
     prettyPrint: process.env.LOG_PRETTY_PRINT !== 'false',
-    maxBodySize: parseInt(process.env.LOG_MAX_BODY_SIZE || String(DEFAULT_LOGGER_CONFIG.maxBodySize), 10),
+    maxBodySize: parseInt(
+      process.env.LOG_MAX_BODY_SIZE || String(DEFAULT_LOGGER_CONFIG.maxBodySize),
+      10
+    ),
     redactSensitiveData: process.env.LOG_REDACT_SENSITIVE !== 'false',
     rotation: {
       maxFileSize: parseInt(
-        process.env.LOG_ROTATION_MAX_SIZE || String(DEFAULT_LOGGER_CONFIG.rotation?.maxFileSize || 0),
+        process.env.LOG_ROTATION_MAX_SIZE ||
+          String(DEFAULT_LOGGER_CONFIG.rotation?.maxFileSize || 0),
         10
       ),
       maxFiles: parseInt(

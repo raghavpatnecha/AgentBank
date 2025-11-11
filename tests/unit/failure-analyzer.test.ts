@@ -10,7 +10,7 @@ import {
   FailureType,
   AssertionErrorType,
   NetworkErrorType,
-  FailureAnalysis
+  FailureAnalysis,
 } from '../../src/types/failure-types.js';
 
 describe('FailureAnalyzer', () => {
@@ -111,8 +111,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "expect(locator('button')).toBeVisible()\nElement is hidden"
-        }
+          message: "expect(locator('button')).toBeVisible()\nElement is hidden",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -130,8 +130,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "expect(element).toHaveText('Hello')\nReceived: 'Goodbye'"
-        }
+          message: "expect(element).toHaveText('Hello')\nReceived: 'Goodbye'",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -150,8 +150,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "expect(element).toHaveAttribute('disabled', 'true')"
-        }
+          message: "expect(element).toHaveAttribute('disabled', 'true')",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -168,8 +168,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "expect(items).toHaveCount(5)\nReceived count: 3"
-        }
+          message: 'expect(items).toHaveCount(5)\nReceived count: 3',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -186,8 +186,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "expect(locator('.button')).toBeVisible()"
-        }
+          message: "expect(locator('.button')).toBeVisible()",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -206,8 +206,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'ECONNREFUSED - Connection refused'
-        }
+          message: 'ECONNREFUSED - Connection refused',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -225,8 +225,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Network error at https://api.example.com - DNS lookup failed'
-        }
+          message: 'Network error at https://api.example.com - DNS lookup failed',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -244,8 +244,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Network error - SSL certificate verification failed'
-        }
+          message: 'Network error - SSL certificate verification failed',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -263,8 +263,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'HTTP 500 Internal Server Error at https://api.example.com/data'
-        }
+          message: 'HTTP 500 Internal Server Error at https://api.example.com/data',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -283,8 +283,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'POST request failed with 400 Bad Request'
-        }
+          message: 'POST request failed with 400 Bad Request',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -301,8 +301,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'HTTP 404 Not Found'
-        }
+          message: 'HTTP 404 Not Found',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -322,8 +322,8 @@ describe('FailureAnalyzer', () => {
         duration: 30000,
         retry: 0,
         error: {
-          message: "Timeout 30000ms waiting for selector 'button.submit'"
-        }
+          message: "Timeout 30000ms waiting for selector 'button.submit'",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -345,8 +345,8 @@ describe('FailureAnalyzer', () => {
         duration: 30000,
         retry: 0,
         error: {
-          message: 'Timeout during navigation to https://example.com'
-        }
+          message: 'Timeout during navigation to https://example.com',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -364,8 +364,8 @@ describe('FailureAnalyzer', () => {
         duration: 10000,
         retry: 0,
         error: {
-          message: 'Timeout 10000ms waiting for click action'
-        }
+          message: 'Timeout 10000ms waiting for click action',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -383,15 +383,13 @@ describe('FailureAnalyzer', () => {
         duration: 5000,
         retry: 0,
         error: {
-          message: 'Timeout 5000ms exceeded'
-        }
+          message: 'Timeout 5000ms exceeded',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
 
-      const timeoutFix = analysis.potentialFixes.find(f =>
-        f.description.includes('timeout')
-      );
+      const timeoutFix = analysis.potentialFixes.find((f) => f.description.includes('timeout'));
       expect(timeoutFix).toBeDefined();
     });
   });
@@ -405,8 +403,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: '401 Unauthorized'
-        }
+          message: '401 Unauthorized',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -424,8 +422,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: '403 Forbidden - Access denied'
-        }
+          message: '403 Forbidden - Access denied',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -443,8 +441,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: '401 Authentication token expired'
-        }
+          message: '401 Authentication token expired',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -462,8 +460,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Authentication failed - invalid credentials provided'
-        }
+          message: 'Authentication failed - invalid credentials provided',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -480,8 +478,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Bearer token authentication failed'
-        }
+          message: 'Bearer token authentication failed',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -500,8 +498,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Locator('.submit-button') did not match any elements"
-        }
+          message: "Locator('.submit-button') did not match any elements",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -519,8 +517,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Element '#modal' is hidden"
-        }
+          message: "Element '#modal' is hidden",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -538,8 +536,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Selector 'button' matched multiple elements (5 found)"
-        }
+          message: "Selector 'button' matched multiple elements (5 found)",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -556,8 +554,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Element is detached from DOM"
-        }
+          message: 'Element is detached from DOM',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -574,8 +572,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Selector '.button' not found"
-        }
+          message: "Selector '.button' not found",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -592,8 +590,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Selector '//button[@id=\"submit\"]' not found"
-        }
+          message: 'Selector \'//button[@id="submit"]\' not found',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -612,8 +610,8 @@ describe('FailureAnalyzer', () => {
         duration: 30000,
         retry: 0,
         error: {
-          message: 'Navigation timeout to https://example.com'
-        }
+          message: 'Navigation timeout to https://example.com',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -631,8 +629,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Navigation failed to https://example.com - network error'
-        }
+          message: 'Navigation failed to https://example.com - network error',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -649,8 +647,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Navigation failed: SSL certificate invalid'
-        }
+          message: 'Navigation failed: SSL certificate invalid',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -669,8 +667,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Test failed'
-        }
+          message: 'Test failed',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -692,9 +690,9 @@ describe('FailureAnalyzer', () => {
           location: {
             file: '/tests/example.test.ts',
             line: 42,
-            column: 10
-          }
-        }
+            column: 10,
+          },
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -710,15 +708,15 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Test failed'
+          message: 'Test failed',
         },
         attachments: [
           {
             name: 'screenshot',
             path: '/screenshots/test-1.png',
-            contentType: 'image/png'
-          }
-        ]
+            contentType: 'image/png',
+          },
+        ],
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -735,15 +733,15 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Test failed'
+          message: 'Test failed',
         },
         attachments: [
           {
             name: 'trace',
             path: '/traces/test-1.zip',
-            contentType: 'application/zip'
-          }
-        ]
+            contentType: 'application/zip',
+          },
+        ],
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -761,8 +759,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Expected 'Hello' but got 'World'"
-        }
+          message: "Expected 'Hello' but got 'World'",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -779,13 +777,13 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Timeout 5000ms exceeded"
-        }
+          message: 'Timeout 5000ms exceeded',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
 
-      const automatedFix = analysis.potentialFixes.find(f => f.automated);
+      const automatedFix = analysis.potentialFixes.find((f) => f.automated);
       expect(automatedFix).toBeDefined();
     });
 
@@ -797,8 +795,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Test failed"
-        }
+          message: 'Test failed',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -818,8 +816,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Expected '5' but received '3'"
-        }
+          message: "Expected '5' but received '3'",
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -835,8 +833,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: "Something went wrong"
-        }
+          message: 'Something went wrong',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -854,8 +852,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Test failed'
-        }
+          message: 'Test failed',
+        },
       };
 
       const analysis = analyzeTestFailure(testResult);
@@ -872,13 +870,13 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: 'Test failed'
-        }
+          message: 'Test failed',
+        },
       };
 
       const analysis = analyzeTestFailure(testResult, {
         includeContext: false,
-        includeSuggestions: false
+        includeSuggestions: false,
       });
 
       expect(analysis.potentialFixes.length).toBe(0);
@@ -892,7 +890,7 @@ describe('FailureAnalyzer', () => {
         testName: 'test',
         status: 'passed',
         duration: 1000,
-        retry: 0
+        retry: 0,
       };
 
       expect(() => analyzer.analyzeFailure(testResult)).toThrow();
@@ -906,8 +904,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: ''
-        }
+          message: '',
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);
@@ -916,7 +914,7 @@ describe('FailureAnalyzer', () => {
     });
 
     it('should handle very long error messages', () => {
-      const longMessage = 'Error: ' + 'A'.repeat(10000);
+      const longMessage = `Error: ${'A'.repeat(10000)}`;
       const testResult: TestResult = {
         testPath: '/tests/example.test.ts',
         testName: 'test',
@@ -924,8 +922,8 @@ describe('FailureAnalyzer', () => {
         duration: 1000,
         retry: 0,
         error: {
-          message: longMessage
-        }
+          message: longMessage,
+        },
       };
 
       const analysis = analyzer.analyzeFailure(testResult);

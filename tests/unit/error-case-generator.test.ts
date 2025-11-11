@@ -47,7 +47,7 @@ describe('ErrorCaseGenerator', () => {
 
       expect(tests.length).toBeGreaterThan(0);
       expect(tests.length).toBeLessThanOrEqual(5);
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.type).toBe('error-case');
       });
     });
@@ -57,9 +57,7 @@ describe('ErrorCaseGenerator', () => {
         path: '/users/{id}',
         method: 'put',
         operationId: 'updateUser',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
           content: {
@@ -75,7 +73,7 @@ describe('ErrorCaseGenerator', () => {
           },
         },
         responses: new Map(),
-        security: [{ 'bearerAuth': [] }],
+        security: [{ bearerAuth: [] }],
         tags: [],
         servers: [],
       };
@@ -116,7 +114,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const test400 = tests.find(t => t.name.includes('400'));
+      const test400 = tests.find((t) => t.name.includes('400'));
       expect(test400).toBeDefined();
       expect(test400?.expectedResponse.status).toBe(400);
       expect(test400?.metadata.tags).toContain('400');
@@ -148,7 +146,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const invalidTypeTest = tests.find(t => t.name.includes('invalid type'));
+      const invalidTypeTest = tests.find((t) => t.name.includes('invalid type'));
       expect(invalidTypeTest).toBeDefined();
     });
 
@@ -156,9 +154,7 @@ describe('ErrorCaseGenerator', () => {
       const endpoint: ApiEndpoint = {
         path: '/users',
         method: 'get',
-        parameters: [
-          { name: 'status', in: 'query', required: true, schema: { type: 'string' } },
-        ],
+        parameters: [{ name: 'status', in: 'query', required: true, schema: { type: 'string' } }],
         responses: new Map(),
         security: [],
         tags: [],
@@ -167,7 +163,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const missingParamTest = tests.find(t => t.name.includes('missing required parameter'));
+      const missingParamTest = tests.find((t) => t.name.includes('missing required parameter'));
       expect(missingParamTest).toBeDefined();
       expect(missingParamTest?.request.queryParams).toBeDefined();
     });
@@ -181,14 +177,14 @@ describe('ErrorCaseGenerator', () => {
         operationId: 'listUsers',
         parameters: [],
         responses: new Map(),
-        security: [{ 'bearerAuth': [] }],
+        security: [{ bearerAuth: [] }],
         tags: [],
         servers: [],
       };
 
       const tests = generator.generateTests(endpoint);
 
-      const test401 = tests.find(t => t.name.includes('401'));
+      const test401 = tests.find((t) => t.name.includes('401'));
       expect(test401).toBeDefined();
       expect(test401?.expectedResponse.status).toBe(401);
       expect(test401?.metadata.tags).toContain('401');
@@ -201,14 +197,14 @@ describe('ErrorCaseGenerator', () => {
         method: 'get',
         parameters: [],
         responses: new Map(),
-        security: [{ 'apiKey': [] }],
+        security: [{ apiKey: [] }],
         tags: [],
         servers: [],
       };
 
       const tests = generator.generateTests(endpoint);
 
-      const invalidTokenTest = tests.find(t => t.name.includes('invalid'));
+      const invalidTokenTest = tests.find((t) => t.name.includes('invalid'));
       expect(invalidTokenTest).toBeDefined();
       if (invalidTokenTest) {
         expect(invalidTokenTest.request.headers?.['Authorization']).toContain('Bearer');
@@ -228,7 +224,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const test401 = tests.find(t => t.expectedResponse.status === 401);
+      const test401 = tests.find((t) => t.expectedResponse.status === 401);
       expect(test401).toBeUndefined();
     });
   });
@@ -240,14 +236,14 @@ describe('ErrorCaseGenerator', () => {
         method: 'delete',
         parameters: [],
         responses: new Map(),
-        security: [{ 'oauth2': ['admin:write'] }],
+        security: [{ oauth2: ['admin:write'] }],
         tags: [],
         servers: [],
       };
 
       const tests = generator.generateTests(endpoint);
 
-      const test403 = tests.find(t => t.name.includes('403'));
+      const test403 = tests.find((t) => t.name.includes('403'));
       expect(test403).toBeDefined();
       expect(test403?.metadata.tags).toContain('permissions');
     });
@@ -259,9 +255,7 @@ describe('ErrorCaseGenerator', () => {
         path: '/users/{id}',
         method: 'get',
         operationId: 'getUser',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
-        ],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: new Map(),
         security: [],
         tags: [],
@@ -270,7 +264,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const test404 = tests.find(t => t.name.includes('404'));
+      const test404 = tests.find((t) => t.name.includes('404'));
       expect(test404).toBeDefined();
       expect(test404?.expectedResponse.status).toBe(404);
       expect(test404?.request.pathParams?.['id']).toBeDefined();
@@ -281,9 +275,7 @@ describe('ErrorCaseGenerator', () => {
       const endpoint: ApiEndpoint = {
         path: '/users/{userId}',
         method: 'get',
-        parameters: [
-          { name: 'userId', in: 'path', required: true, schema: { type: 'string' } },
-        ],
+        parameters: [{ name: 'userId', in: 'path', required: true, schema: { type: 'string' } }],
         responses: new Map(),
         security: [],
         tags: [],
@@ -292,7 +284,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const test404 = tests.find(t => t.name.includes('404'));
+      const test404 = tests.find((t) => t.name.includes('404'));
       expect(test404).toBeDefined();
       expect(typeof test404?.request.pathParams?.['userId']?.value).toBe('string');
     });
@@ -310,7 +302,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const test404 = tests.find(t => t.expectedResponse.status === 404);
+      const test404 = tests.find((t) => t.expectedResponse.status === 404);
       expect(test404).toBeUndefined();
     });
   });
@@ -342,7 +334,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const emailTest = tests.find(t => t.name.includes('email'));
+      const emailTest = tests.find((t) => t.name.includes('email'));
       expect(emailTest).toBeDefined();
       if (emailTest?.request.body?.data) {
         const data = emailTest.request.body.data as Record<string, unknown>;
@@ -377,7 +369,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const minTest = tests.find(t => t.name.includes('minimum'));
+      const minTest = tests.find((t) => t.name.includes('minimum'));
       expect(minTest).toBeDefined();
       if (minTest?.request.body?.data) {
         const data = minTest.request.body.data as Record<string, unknown>;
@@ -411,7 +403,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const minLengthTest = tests.find(t => t.name.includes('too short'));
+      const minLengthTest = tests.find((t) => t.name.includes('too short'));
       expect(minLengthTest).toBeDefined();
     });
 
@@ -441,7 +433,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const validationTest = tests.find(t => t.metadata.tags.includes('validation'));
+      const validationTest = tests.find((t) => t.metadata.tags.includes('validation'));
       if (validationTest) {
         expect(Array.isArray(validationTest.expectedResponse.status)).toBe(true);
         const statuses = validationTest.expectedResponse.status as number[];
@@ -479,7 +471,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.metadata.tags).toContain('error');
         expect(test.metadata.tags.length).toBeGreaterThan(1);
       });
@@ -491,14 +483,14 @@ describe('ErrorCaseGenerator', () => {
         method: 'get',
         parameters: [],
         responses: new Map(),
-        security: [{ 'bearerAuth': [] }],
+        security: [{ bearerAuth: [] }],
         tags: [],
         servers: [],
       };
 
       const tests = generator.generateTests(endpoint);
 
-      const authTest = tests.find(t => t.metadata.tags.includes('auth'));
+      const authTest = tests.find((t) => t.metadata.tags.includes('auth'));
       if (authTest) {
         expect(authTest.metadata.priority).toBe('critical');
       }
@@ -530,7 +522,7 @@ describe('ErrorCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.metadata.operationId).toBe('createUser');
       });
     });

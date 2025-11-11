@@ -20,7 +20,12 @@ import {
   Conclusion,
 } from '../../src/types/check-run-types.js';
 import { FormattedTestResults } from '../../src/github/comment-formatter.js';
-import { TestResult, TestStatus, ExecutionSummary, ErrorType } from '../../src/types/executor-types.js';
+import {
+  TestResult,
+  TestStatus,
+  ExecutionSummary,
+  ErrorType,
+} from '../../src/types/executor-types.js';
 
 describe('CheckRunner Integration Tests', () => {
   let mockClient: GitHubClient;

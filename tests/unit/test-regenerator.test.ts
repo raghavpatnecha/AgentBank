@@ -27,7 +27,10 @@ class MockOpenAIClient implements OpenAIClient {
     this.mockResponses.set(key, response);
   }
 
-  async createCompletion(prompt: string, options?: any): Promise<{
+  async createCompletion(
+    prompt: string,
+    options?: any
+  ): Promise<{
     text: string;
     tokensUsed: number;
     model: string;
@@ -36,7 +39,7 @@ class MockOpenAIClient implements OpenAIClient {
 
     // Return predefined response or default
     const response = this.mockResponses.get('default') || {
-      text: '```typescript\nimport { test, expect } from \'@playwright/test\';\n\ntest(\'sample test\', async ({ request }) => {\n  const response = await request.get(\'/api/users\');\n  expect(response.status()).toBe(200);\n});\n```',
+      text: "```typescript\nimport { test, expect } from '@playwright/test';\n\ntest('sample test', async ({ request }) => {\n  const response = await request.get('/api/users');\n  expect(response.status()).toBe(200);\n});\n```",
       tokensUsed: 100,
     };
 
@@ -109,14 +112,16 @@ describe('PromptBuilder', () => {
 
     it('should include spec changes', () => {
       const context = createMockContext({
-        specChanges: [{
-          type: 'field_renamed' as any,
-          path: '/api/users',
-          oldValue: 'email',
-          newValue: 'emailAddress',
-          impact: 'medium' as any,
-          description: 'Field renamed from email to emailAddress',
-        }],
+        specChanges: [
+          {
+            type: 'field_renamed' as any,
+            path: '/api/users',
+            oldValue: 'email',
+            newValue: 'emailAddress',
+            impact: 'medium' as any,
+            description: 'Field renamed from email to emailAddress',
+          },
+        ],
       });
       const prompt = promptBuilder.buildRegenerationPrompt(context);
 
@@ -159,7 +164,16 @@ describe('PromptBuilder', () => {
       promptBuilder = new PromptBuilder(config);
 
       const context = createMockContext({
-        specChanges: [{ type: 'field_added' as any, path: '/test', oldValue: null, newValue: 'test', impact: 'low' as any, description: 'test' }],
+        specChanges: [
+          {
+            type: 'field_added' as any,
+            path: '/test',
+            oldValue: null,
+            newValue: 'test',
+            impact: 'low' as any,
+            description: 'test',
+          },
+        ],
       });
       const prompt = promptBuilder.buildRegenerationPrompt(context);
 

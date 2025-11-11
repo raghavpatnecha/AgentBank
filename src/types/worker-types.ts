@@ -26,7 +26,7 @@ export enum WorkerState {
   IDLE = 'idle',
   BUSY = 'busy',
   FAILED = 'failed',
-  TERMINATED = 'terminated'
+  TERMINATED = 'terminated',
 }
 
 /**
@@ -219,7 +219,7 @@ export enum AllocationStrategy {
   /** Random allocation */
   RANDOM = 'random',
   /** Priority-based allocation */
-  PRIORITY = 'priority'
+  PRIORITY = 'priority',
 }
 
 /**

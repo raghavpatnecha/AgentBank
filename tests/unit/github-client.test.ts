@@ -161,17 +161,17 @@ describe('GitHubClient', () => {
     });
 
     it('should validate required parameters', async () => {
-      await expect(
-        client.getPullRequest('', 'repo', 123)
-      ).rejects.toThrow("Parameter 'owner' is required");
+      await expect(client.getPullRequest('', 'repo', 123)).rejects.toThrow(
+        "Parameter 'owner' is required"
+      );
 
-      await expect(
-        client.getPullRequest('owner', '', 123)
-      ).rejects.toThrow("Parameter 'repo' is required");
+      await expect(client.getPullRequest('owner', '', 123)).rejects.toThrow(
+        "Parameter 'repo' is required"
+      );
 
-      await expect(
-        client.getPullRequest('owner', 'repo', -1)
-      ).rejects.toThrow("Parameter 'number' must be a valid positive number");
+      await expect(client.getPullRequest('owner', 'repo', -1)).rejects.toThrow(
+        "Parameter 'number' must be a valid positive number"
+      );
     });
 
     it('should handle API errors', async () => {
@@ -184,9 +184,9 @@ describe('GitHubClient', () => {
         },
       });
 
-      await expect(
-        client.getPullRequest('owner', 'repo', 999)
-      ).rejects.toThrow('GitHub API error during getPullRequest');
+      await expect(client.getPullRequest('owner', 'repo', 999)).rejects.toThrow(
+        'GitHub API error during getPullRequest'
+      );
     });
   });
 
@@ -247,9 +247,9 @@ describe('GitHubClient', () => {
         },
       });
 
-      await expect(
-        client.getFileContent('owner', 'repo', 'src')
-      ).rejects.toThrow('Path src is not a file (type: dir)');
+      await expect(client.getFileContent('owner', 'repo', 'src')).rejects.toThrow(
+        'Path src is not a file (type: dir)'
+      );
     });
 
     it('should throw error if content is missing', async () => {
@@ -260,9 +260,9 @@ describe('GitHubClient', () => {
         },
       });
 
-      await expect(
-        client.getFileContent('owner', 'repo', 'empty.txt')
-      ).rejects.toThrow('No content available for file empty.txt');
+      await expect(client.getFileContent('owner', 'repo', 'empty.txt')).rejects.toThrow(
+        'No content available for file empty.txt'
+      );
     });
   });
 
@@ -300,19 +300,19 @@ describe('GitHubClient', () => {
     });
 
     it('should reject empty comment body', async () => {
-      await expect(
-        client.postComment('owner', 'repo', 123, '')
-      ).rejects.toThrow('Comment body cannot be empty');
+      await expect(client.postComment('owner', 'repo', 123, '')).rejects.toThrow(
+        'Comment body cannot be empty'
+      );
 
-      await expect(
-        client.postComment('owner', 'repo', 123, '   ')
-      ).rejects.toThrow('Comment body cannot be empty');
+      await expect(client.postComment('owner', 'repo', 123, '   ')).rejects.toThrow(
+        'Comment body cannot be empty'
+      );
     });
 
     it('should validate required parameters', async () => {
-      await expect(
-        client.postComment('', 'repo', 123, 'comment')
-      ).rejects.toThrow("Parameter 'owner' is required");
+      await expect(client.postComment('', 'repo', 123, 'comment')).rejects.toThrow(
+        "Parameter 'owner' is required"
+      );
     });
   });
 
@@ -338,9 +338,9 @@ describe('GitHubClient', () => {
     });
 
     it('should reject empty comment body', async () => {
-      await expect(
-        client.updateComment('owner', 'repo', 1, '')
-      ).rejects.toThrow('Comment body cannot be empty');
+      await expect(client.updateComment('owner', 'repo', 1, '')).rejects.toThrow(
+        'Comment body cannot be empty'
+      );
     });
   });
 
@@ -358,9 +358,9 @@ describe('GitHubClient', () => {
     });
 
     it('should validate required parameters', async () => {
-      await expect(
-        client.deleteComment('', 'repo', 1)
-      ).rejects.toThrow("Parameter 'owner' is required");
+      await expect(client.deleteComment('', 'repo', 1)).rejects.toThrow(
+        "Parameter 'owner' is required"
+      );
     });
   });
 
@@ -461,9 +461,9 @@ describe('GitHubClient', () => {
     });
 
     it('should validate required parameters', async () => {
-      await expect(
-        client.updateCheckRun('', 'repo', 1, { status: 'completed' })
-      ).rejects.toThrow("Parameter 'owner' is required");
+      await expect(client.updateCheckRun('', 'repo', 1, { status: 'completed' })).rejects.toThrow(
+        "Parameter 'owner' is required"
+      );
     });
   });
 
@@ -539,9 +539,7 @@ describe('GitHubClient', () => {
     });
 
     it('should validate required parameters', async () => {
-      await expect(
-        client.getRepoInfo('', 'repo')
-      ).rejects.toThrow("Parameter 'owner' is required");
+      await expect(client.getRepoInfo('', 'repo')).rejects.toThrow("Parameter 'owner' is required");
     });
   });
 
@@ -567,9 +565,9 @@ describe('GitHubClient', () => {
     });
 
     it('should validate required parameters', async () => {
-      await expect(
-        client.checkUserPermissions('owner', 'repo', '')
-      ).rejects.toThrow("Parameter 'username' is required");
+      await expect(client.checkUserPermissions('owner', 'repo', '')).rejects.toThrow(
+        "Parameter 'username' is required"
+      );
     });
   });
 
@@ -657,25 +655,17 @@ describe('GitHubClient', () => {
     });
 
     it('should not retry on non-retryable errors', async () => {
-      const mockFn = vi
-        .fn()
-        .mockRejectedValue({ status: 404, message: 'Not Found' });
+      const mockFn = vi.fn().mockRejectedValue({ status: 404, message: 'Not Found' });
 
-      await expect(
-        client.retryRequest(mockFn, { maxRetries: 3 })
-      ).rejects.toThrow();
+      await expect(client.retryRequest(mockFn, { maxRetries: 3 })).rejects.toThrow();
 
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
     it('should respect max retries', async () => {
-      const mockFn = vi
-        .fn()
-        .mockRejectedValue({ status: 503, message: 'Service Unavailable' });
+      const mockFn = vi.fn().mockRejectedValue({ status: 503, message: 'Service Unavailable' });
 
-      await expect(
-        client.retryRequest(mockFn, { maxRetries: 2 })
-      ).rejects.toThrow();
+      await expect(client.retryRequest(mockFn, { maxRetries: 2 })).rejects.toThrow();
 
       expect(mockFn).toHaveBeenCalledTimes(3); // initial + 2 retries
     });
@@ -810,9 +800,9 @@ describe('GitHubClient', () => {
 
       mockOctokit.rest.pulls.get.mockRejectedValue(apiError);
 
-      await expect(
-        client.getPullRequest('owner', 'repo', 123)
-      ).rejects.toThrow('GitHub API error during getPullRequest: Validation Failed');
+      await expect(client.getPullRequest('owner', 'repo', 123)).rejects.toThrow(
+        'GitHub API error during getPullRequest: Validation Failed'
+      );
     });
 
     it('should preserve error stack traces', async () => {

@@ -148,7 +148,8 @@ describe('Backoff Utility', () => {
     });
 
     it('should retry on failure and eventually succeed', async () => {
-      const fn = vi.fn()
+      const fn = vi
+        .fn()
         .mockRejectedValueOnce(new Error('fail 1'))
         .mockRejectedValueOnce(new Error('fail 2'))
         .mockResolvedValue('success');
@@ -191,7 +192,8 @@ describe('Backoff Utility', () => {
     });
 
     it('should only retry on retryable errors', async () => {
-      const fn = vi.fn()
+      const fn = vi
+        .fn()
         .mockRejectedValueOnce(new Error('ECONNREFUSED'))
         .mockResolvedValue('success');
 

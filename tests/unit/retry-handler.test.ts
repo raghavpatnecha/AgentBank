@@ -76,7 +76,8 @@ describe('RetryHandler', () => {
         maxRetries: 3,
       };
 
-      const executor = vi.fn()
+      const executor = vi
+        .fn()
         .mockResolvedValueOnce({
           taskId: 'test-2',
           success: false,
@@ -228,7 +229,8 @@ describe('RetryHandler', () => {
         maxRetries: 2,
       };
 
-      const executor = vi.fn()
+      const executor = vi
+        .fn()
         .mockResolvedValueOnce({
           taskId: 'test-7',
           success: false,
@@ -268,7 +270,8 @@ describe('RetryHandler', () => {
         maxRetries: 2,
       };
 
-      const executor = vi.fn()
+      const executor = vi
+        .fn()
         .mockResolvedValueOnce({
           taskId: 'test-8',
           success: false,
@@ -311,7 +314,8 @@ describe('RetryHandler', () => {
         maxRetries: 2,
       };
 
-      const executor = vi.fn()
+      const executor = vi
+        .fn()
         .mockResolvedValueOnce({
           taskId: 'test-9',
           success: false,
@@ -356,7 +360,8 @@ describe('RetryHandler', () => {
           maxRetries: 2,
         };
 
-        const executor = vi.fn()
+        const executor = vi
+          .fn()
           .mockResolvedValueOnce({
             taskId: task.id,
             success: false,
@@ -540,7 +545,8 @@ describe('RetryHandler', () => {
         maxRetries: 1,
       };
 
-      const executor = vi.fn()
+      const executor = vi
+        .fn()
         .mockResolvedValueOnce({
           taskId: 'test-reset',
           success: false,
@@ -609,22 +615,24 @@ describe('RetryHandler', () => {
             isFlaky: false,
           });
         } else {
-          executor.mockResolvedValueOnce({
-            taskId: t.id,
-            success: false,
-            error: new Error('Fail'),
-            executionTime: 100,
-            workerId: 'worker-1',
-            retryAttempt: 0,
-            isFlaky: false,
-          }).mockResolvedValue({
-            taskId: t.id,
-            success: true,
-            executionTime: 100,
-            workerId: 'worker-1',
-            retryAttempt: 1,
-            isFlaky: false,
-          });
+          executor
+            .mockResolvedValueOnce({
+              taskId: t.id,
+              success: false,
+              error: new Error('Fail'),
+              executionTime: 100,
+              workerId: 'worker-1',
+              retryAttempt: 0,
+              isFlaky: false,
+            })
+            .mockResolvedValue({
+              taskId: t.id,
+              success: true,
+              executionTime: 100,
+              workerId: 'worker-1',
+              retryAttempt: 1,
+              isFlaky: false,
+            });
         }
 
         await handler.executeWithRetry(task, executor);

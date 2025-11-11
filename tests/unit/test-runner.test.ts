@@ -95,7 +95,7 @@ describe('PlaywrightTestRunner', () => {
 
       await runner.executeTests();
 
-      const startEvent = progressEvents.find(e => e.type === ProgressEventType.START);
+      const startEvent = progressEvents.find((e) => e.type === ProgressEventType.START);
       expect(startEvent).toBeDefined();
       expect(startEvent.completed).toBe(0);
     });
@@ -121,7 +121,7 @@ describe('PlaywrightTestRunner', () => {
 
       await runner.executeTests();
 
-      const completeEvent = progressEvents.find(e => e.type === ProgressEventType.COMPLETE);
+      const completeEvent = progressEvents.find((e) => e.type === ProgressEventType.COMPLETE);
       expect(completeEvent).toBeDefined();
       expect(completeEvent.percentage).toBe(100);
     });
@@ -439,7 +439,7 @@ describe('PlaywrightTestRunner', () => {
         stdout: {
           on: vi.fn((event, callback) => {
             if (event === 'data') stdoutCallback = callback;
-          })
+          }),
         },
         stderr: { on: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -460,7 +460,7 @@ describe('PlaywrightTestRunner', () => {
       await executePromise;
 
       const startEvent = progressEvents.find(
-        e => e.type === ProgressEventType.START && e.total === 25
+        (e) => e.type === ProgressEventType.START && e.total === 25
       );
       expect(startEvent).toBeDefined();
     });
@@ -475,7 +475,7 @@ describe('PlaywrightTestRunner', () => {
         stdout: {
           on: vi.fn((event, callback) => {
             if (event === 'data') stdoutCallback = callback;
-          })
+          }),
         },
         stderr: { on: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -496,7 +496,7 @@ describe('PlaywrightTestRunner', () => {
       await executePromise;
 
       const progressEvent = progressEvents.find(
-        e => e.type === ProgressEventType.TEST_END && e.completed === 10
+        (e) => e.type === ProgressEventType.TEST_END && e.completed === 10
       );
       expect(progressEvent).toBeDefined();
       expect(progressEvent?.total).toBe(25);

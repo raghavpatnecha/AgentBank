@@ -198,9 +198,7 @@ export class TestOrganizer {
    * Generate imports for test file
    */
   private generateImports(): string[] {
-    return [
-      "import { test, expect } from '@playwright/test';",
-    ];
+    return ["import { test, expect } from '@playwright/test';"];
   }
 
   /**
@@ -219,7 +217,9 @@ export class TestOrganizer {
 
     if (test.request.body) {
       lines.push(`${indent}  const response = await request.${method}('${path}', {`);
-      lines.push(`${indent}    data: ${JSON.stringify(test.request.body.data, null, 6).split('\n').join(`\n${indent}    `)}`);
+      lines.push(
+        `${indent}    data: ${JSON.stringify(test.request.body.data, null, 6).split('\n').join(`\n${indent}    `)}`
+      );
       lines.push(`${indent}  });`);
     } else {
       lines.push(`${indent}  const response = await request.${method}('${path}');`);

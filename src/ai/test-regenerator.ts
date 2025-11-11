@@ -24,11 +24,14 @@ export interface OpenAIClient {
   /**
    * Send a completion request to OpenAI
    */
-  createCompletion(prompt: string, options?: {
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-  }): Promise<{
+  createCompletion(
+    prompt: string,
+    options?: {
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ): Promise<{
     text: string;
     tokensUsed: number;
     model: string;
@@ -39,11 +42,13 @@ export interface OpenAIClient {
  * Prompt builder for creating AI prompts
  */
 export class PromptBuilder {
-  constructor(private config: PromptConfig = {
-    includeSpecChanges: true,
-    includeOriginalCode: true,
-    includeFailureAnalysis: true,
-  }) {}
+  constructor(
+    private config: PromptConfig = {
+      includeSpecChanges: true,
+      includeOriginalCode: true,
+      includeFailureAnalysis: true,
+    }
+  ) {}
 
   /**
    * Build a prompt for test regeneration
@@ -53,7 +58,9 @@ export class PromptBuilder {
 
     // Header
     sections.push('# Task: Regenerate Failing Playwright Test\n');
-    sections.push('You are an expert at writing Playwright API tests. A test has failed due to API specification changes.');
+    sections.push(
+      'You are an expert at writing Playwright API tests. A test has failed due to API specification changes.'
+    );
     sections.push('Your task is to regenerate the test to match the new specification.\n');
 
     // Failure analysis
@@ -157,7 +164,7 @@ export class TestRegenerator {
   constructor(
     private openaiClient: OpenAIClient,
     private promptBuilder: PromptBuilder,
-    private config: OpenAIConfig,
+    private config: OpenAIConfig
   ) {
     this.metrics = {
       totalAttempts: 0,
@@ -189,7 +196,7 @@ export class TestRegenerator {
         throw this.createError(
           'No code found in AI response',
           'parsing_error' as RegenerationErrorType,
-          aiResponse.text,
+          aiResponse.text
         );
       }
 
@@ -200,11 +207,11 @@ export class TestRegenerator {
       const validation = await this.validateGeneratedCode(testCode);
 
       if (!validation.valid) {
-        const errorMessages = validation.errors.map(e => e.message).join(', ');
+        const errorMessages = validation.errors.map((e) => e.message).join(', ');
         throw this.createError(
           `Generated code validation failed: ${errorMessages}`,
           'validation_error' as RegenerationErrorType,
-          errorMessages,
+          errorMessages
         );
       }
 
@@ -270,13 +277,10 @@ export class TestRegenerator {
         throw this.createError(
           `AI API error: ${error.message}`,
           'ai_api_error' as RegenerationErrorType,
-          error.message,
+          error.message
         );
       }
-      throw this.createError(
-        'Unknown AI API error',
-        'ai_api_error' as RegenerationErrorType,
-      );
+      throw this.createError('Unknown AI API error', 'ai_api_error' as RegenerationErrorType);
     }
   }
 
@@ -286,7 +290,7 @@ export class TestRegenerator {
   parseAIResponse(response: string): ParsedCode {
     // Try to find TypeScript code block
     const typeScriptMatch = response.match(/```typescript\s*([\s\S]*?)\s*```/);
-    if (typeScriptMatch && typeScriptMatch[1]) {
+    if (typeScriptMatch?.[1]) {
       return {
         code: typeScriptMatch[1].trim(),
         language: 'typescript',
@@ -298,25 +302,25 @@ export class TestRegenerator {
 
     // Try to find JavaScript code block
     const jsMatch = response.match(/```javascript\s*([\s\S]*?)\s*```/);
-    if (jsMatch && jsMatch[1]) {
+    if (jsMatch?.[1]) {
       return {
         code: jsMatch[1].trim(),
         language: 'javascript',
         found: true,
         rawResponse: response,
-        confidence: 0.90,
+        confidence: 0.9,
       };
     }
 
     // Try to find generic code block
     const codeMatch = response.match(/```\s*([\s\S]*?)\s*```/);
-    if (codeMatch && codeMatch[1]) {
+    if (codeMatch?.[1]) {
       return {
         code: codeMatch[1].trim(),
         language: 'unknown',
         found: true,
         rawResponse: response,
-        confidence: 0.70,
+        confidence: 0.7,
       };
     }
 
@@ -329,7 +333,7 @@ export class TestRegenerator {
         language: 'typescript',
         found: true,
         rawResponse: response,
-        confidence: 0.50,
+        confidence: 0.5,
       };
     }
 
@@ -374,41 +378,54 @@ export class TestRegenerator {
 
     // Collect errors
     const errors = [
-      ...(!syntax.valid ? syntax.errors.map(e => ({
-        message: e.message,
-        type: 'syntax' as any,
-        severity: 'error' as const,
-        location: { line: e.line, column: e.column },
-      })) : []),
-      ...(!imports.valid ? [{
-        message: 'Missing Playwright imports',
-        type: 'imports' as any,
-        severity: 'error' as const,
-      }] : []),
-      ...(!structure.valid ? structure.issues.map(issue => ({
-        message: issue,
-        type: 'structure' as any,
-        severity: 'error' as const,
-      })) : []),
-      ...(compilation && !compilation.success ? compilation.errors.map(e => ({
-        message: e.message,
-        type: 'compilation' as any,
-        severity: 'error' as const,
-        location: { line: e.line, column: e.column },
-      })) : []),
+      ...(!syntax.valid
+        ? syntax.errors.map((e) => ({
+            message: e.message,
+            type: 'syntax' as any,
+            severity: 'error' as const,
+            location: { line: e.line, column: e.column },
+          }))
+        : []),
+      ...(!imports.valid
+        ? [
+            {
+              message: 'Missing Playwright imports',
+              type: 'imports' as any,
+              severity: 'error' as const,
+            },
+          ]
+        : []),
+      ...(!structure.valid
+        ? structure.issues.map((issue) => ({
+            message: issue,
+            type: 'structure' as any,
+            severity: 'error' as const,
+          }))
+        : []),
+      ...(compilation && !compilation.success
+        ? compilation.errors.map((e) => ({
+            message: e.message,
+            type: 'compilation' as any,
+            severity: 'error' as const,
+            location: { line: e.line, column: e.column },
+          }))
+        : []),
     ];
 
     // Collect warnings
     const warnings = [
-      ...(!assertions.valid ? assertions.issues.map(issue => ({
-        message: issue,
-        type: 'assertions' as any,
-        recommendation: 'Add more assertions to validate API responses',
-      })) : []),
+      ...(!assertions.valid
+        ? assertions.issues.map((issue) => ({
+            message: issue,
+            type: 'assertions' as any,
+            recommendation: 'Add more assertions to validate API responses',
+          }))
+        : []),
     ];
 
     return {
-      valid: syntax.valid && imports.valid && structure.valid && (!compilation || compilation.success),
+      valid:
+        syntax.valid && imports.valid && structure.valid && (!compilation || compilation.success),
       syntax,
       imports,
       structure,
@@ -431,8 +448,8 @@ export class TestRegenerator {
     extracted = extracted.replace(/\n?```$/gm, '');
 
     // Ensure proper imports if missing
-    if (!extracted.includes("import { test, expect }")) {
-      extracted = "import { test, expect } from '@playwright/test';\n\n" + extracted;
+    if (!extracted.includes('import { test, expect }')) {
+      extracted = `import { test, expect } from '@playwright/test';\n\n${extracted}`;
     }
 
     return extracted;
@@ -462,12 +479,12 @@ export class TestRegenerator {
         throw this.createError(
           `Failed to save regenerated test: ${error.message}`,
           'file_write_error' as RegenerationErrorType,
-          error.message,
+          error.message
         );
       }
       throw this.createError(
         'Unknown file write error',
-        'file_write_error' as RegenerationErrorType,
+        'file_write_error' as RegenerationErrorType
       );
     }
   }
@@ -506,8 +523,12 @@ export class TestRegenerator {
       totalAttempts: this.metrics.totalAttempts,
       successful: this.metrics.successful,
       failed: this.metrics.failed,
-      rate: this.metrics.totalAttempts > 0 ? this.metrics.successful / this.metrics.totalAttempts : 0,
-      byFailureType: byFailureType as Record<FailureType, { attempts: number; successes: number; rate: number }>,
+      rate:
+        this.metrics.totalAttempts > 0 ? this.metrics.successful / this.metrics.totalAttempts : 0,
+      byFailureType: byFailureType as Record<
+        FailureType,
+        { attempts: number; successes: number; rate: number }
+      >,
     };
   }
 
@@ -519,7 +540,7 @@ export class TestRegenerator {
     result: RegenerationResult;
     timestamp: Date;
   }> {
-    return this.regenerationLog.filter(log => log !== null && log !== undefined);
+    return this.regenerationLog.filter((log) => log !== null && log !== undefined);
   }
 
   /**
@@ -553,7 +574,7 @@ export class TestRegenerator {
   private createError(
     message: string,
     type: RegenerationErrorType,
-    details?: string,
+    details?: string
   ): RegenerationError {
     return {
       message,

@@ -77,17 +77,13 @@ describe('Docker Test Execution Integration', () => {
     });
 
     it('should have correct working directory', async () => {
-      const { stdout } = await execAsync(
-        'docker run --rm api-test-agent:test pwd'
-      );
+      const { stdout } = await execAsync('docker run --rm api-test-agent:test pwd');
 
       expect(stdout.trim()).toBe('/app');
     });
 
     it('should have node_modules installed', async () => {
-      const { stdout } = await execAsync(
-        'docker run --rm api-test-agent:test ls -la node_modules'
-      );
+      const { stdout } = await execAsync('docker run --rm api-test-agent:test ls -la node_modules');
 
       expect(stdout).toContain('playwright');
       expect(stdout).toContain('vitest');
@@ -104,10 +100,7 @@ describe('Docker Test Execution Integration', () => {
 
   describe('docker-compose Configuration', () => {
     it('should have valid docker-compose.yml', async () => {
-      const { stdout } = await execAsync(
-        'docker-compose config',
-        { cwd: projectRoot }
-      );
+      const { stdout } = await execAsync('docker-compose config', { cwd: projectRoot });
 
       expect(stdout).toBeDefined();
       expect(stdout).toContain('test-runner');
@@ -159,10 +152,9 @@ describe('Docker Test Execution Integration', () => {
 
   describe('docker-compose CI Configuration', () => {
     it('should have valid docker-compose.ci.yml', async () => {
-      const { stdout } = await execAsync(
-        'docker-compose -f docker-compose.ci.yml config',
-        { cwd: projectRoot }
-      );
+      const { stdout } = await execAsync('docker-compose -f docker-compose.ci.yml config', {
+        cwd: projectRoot,
+      });
 
       expect(stdout).toBeDefined();
       expect(stdout).toContain('test-runner');
@@ -213,17 +205,13 @@ describe('Docker Test Execution Integration', () => {
     });
 
     it('should be able to run npm commands', async () => {
-      const { stdout } = await execAsync(
-        'docker run --rm api-test-agent:test npm --version'
-      );
+      const { stdout } = await execAsync('docker run --rm api-test-agent:test npm --version');
 
       expect(stdout).toMatch(/^\d+\.\d+\.\d+/);
     });
 
     it('should be able to access test files', async () => {
-      const { stdout } = await execAsync(
-        'docker run --rm api-test-agent:test ls -la tests'
-      );
+      const { stdout } = await execAsync('docker run --rm api-test-agent:test ls -la tests');
 
       expect(stdout).toContain('integration');
     });

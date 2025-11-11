@@ -19,11 +19,7 @@ import {
   ExecutionSummary,
   ErrorType,
 } from '../../src/types/executor-types';
-import {
-  HealingAttempt,
-  HealingStrategy,
-  FailureType,
-} from '../../src/types/self-healing-types';
+import { HealingAttempt, HealingStrategy, FailureType } from '../../src/types/self-healing-types';
 
 // Mock fs module
 vi.mock('fs', () => ({

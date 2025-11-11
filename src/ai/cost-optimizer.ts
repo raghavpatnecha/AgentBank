@@ -203,18 +203,11 @@ export class CostOptimizer {
     });
 
     // Token breakdown
-    const totalPromptTokens = this.tokenUsage.reduce(
-      (sum, r) => sum + r.promptTokens,
-      0
-    );
-    const totalCompletionTokens = this.tokenUsage.reduce(
-      (sum, r) => sum + r.completionTokens,
-      0
-    );
+    const totalPromptTokens = this.tokenUsage.reduce((sum, r) => sum + r.promptTokens, 0);
+    const totalCompletionTokens = this.tokenUsage.reduce((sum, r) => sum + r.completionTokens, 0);
 
     const promptCost = (totalPromptTokens / 1000) * this.config.pricing.promptPrice;
-    const completionCost =
-      (totalCompletionTokens / 1000) * this.config.pricing.completionPrice;
+    const completionCost = (totalCompletionTokens / 1000) * this.config.pricing.completionPrice;
 
     return {
       total,
@@ -316,19 +309,14 @@ export class CostOptimizer {
     const budgetStatus = this.checkBudgetLimit();
 
     // Calculate trends
-    const currentMonthRecords = this.tokenUsage.filter((r) =>
-      this.isCurrentMonth(r.timestamp)
-    );
+    const currentMonthRecords = this.tokenUsage.filter((r) => this.isCurrentMonth(r.timestamp));
 
     const daysInMonth = this.getDaysInMonth();
     const daysPassed = this.getDaysPassed();
-    const dailyAverage =
-      daysPassed > 0 ? this.monthlySpend / daysPassed : this.monthlySpend;
+    const dailyAverage = daysPassed > 0 ? this.monthlySpend / daysPassed : this.monthlySpend;
     const projectedMonthly = dailyAverage * daysInMonth;
     const costPerHealing =
-      currentMonthRecords.length > 0
-        ? this.monthlySpend / currentMonthRecords.length
-        : 0;
+      currentMonthRecords.length > 0 ? this.monthlySpend / currentMonthRecords.length : 0;
 
     // Generate suggestions
     const suggestions: string[] = [];
@@ -352,9 +340,7 @@ export class CostOptimizer {
     }
 
     if (breakdown.tokenBreakdown.completionCost > breakdown.tokenBreakdown.promptCost * 2) {
-      suggestions.push(
-        'Completion tokens are expensive - consider reducing max_tokens parameter'
-      );
+      suggestions.push('Completion tokens are expensive - consider reducing max_tokens parameter');
     }
 
     // Find top cost drivers

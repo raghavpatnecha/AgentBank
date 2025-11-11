@@ -101,12 +101,14 @@ export class GitHubClient {
         },
       },
       retry: this.config.retry,
-      log: this.config.log.debug ? ({
-        debug: this.config.log.debug.bind(this.config.log),
-        info: this.config.log.info!.bind(this.config.log),
-        warn: this.config.log.warn!.bind(this.config.log),
-        error: this.config.log.error!.bind(this.config.log),
-      }) : undefined,
+      log: this.config.log.debug
+        ? {
+            debug: this.config.log.debug.bind(this.config.log),
+            info: this.config.log.info!.bind(this.config.log),
+            warn: this.config.log.warn!.bind(this.config.log),
+            error: this.config.log.error!.bind(this.config.log),
+          }
+        : undefined,
     });
   }
 
@@ -117,11 +119,7 @@ export class GitHubClient {
    * @param number - Pull request number
    * @returns Pull request data
    */
-  async getPullRequest(
-    owner: string,
-    repo: string,
-    number: number
-  ): Promise<PullRequest> {
+  async getPullRequest(owner: string, repo: string, number: number): Promise<PullRequest> {
     this.validateParams({ owner, repo, number });
 
     try {
@@ -149,12 +147,7 @@ export class GitHubClient {
    * @param ref - Optional git reference (branch, tag, commit SHA)
    * @returns File content as string
    */
-  async getFileContent(
-    owner: string,
-    repo: string,
-    path: string,
-    ref?: string
-  ): Promise<string> {
+  async getFileContent(owner: string, repo: string, path: string, ref?: string): Promise<string> {
     this.validateParams({ owner, repo, path });
 
     try {
@@ -203,7 +196,7 @@ export class GitHubClient {
   ): Promise<Comment> {
     this.validateParams({ owner, repo, issueNumber });
 
-    if (!body || !body.trim()) {
+    if (!body?.trim()) {
       throw new Error('Comment body cannot be empty');
     }
 
@@ -241,7 +234,7 @@ export class GitHubClient {
   ): Promise<Comment> {
     this.validateParams({ owner, repo, commentId });
 
-    if (!body || !body.trim()) {
+    if (!body?.trim()) {
       throw new Error('Comment body cannot be empty');
     }
 
@@ -269,11 +262,7 @@ export class GitHubClient {
    * @param repo - Repository name
    * @param commentId - Comment ID
    */
-  async deleteComment(
-    owner: string,
-    repo: string,
-    commentId: number
-  ): Promise<void> {
+  async deleteComment(owner: string, repo: string, commentId: number): Promise<void> {
     this.validateParams({ owner, repo, commentId });
 
     try {
@@ -298,11 +287,7 @@ export class GitHubClient {
    * @param data - Check run data
    * @returns Created check run
    */
-  async createCheckRun(
-    owner: string,
-    repo: string,
-    data: CheckRunData
-  ): Promise<CheckRun> {
+  async createCheckRun(owner: string, repo: string, data: CheckRunData): Promise<CheckRun> {
     this.validateParams({ owner, repo });
     this.validateCheckRunData(data);
 
@@ -364,11 +349,7 @@ export class GitHubClient {
    * @param number - Pull request number
    * @returns List of changed files
    */
-  async listPRFiles(
-    owner: string,
-    repo: string,
-    number: number
-  ): Promise<PRFile[]> {
+  async listPRFiles(owner: string, repo: string, number: number): Promise<PRFile[]> {
     this.validateParams({ owner, repo, number });
 
     try {
@@ -436,11 +417,7 @@ export class GitHubClient {
    * @param username - Username to check
    * @returns User permissions
    */
-  async checkUserPermissions(
-    owner: string,
-    repo: string,
-    username: string
-  ): Promise<Permission> {
+  async checkUserPermissions(owner: string, repo: string, username: string): Promise<Permission> {
     this.validateParams({ owner, repo, username });
 
     try {
@@ -520,10 +497,7 @@ export class GitHubClient {
   private async checkRateLimit(): Promise<void> {
     // Use cached value if recent
     const now = Date.now();
-    if (
-      this.rateLimitCache &&
-      now - this.lastRateLimitCheck < this.RATE_LIMIT_CACHE_TTL
-    ) {
+    if (this.rateLimitCache && now - this.lastRateLimitCheck < this.RATE_LIMIT_CACHE_TTL) {
       if (this.rateLimitCache.remaining < 10) {
         await this.handleRateLimit();
       }
@@ -543,10 +517,7 @@ export class GitHubClient {
    * @param options - Retry options
    * @returns Result of the function
    */
-  async retryRequest<T>(
-    fn: () => Promise<T>,
-    options?: RetryOptions
-  ): Promise<T> {
+  async retryRequest<T>(fn: () => Promise<T>, options?: RetryOptions): Promise<T> {
     const maxRetries = options?.maxRetries ?? this.config.maxRetries;
     const retryableStatuses = options?.retryableStatuses ?? [408, 429, 500, 502, 503, 504];
     const backoffMultiplier = options?.backoffMultiplier ?? 2;
@@ -571,9 +542,7 @@ export class GitHubClient {
         // Don't retry non-retryable errors
         if (!isRetryable) {
           if (this.config.log.debug) {
-            this.config.log.debug(
-              `Error is not retryable (status: ${status}): ${error.message}`
-            );
+            this.config.log.debug(`Error is not retryable (status: ${status}): ${error.message}`);
           }
           break;
         }
@@ -637,11 +606,11 @@ export class GitHubClient {
    * Validate check run data
    */
   private validateCheckRunData(data: CheckRunData): void {
-    if (!data.name || !data.name.trim()) {
+    if (!data.name?.trim()) {
       throw new Error('Check run name is required');
     }
 
-    if (!data.head_sha || !data.head_sha.trim()) {
+    if (!data.head_sha?.trim()) {
       throw new Error('Check run head_sha is required');
     }
 
@@ -698,11 +667,7 @@ export class GitHubClient {
   /**
    * List pull request reviews
    */
-  async listPRReviews(
-    owner: string,
-    repo: string,
-    number: number
-  ): Promise<any[]> {
+  async listPRReviews(owner: string, repo: string, number: number): Promise<any[]> {
     this.validateParams({ owner, repo, number });
 
     try {

@@ -33,8 +33,12 @@ describe('Docker Setup Tests', () => {
     });
 
     it('should implement multi-stage build', () => {
-      expect(dockerfileContent).toContain('FROM mcr.microsoft.com/playwright:v1.40.0-jammy AS builder');
-      expect(dockerfileContent).toContain('FROM mcr.microsoft.com/playwright:v1.40.0-jammy AS runtime');
+      expect(dockerfileContent).toContain(
+        'FROM mcr.microsoft.com/playwright:v1.40.0-jammy AS builder'
+      );
+      expect(dockerfileContent).toContain(
+        'FROM mcr.microsoft.com/playwright:v1.40.0-jammy AS runtime'
+      );
     });
 
     it('should use non-root user (playwright)', () => {
@@ -75,7 +79,9 @@ describe('Docker Setup Tests', () => {
     });
 
     it('should copy entrypoint script', () => {
-      expect(dockerfileContent).toContain('COPY --chown=playwright:playwright docker/entrypoint.sh');
+      expect(dockerfileContent).toContain(
+        'COPY --chown=playwright:playwright docker/entrypoint.sh'
+      );
     });
 
     it('should make entrypoint executable', () => {
@@ -352,7 +358,9 @@ describe('Docker Setup Tests', () => {
 
     describe('Health Check Logic', () => {
       it('should implement retry mechanism', () => {
-        const retryLogic = entrypointContent.match(/retry_count=0[\s\S]*?retry_count=\$\(\(retry_count \+ 1\)\)/);
+        const retryLogic = entrypointContent.match(
+          /retry_count=0[\s\S]*?retry_count=\$\(\(retry_count \+ 1\)\)/
+        );
         expect(retryLogic).toBeTruthy();
       });
 
@@ -514,8 +522,8 @@ describe('Docker Setup Tests', () => {
 
     it('should copy package files before source for better caching', () => {
       const lines = dockerfileContent.split('\n');
-      const packageIndex = lines.findIndex(l => l.includes('COPY package'));
-      const srcIndex = lines.findIndex(l => l.includes('COPY src'));
+      const packageIndex = lines.findIndex((l) => l.includes('COPY package'));
+      const srcIndex = lines.findIndex((l) => l.includes('COPY src'));
       expect(packageIndex).toBeGreaterThan(0);
       expect(srcIndex).toBeGreaterThan(packageIndex);
     });

@@ -137,7 +137,7 @@ export class PromptBuilder {
 
     if (diff.breakingChanges.length > 0) {
       parts.push('**Breaking Changes:**');
-      diff.breakingChanges.forEach(change => {
+      diff.breakingChanges.forEach((change) => {
         parts.push(`- ${change}`);
       });
       parts.push('');
@@ -146,15 +146,15 @@ export class PromptBuilder {
     parts.push('**Detailed Changes:**');
 
     const groupedChanges = {
-      added: diff.changes.filter(c => c.type === 'added'),
-      removed: diff.changes.filter(c => c.type === 'removed'),
-      modified: diff.changes.filter(c => c.type === 'modified'),
+      added: diff.changes.filter((c) => c.type === 'added'),
+      removed: diff.changes.filter((c) => c.type === 'removed'),
+      modified: diff.changes.filter((c) => c.type === 'modified'),
     };
 
     if (groupedChanges.added.length > 0) {
       parts.push('');
       parts.push('*Added:*');
-      groupedChanges.added.forEach(change => {
+      groupedChanges.added.forEach((change) => {
         parts.push(`- ${change.field}: ${change.description}`);
         if (change.newValue !== undefined) {
           parts.push(`  New value: ${JSON.stringify(change.newValue)}`);
@@ -165,7 +165,7 @@ export class PromptBuilder {
     if (groupedChanges.removed.length > 0) {
       parts.push('');
       parts.push('*Removed:*');
-      groupedChanges.removed.forEach(change => {
+      groupedChanges.removed.forEach((change) => {
         parts.push(`- ${change.field}: ${change.description}`);
         if (change.oldValue !== undefined) {
           parts.push(`  Old value: ${JSON.stringify(change.oldValue)}`);
@@ -176,7 +176,7 @@ export class PromptBuilder {
     if (groupedChanges.modified.length > 0) {
       parts.push('');
       parts.push('*Modified:*');
-      groupedChanges.modified.forEach(change => {
+      groupedChanges.modified.forEach((change) => {
         parts.push(`- ${change.field}: ${change.description}`);
         if (change.oldValue !== undefined && change.newValue !== undefined) {
           parts.push(`  Old: ${JSON.stringify(change.oldValue)}`);

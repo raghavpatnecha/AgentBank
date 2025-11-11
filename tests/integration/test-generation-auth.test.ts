@@ -254,7 +254,9 @@ describe('Authentication Test Generation Integration', () => {
       expect(optionalTest?.expectedResponse.status).toEqual([200, 201, 204]);
 
       // Should NOT have unauthorized test for optional auth
-      const unauthTest = tests.find((t) => t.id.includes('none') && t.expectedResponse.status === 401);
+      const unauthTest = tests.find(
+        (t) => t.id.includes('none') && t.expectedResponse.status === 401
+      );
       expect(unauthTest).toBeUndefined();
     });
   });
@@ -264,10 +266,10 @@ describe('Authentication Test Generation Integration', () => {
       const schemes = parser.extractAuthSchemes();
       const fixture = generateAuthFixture(schemes);
 
-      expect(fixture).toContain("import { test as base }");
+      expect(fixture).toContain('import { test as base }');
       expect(fixture).toContain('type AuthFixtures');
       expect(fixture).toContain('export const test');
-      expect(fixture).toContain("export { expect }");
+      expect(fixture).toContain('export { expect }');
 
       // Should include all auth schemes
       expect(fixture).toContain('bearerAuth');
@@ -399,7 +401,7 @@ describe('Authentication Test Generation Integration', () => {
       const fixture = generator.generateAuthFixture();
 
       // Should be a complete Playwright fixture file
-      expect(fixture).toContain("import { test as base }");
+      expect(fixture).toContain('import { test as base }');
       expect(fixture).toContain('type AuthFixtures');
       expect(fixture).toContain('export const test');
 
@@ -445,11 +447,12 @@ describe('Authentication Test Generation Integration', () => {
       for (const endpoint of endpoints) {
         const tests = generator.generateAuthTests(endpoint);
         // Filter for tests that should succeed (not invalid/missing/expired)
-        const validTests = tests.filter((t) =>
-          (t.id.includes('valid') || t.id.includes('optional')) &&
-          !t.id.includes('missing') &&
-          !t.id.includes('invalid') &&
-          !t.id.includes('expired')
+        const validTests = tests.filter(
+          (t) =>
+            (t.id.includes('valid') || t.id.includes('optional')) &&
+            !t.id.includes('missing') &&
+            !t.id.includes('invalid') &&
+            !t.id.includes('expired')
         );
 
         validTests.forEach((test) => {
@@ -459,7 +462,7 @@ describe('Authentication Test Generation Integration', () => {
           } else {
             // Status should be one of the success codes
             const validStatuses = [200, 201, 204];
-            const isValid = validStatuses.includes(status as number);
+            const isValid = validStatuses.includes(status);
             expect(isValid).toBe(true);
           }
         });

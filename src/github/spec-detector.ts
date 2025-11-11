@@ -278,9 +278,7 @@ export class SpecDetector {
     const specs: SpecFile[] = [];
 
     for (const customPath of customPaths) {
-      const fullPath = path.isAbsolute(customPath)
-        ? customPath
-        : path.join(repoPath, customPath);
+      const fullPath = path.isAbsolute(customPath) ? customPath : path.join(repoPath, customPath);
 
       try {
         const stats = await fs.stat(fullPath);
@@ -339,11 +337,7 @@ export class SpecDetector {
    * @param depth Remaining search depth
    * @returns Array of found spec files
    */
-  async searchDirectory(
-    dirPath: string,
-    repoPath: string,
-    depth: number
-  ): Promise<SpecFile[]> {
+  async searchDirectory(dirPath: string, repoPath: string, depth: number): Promise<SpecFile[]> {
     if (depth <= 0) {
       return [];
     }
@@ -464,7 +458,9 @@ export class SpecDetector {
           parsed = parseYaml(content) as unknown;
         }
       } catch (error) {
-        errors.push(`Failed to parse ${specFile.format.toUpperCase()}: ${error instanceof Error ? error.message : String(error)}`);
+        errors.push(
+          `Failed to parse ${specFile.format.toUpperCase()}: ${error instanceof Error ? error.message : String(error)}`
+        );
         return { ...specFile, isValid: false, validationErrors: errors };
       }
 
@@ -523,7 +519,9 @@ export class SpecDetector {
 
       return specFile;
     } catch (error) {
-      errors.push(`Failed to read spec file: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(
+        `Failed to read spec file: ${error instanceof Error ? error.message : String(error)}`
+      );
       return { ...specFile, isValid: false, validationErrors: errors };
     }
   }
@@ -534,9 +532,7 @@ export class SpecDetector {
    * @returns Array of validated spec files
    */
   async validateAllSpecs(specs: SpecFile[]): Promise<SpecFile[]> {
-    const validatedSpecs = await Promise.all(
-      specs.map((spec) => this.validateSpecFile(spec))
-    );
+    const validatedSpecs = await Promise.all(specs.map((spec) => this.validateSpecFile(spec)));
 
     return validatedSpecs;
   }
@@ -684,7 +680,10 @@ export class SpecDetector {
    * Get cache statistics
    * @returns Cache statistics
    */
-  getCacheStats(): { size: number; entries: Array<{ repoPath: string; specCount: number; expiresIn: number }> } {
+  getCacheStats(): {
+    size: number;
+    entries: Array<{ repoPath: string; specCount: number; expiresIn: number }>;
+  } {
     const now = Date.now();
     const entries: Array<{ repoPath: string; specCount: number; expiresIn: number }> = [];
 

@@ -5,10 +5,7 @@
 
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
-import type {
-  ReportingConfig,
-  ReportFormat,
-} from '../types/reporting-types.js';
+import type { ReportingConfig, ReportFormat } from '../types/reporting-types.js';
 
 dotenv.config();
 
@@ -161,7 +158,7 @@ export class ReportingConfigLoader {
       config.email.from = env.API_TEST_AGENT_EMAIL_FROM;
     }
     if (env.API_TEST_AGENT_EMAIL_RECIPIENTS) {
-      config.email.recipients = env.API_TEST_AGENT_EMAIL_RECIPIENTS.split(',').map(s => s.trim());
+      config.email.recipients = env.API_TEST_AGENT_EMAIL_RECIPIENTS.split(',').map((s) => s.trim());
     }
     if (env.API_TEST_AGENT_EMAIL_ONLY_ON_FAILURE) {
       config.email.onlyOnFailure = env.API_TEST_AGENT_EMAIL_ONLY_ON_FAILURE === 'true';
@@ -200,8 +197,8 @@ export class ReportingConfigLoader {
   parseFormats(formats: string): ReportFormat[] {
     return formats
       .split(',')
-      .map(f => f.trim() as ReportFormat)
-      .filter(f => ['html', 'json', 'junit', 'markdown', 'pdf'].includes(f));
+      .map((f) => f.trim() as ReportFormat)
+      .filter((f) => ['html', 'json', 'junit', 'markdown', 'pdf'].includes(f));
   }
 
   validateConfig(config: ReportingConfig): boolean {
@@ -260,7 +257,9 @@ export class ReportingConfigLoader {
 
       return true;
     } catch (error) {
-      console.error(`Configuration validation error: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `Configuration validation error: ${error instanceof Error ? error.message : String(error)}`
+      );
       return false;
     }
   }

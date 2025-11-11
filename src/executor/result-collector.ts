@@ -53,11 +53,11 @@ export class ResultCollector {
     const totalTests = this.results.length;
 
     // Count by status
-    const passed = this.results.filter(r => r.status === TestStatus.PASSED).length;
-    const failed = this.results.filter(r => r.status === TestStatus.FAILED).length;
-    const skipped = this.results.filter(r => r.status === TestStatus.SKIPPED).length;
-    const timeout = this.results.filter(r => r.status === TestStatus.TIMEOUT).length;
-    const error = this.results.filter(r => r.status === TestStatus.ERROR).length;
+    const passed = this.results.filter((r) => r.status === TestStatus.PASSED).length;
+    const failed = this.results.filter((r) => r.status === TestStatus.FAILED).length;
+    const skipped = this.results.filter((r) => r.status === TestStatus.SKIPPED).length;
+    const timeout = this.results.filter((r) => r.status === TestStatus.TIMEOUT).length;
+    const error = this.results.filter((r) => r.status === TestStatus.ERROR).length;
 
     // Calculate durations
     const totalDuration = this.results.reduce((sum, r) => sum + r.duration, 0);
@@ -67,7 +67,7 @@ export class ResultCollector {
     const successRate = totalTests > 0 ? passed / totalTests : 0;
 
     // Get unique files
-    const filesExecuted = [...new Set(this.results.map(r => r.filePath))];
+    const filesExecuted = [...new Set(this.results.map((r) => r.filePath))];
 
     // Count total retries
     const totalRetries = this.results.reduce((sum, r) => sum + r.retries, 0);
@@ -183,9 +183,7 @@ export class ResultCollector {
     for (const tag in byTag) {
       const summary = byTag[tag];
       if (summary) {
-        summary.successRate = summary.testCount > 0
-          ? summary.passed / summary.testCount
-          : 0;
+        summary.successRate = summary.testCount > 0 ? summary.passed / summary.testCount : 0;
       }
     }
 
@@ -231,9 +229,7 @@ export class ResultCollector {
       metadata: options.metadata,
     };
 
-    const json = options.prettyPrint
-      ? JSON.stringify(data, null, 2)
-      : JSON.stringify(data);
+    const json = options.prettyPrint ? JSON.stringify(data, null, 2) : JSON.stringify(data);
 
     await this.ensureDirectory(path.dirname(outputPath));
     await fs.writeFile(outputPath, json, 'utf-8');
@@ -256,7 +252,7 @@ export class ResultCollector {
       xml += `skipped="${fileSummary.skipped}" time="${fileSummary.duration / 1000}">\n`;
 
       // Add test cases for this file
-      const fileTests = this.results.filter(r => r.filePath === filePath);
+      const fileTests = this.results.filter((r) => r.filePath === filePath);
       for (const test of fileTests) {
         xml += `    <testcase name="${this.escapeXml(test.name)}" `;
         xml += `classname="${this.escapeXml(filePath)}" `;
@@ -435,9 +431,14 @@ export class ResultCollector {
       md += '|-----------|------|--------|----------|----------|\n';
 
       for (const test of this.results) {
-        const statusIcon = test.status === TestStatus.PASSED ? '✅' :
-                          test.status === TestStatus.FAILED ? '❌' :
-                          test.status === TestStatus.SKIPPED ? '⊘' : '⚠️';
+        const statusIcon =
+          test.status === TestStatus.PASSED
+            ? '✅'
+            : test.status === TestStatus.FAILED
+              ? '❌'
+              : test.status === TestStatus.SKIPPED
+                ? '⊘'
+                : '⚠️';
         md += `| ${test.name} | ${test.filePath} | ${statusIcon} ${test.status} | ${(test.duration / 1000).toFixed(2)}s | ${test.retries} |\n`;
       }
     }

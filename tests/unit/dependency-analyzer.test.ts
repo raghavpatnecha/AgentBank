@@ -34,9 +34,10 @@ function createEndpoint(
     operationId,
     summary: `${method.toUpperCase()} ${path}`,
     description: `Test endpoint for ${path}`,
-    parameters: path.includes('{id}') || path.includes('{userId}')
-      ? [{ name: path.includes('{userId}') ? 'userId' : 'id', in: 'path', required: true }]
-      : [],
+    parameters:
+      path.includes('{id}') || path.includes('{userId}')
+        ? [{ name: path.includes('{userId}') ? 'userId' : 'id', in: 'path', required: true }]
+        : [],
     responses: new Map([[200, { description: 'Success' }]]),
     security: [],
     tags,
@@ -262,10 +263,7 @@ describe('Dependency Analyzer', () => {
     });
 
     it('should handle single resource', () => {
-      const endpoints = [
-        createEndpoint('/users', 'get'),
-        createEndpoint('/users', 'post'),
-      ];
+      const endpoints = [createEndpoint('/users', 'get'), createEndpoint('/users', 'post')];
 
       const groups = groupByResource(endpoints);
 
@@ -298,10 +296,7 @@ describe('Dependency Analyzer', () => {
     });
 
     it('should detect dependencies for endpoints with IDs', () => {
-      const endpoints = [
-        createEndpoint('/users', 'post'),
-        createEndpoint('/users/{id}', 'get'),
-      ];
+      const endpoints = [createEndpoint('/users', 'post'), createEndpoint('/users/{id}', 'get')];
 
       const graph = analyzeEndpointDependencies(endpoints);
 

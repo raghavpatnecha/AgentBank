@@ -6,7 +6,12 @@
 import { DataFactory } from '../utils/data-factory.js';
 import { RequestBodyGenerator } from './request-body-generator.js';
 import type { ApiEndpoint, ParameterObject, SchemaObject } from '../types/openapi-types.js';
-import type { TestCase, TestRequest, ExpectedResponse, TestValue } from '../types/test-generator-types.js';
+import type {
+  TestCase,
+  TestRequest,
+  ExpectedResponse,
+  TestValue,
+} from '../types/test-generator-types.js';
 
 /**
  * Options for happy path test generation
@@ -267,10 +272,12 @@ export class HappyPathGenerator {
   private generateExpectedResponse(endpoint: ApiEndpoint): ExpectedResponse {
     const successStatuses = this.getSuccessStatuses(endpoint);
     const firstStatus = successStatuses[0];
-    const responseSchema = firstStatus !== undefined ? this.getResponseSchema(endpoint, firstStatus) : undefined;
+    const responseSchema =
+      firstStatus !== undefined ? this.getResponseSchema(endpoint, firstStatus) : undefined;
 
     // Return the status array if there are multiple, otherwise the single status
-    const status = successStatuses.length === 1 && firstStatus !== undefined ? firstStatus : successStatuses;
+    const status =
+      successStatuses.length === 1 && firstStatus !== undefined ? firstStatus : successStatuses;
 
     const expectedResponse: ExpectedResponse = {
       status,
@@ -305,7 +312,10 @@ export class HappyPathGenerator {
   /**
    * Get response schema for a status code
    */
-  private getResponseSchema(endpoint: ApiEndpoint, statusCode: number | undefined): SchemaObject | undefined {
+  private getResponseSchema(
+    endpoint: ApiEndpoint,
+    statusCode: number | undefined
+  ): SchemaObject | undefined {
     if (statusCode === undefined) {
       return undefined;
     }

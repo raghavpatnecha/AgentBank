@@ -337,7 +337,7 @@ describe('AuthTestGenerator', () => {
       const generator = new AuthTestGenerator([bearerScheme, apiKeyScheme]);
       const fixture = generator.generateAuthFixture();
 
-      expect(fixture).toContain("import { test as base }");
+      expect(fixture).toContain('import { test as base }');
       expect(fixture).toContain('bearerAuth');
       expect(fixture).toContain('apiKeyHeader');
       expect(fixture).toContain('export const test');

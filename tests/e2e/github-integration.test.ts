@@ -82,7 +82,7 @@ class MockGitHubClient {
 
     const key = this.getPRKey(owner, repo);
     const comments = this.comments.get(key) || [];
-    const comment = comments.find(c => c.id === commentId);
+    const comment = comments.find((c) => c.id === commentId);
 
     if (!comment) {
       throw new Error('Comment not found');
@@ -152,7 +152,7 @@ class MockGitHubClient {
 
     const key = this.getRepoKey(owner, repo);
     const runs = this.checkRuns.get(key) || [];
-    const run = runs.find(r => r.id === checkRunId);
+    const run = runs.find((r) => r.id === checkRunId);
 
     if (!run) {
       throw new Error('Check run not found');
@@ -162,11 +162,7 @@ class MockGitHubClient {
     return run;
   }
 
-  async getPullRequest(
-    owner: string,
-    repo: string,
-    prNumber: number
-  ): Promise<GitHubPullRequest> {
+  async getPullRequest(owner: string, repo: string, prNumber: number): Promise<GitHubPullRequest> {
     this.checkAuth();
     await this.checkRateLimit();
 
@@ -377,7 +373,7 @@ class WebhookHandler {
 
   private async executeTests(command: { spec?: string; environment?: string }): Promise<void> {
     // Simulate test execution
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   private formatTestResults(results: { passed: number; failed: number; total: number }): string {
@@ -465,7 +461,7 @@ class GitHubActionSimulator {
     environment: string;
   }): Promise<{ passed: number; failed: number; total: number }> {
     // Simulate test execution
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     return {
       passed: 10,
@@ -554,7 +550,8 @@ describe('GitHub Integration E2E', () => {
     });
 
     it('should parse command with multiple options', async () => {
-      const comment = '@api-test-agent test --spec=api/v2/openapi.yaml --env=production --verbose --timeout=30';
+      const comment =
+        '@api-test-agent test --spec=api/v2/openapi.yaml --env=production --verbose --timeout=30';
       const command = commentParser.parseCommand(comment);
 
       expect(command).toBeDefined();
@@ -757,9 +754,9 @@ paths:
     it('should handle rate limit errors', async () => {
       mockClient.setRateLimitRemaining(0);
 
-      await expect(
-        mockClient.createComment('test-org', 'test-repo', 42, 'Test')
-      ).rejects.toThrow('API rate limit exceeded');
+      await expect(mockClient.createComment('test-org', 'test-repo', 42, 'Test')).rejects.toThrow(
+        'API rate limit exceeded'
+      );
     });
 
     it('should check rate limit status', async () => {
@@ -811,12 +808,7 @@ paths:
     });
 
     it('should update check run to failure on error', async () => {
-      const checkRun = await mockClient.createCheckRun(
-        'test-org',
-        'test-repo',
-        'Tests',
-        'sha123'
-      );
+      const checkRun = await mockClient.createCheckRun('test-org', 'test-repo', 'Tests', 'sha123');
 
       const updated = await mockClient.updateCheckRun('test-org', 'test-repo', checkRun.id, {
         status: 'completed',

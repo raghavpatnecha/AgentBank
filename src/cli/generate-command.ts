@@ -44,7 +44,11 @@ export function createGenerateCommand(): Command {
     .option('--no-errors', 'Skip error case tests')
     .option('--no-edge-cases', 'Skip edge case tests')
     .option('--no-flows', 'Skip workflow tests')
-    .option('--organization <strategy>', 'Organization strategy: by-tag, by-endpoint, by-type, by-method, flat', 'by-tag')
+    .option(
+      '--organization <strategy>',
+      'Organization strategy: by-tag, by-endpoint, by-type, by-method, flat',
+      'by-tag'
+    )
     .option('--base-url <url>', 'Base URL for API (overrides spec servers)')
     .option('-v, --verbose', 'Verbose output', false)
     .action(async (options: GenerateCommandOptions) => {
@@ -96,7 +100,9 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
     try {
       spec = await parseOpenAPIFile(specPath);
     } catch (error) {
-      reporter.error(`Failed to parse OpenAPI spec: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      reporter.error(
+        `Failed to parse OpenAPI spec: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       process.exit(1);
     }
 
@@ -194,9 +200,9 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
 
     // Step 8: Next steps
     reporter.info('Next steps:');
-    console.log('  1. Review generated tests');
-    console.log('  2. Add authentication credentials to .env file');
-    console.log('  3. Run tests with: npm run test:playwright');
+    console.warn('  1. Review generated tests');
+    console.warn('  2. Add authentication credentials to .env file');
+    console.warn('  3. Run tests with: npm run test:playwright');
 
     process.exit(0);
   } catch (error) {
@@ -209,4 +215,3 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
     process.exit(1);
   }
 }
-

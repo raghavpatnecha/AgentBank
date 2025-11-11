@@ -322,8 +322,9 @@ export function formatTemplate(context: {
  * Format few-shot examples for inclusion in prompt
  */
 export function formatFewShotExamples(examples: FewShotExample[]): string {
-  return examples.map((example, index) => {
-    return `## Example ${index + 1}: ${example.description}
+  return examples
+    .map((example, index) => {
+      return `## Example ${index + 1}: ${example.description}
 
 ### Original Test
 \`\`\`typescript
@@ -340,7 +341,8 @@ ${example.apiChanges}
 \`\`\`typescript
 ${example.repairedTest}
 \`\`\``;
-  }).join('\n\n');
+    })
+    .join('\n\n');
 }
 
 /**

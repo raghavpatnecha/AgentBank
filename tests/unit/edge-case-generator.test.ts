@@ -47,7 +47,7 @@ describe('EdgeCaseGenerator', () => {
 
       expect(tests.length).toBeGreaterThan(0);
       expect(tests.length).toBeLessThanOrEqual(4);
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.type).toBe('edge-case');
       });
     });
@@ -113,7 +113,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const maxLengthTest = tests.find(t => t.name.includes('maximum length'));
+      const maxLengthTest = tests.find((t) => t.name.includes('maximum length'));
       expect(maxLengthTest).toBeDefined();
       expect(maxLengthTest?.metadata.tags).toContain('boundary');
       expect(maxLengthTest?.metadata.tags).toContain('maxLength');
@@ -150,7 +150,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const minTest = tests.find(t => t.name.includes('minimum value'));
+      const minTest = tests.find((t) => t.name.includes('minimum value'));
       expect(minTest).toBeDefined();
       if (minTest?.request.body?.data) {
         const data = minTest.request.body.data as Record<string, unknown>;
@@ -184,9 +184,9 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const maxTest = tests.find(t => t.name.includes('maximum value'));
+      const maxTest = tests.find((t) => t.name.includes('maximum value'));
       // May or may not generate depending on other fields, test only if found
-      if (maxTest && maxTest.request.body?.data) {
+      if (maxTest?.request.body?.data) {
         const data = maxTest.request.body.data as Record<string, unknown>;
         expect(data.quantity).toBe(999);
       }
@@ -221,7 +221,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const specialCharsTest = tests.find(t => t.name.includes('special characters'));
+      const specialCharsTest = tests.find((t) => t.name.includes('special characters'));
       expect(specialCharsTest).toBeDefined();
       expect(specialCharsTest?.metadata.tags).toContain('security');
       expect(specialCharsTest?.metadata.tags).toContain('xss');
@@ -261,7 +261,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const unicodeTest = tests.find(t => t.name.includes('Unicode'));
+      const unicodeTest = tests.find((t) => t.name.includes('Unicode'));
       expect(unicodeTest).toBeDefined();
       expect(unicodeTest?.metadata.tags).toContain('unicode');
       expect(unicodeTest?.metadata.tags).toContain('internationalization');
@@ -295,9 +295,10 @@ describe('EdgeCaseGenerator', () => {
       const tests = generator.generateTests(endpoint);
 
       // Should not try to inject XSS into email/uuid fields
-      const specialCharsTest = tests.find(t =>
-        t.name.includes('special characters') &&
-        (t.name.includes('email') || t.name.includes('userId'))
+      const specialCharsTest = tests.find(
+        (t) =>
+          t.name.includes('special characters') &&
+          (t.name.includes('email') || t.name.includes('userId'))
       );
       expect(specialCharsTest).toBeUndefined();
     });
@@ -332,7 +333,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const emptyTest = tests.find(t => t.name.includes('empty string'));
+      const emptyTest = tests.find((t) => t.name.includes('empty string'));
       expect(emptyTest).toBeDefined();
       if (emptyTest?.request.body?.data) {
         const data = emptyTest.request.body.data as Record<string, unknown>;
@@ -368,7 +369,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const emptyArrayTest = tests.find(t => t.name.includes('empty array'));
+      const emptyArrayTest = tests.find((t) => t.name.includes('empty array'));
       expect(emptyArrayTest).toBeDefined();
       if (emptyArrayTest?.request.body?.data) {
         const data = emptyArrayTest.request.body.data as Record<string, unknown>;
@@ -405,7 +406,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const largeTest = tests.find(t => t.name.includes('very long value'));
+      const largeTest = tests.find((t) => t.name.includes('very long value'));
       expect(largeTest).toBeDefined();
       expect(largeTest?.metadata.tags).toContain('large-payload');
 
@@ -429,7 +430,7 @@ describe('EdgeCaseGenerator', () => {
                 properties: {
                   items: {
                     type: 'array',
-                    items: { type: 'string' }
+                    items: { type: 'string' },
                   },
                 },
               } as SchemaObject,
@@ -444,7 +445,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const largeArrayTest = tests.find(t => t.name.includes('many items'));
+      const largeArrayTest = tests.find((t) => t.name.includes('many items'));
       expect(largeArrayTest).toBeDefined();
 
       if (largeArrayTest?.request.body?.data) {
@@ -480,7 +481,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      const largeTest = tests.find(t => t.metadata.tags.includes('large-payload'));
+      const largeTest = tests.find((t) => t.metadata.tags.includes('large-payload'));
       if (largeTest && Array.isArray(largeTest.expectedResponse.status)) {
         expect(largeTest.expectedResponse.status).toContain(413);
       }
@@ -514,7 +515,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.metadata.tags).toContain('edge-case');
         expect(test.metadata.tags.length).toBeGreaterThan(1);
       });
@@ -546,7 +547,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.metadata.stability).toBe('stable');
       });
     });
@@ -578,7 +579,7 @@ describe('EdgeCaseGenerator', () => {
 
       const tests = generator.generateTests(endpoint);
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(test.metadata.operationId).toBe('createUser');
       });
     });

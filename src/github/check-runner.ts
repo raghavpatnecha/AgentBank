@@ -131,8 +131,8 @@ export class SimpleGitHubClient implements GitHubClient {
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Accept': 'application/vnd.github+json',
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/vnd.github+json',
           'Content-Type': 'application/json',
           'X-GitHub-Api-Version': '2022-11-28',
         },
@@ -143,7 +143,9 @@ export class SimpleGitHubClient implements GitHubClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: response.statusText })) as { message?: string };
+        const errorData = (await response
+          .json()
+          .catch(() => ({ message: response.statusText }))) as { message?: string };
         throw new Error(
           `GitHub API error: ${response.status} - ${errorData.message || response.statusText}`
         );
@@ -297,10 +299,7 @@ export class CheckRunner {
    * @param context - Check context (owner/repo)
    * @returns Updated check run
    */
-  async cancel(
-    checkRunId: number,
-    context: { owner: string; repo: string }
-  ): Promise<CheckRun> {
+  async cancel(checkRunId: number, context: { owner: string; repo: string }): Promise<CheckRun> {
     const request: UpdateCheckRunRequest = {
       owner: context.owner,
       repo: context.repo,
@@ -515,8 +514,11 @@ export class CheckRunner {
     lines.push(progress.summary);
 
     if (progress.testsCompleted !== undefined && progress.testsTotal !== undefined) {
-      const percentage = progress.percentage || (progress.testsCompleted / progress.testsTotal) * 100;
-      lines.push(`\n**Progress**: ${progress.testsCompleted}/${progress.testsTotal} tests (${percentage.toFixed(1)}%)`);
+      const percentage =
+        progress.percentage || (progress.testsCompleted / progress.testsTotal) * 100;
+      lines.push(
+        `\n**Progress**: ${progress.testsCompleted}/${progress.testsTotal} tests (${percentage.toFixed(1)}%)`
+      );
     }
 
     if (progress.details) {
@@ -601,7 +603,9 @@ export class CheckRunner {
 
     if (results.metrics) {
       lines.push('\n## Performance Metrics\n');
-      lines.push(`**Average Response Time**: ${this.formatDuration(results.metrics.averageResponseTime)}`);
+      lines.push(
+        `**Average Response Time**: ${this.formatDuration(results.metrics.averageResponseTime)}`
+      );
 
       if (results.metrics.slowestEndpoint) {
         lines.push(

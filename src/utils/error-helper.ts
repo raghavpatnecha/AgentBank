@@ -127,7 +127,7 @@ function generate400Scenario(endpoint: ApiEndpoint): ErrorScenario | null {
   }
 
   // Try required parameters
-  const requiredParam = endpoint.parameters.find(p => p.required);
+  const requiredParam = endpoint.parameters.find((p) => p.required);
   if (requiredParam) {
     return {
       name: `${endpoint.method.toUpperCase()} ${endpoint.path} - missing required parameter (400)`,
@@ -183,7 +183,7 @@ function generate403Scenario(endpoint: ApiEndpoint): ErrorScenario | null {
     statusCode: 403,
     request: {
       headers: {
-        'Authorization': 'Bearer invalid-or-limited-scope-token',
+        Authorization: 'Bearer invalid-or-limited-scope-token',
       },
     },
     reason: 'Valid authentication but insufficient permissions',
@@ -195,7 +195,7 @@ function generate403Scenario(endpoint: ApiEndpoint): ErrorScenario | null {
  */
 function generate404Scenario(endpoint: ApiEndpoint): ErrorScenario | null {
   // Find path parameters (typically IDs)
-  const pathParam = endpoint.parameters.find(p => p.in === 'path');
+  const pathParam = endpoint.parameters.find((p) => p.in === 'path');
 
   if (!pathParam) {
     return null;
@@ -206,9 +206,7 @@ function generate404Scenario(endpoint: ApiEndpoint): ErrorScenario | null {
   let nonExistentId: string | number = 99999999;
 
   if (schema && !isReference(schema)) {
-    nonExistentId = schema.type === 'string'
-      ? 'nonexistent-id-99999999'
-      : 99999999;
+    nonExistentId = schema.type === 'string' ? 'nonexistent-id-99999999' : 99999999;
   }
 
   return {
@@ -263,7 +261,7 @@ function generate422Scenario(endpoint: ApiEndpoint): ErrorScenario | null {
         continue;
       }
 
-      const field = fieldSchema as SchemaObject;
+      const field = fieldSchema;
 
       // String with pattern or format
       if (field.type === 'string' && (field.pattern || field.format === 'email')) {
@@ -315,8 +313,14 @@ function generate422Scenario(endpoint: ApiEndpoint): ErrorScenario | null {
  */
 export function getAllErrorScenarios(endpoint: ApiEndpoint): ErrorScenario[] {
   const scenarios: ErrorScenario[] = [];
-  const errorTypes: Array<'400' | '401' | '403' | '404' | '405' | '422'> =
-    ['400', '401', '403', '404', '405', '422'];
+  const errorTypes: Array<'400' | '401' | '403' | '404' | '405' | '422'> = [
+    '400',
+    '401',
+    '403',
+    '404',
+    '405',
+    '422',
+  ];
 
   for (const errorType of errorTypes) {
     const scenario = generateErrorScenario(endpoint, errorType);
@@ -344,7 +348,7 @@ export function supportsErrorCode(endpoint: ApiEndpoint, statusCode: number): bo
   switch (statusCode) {
     case 400:
       // Endpoints with request bodies or required params likely support 400
-      return !!endpoint.requestBody || endpoint.parameters.some(p => p.required);
+      return Boolean(endpoint.requestBody) || endpoint.parameters.some((p) => p.required);
 
     case 401:
     case 403:
@@ -353,11 +357,11 @@ export function supportsErrorCode(endpoint: ApiEndpoint, statusCode: number): bo
 
     case 404:
       // Endpoints with path parameters likely support 404
-      return endpoint.parameters.some(p => p.in === 'path');
+      return endpoint.parameters.some((p) => p.in === 'path');
 
     case 422:
       // Endpoints with validated request bodies likely support 422
-      return !!endpoint.requestBody;
+      return Boolean(endpoint.requestBody);
 
     default:
       return false;

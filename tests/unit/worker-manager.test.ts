@@ -46,9 +46,15 @@ describe('WorkerManager', () => {
     it('should throw for invalid config', () => {
       expect(() => new WorkerManager({ maxWorkers: 0 })).toThrow('maxWorkers must be at least 1');
       expect(() => new WorkerManager({ minWorkers: 0 })).toThrow('minWorkers must be at least 1');
-      expect(() => new WorkerManager({ minWorkers: 5, maxWorkers: 2 })).toThrow('minWorkers cannot exceed maxWorkers');
-      expect(() => new WorkerManager({ memoryLimitMB: 32 })).toThrow('memoryLimitMB must be at least 64');
-      expect(() => new WorkerManager({ workerTimeout: 500 })).toThrow('workerTimeout must be at least 1000ms');
+      expect(() => new WorkerManager({ minWorkers: 5, maxWorkers: 2 })).toThrow(
+        'minWorkers cannot exceed maxWorkers'
+      );
+      expect(() => new WorkerManager({ memoryLimitMB: 32 })).toThrow(
+        'memoryLimitMB must be at least 64'
+      );
+      expect(() => new WorkerManager({ workerTimeout: 500 })).toThrow(
+        'workerTimeout must be at least 1000ms'
+      );
     });
 
     it('should initialize minimum number of workers', () => {
@@ -88,9 +94,33 @@ describe('WorkerManager', () => {
 
     it('should sort tasks by priority', async () => {
       const tasks: TestTask[] = [
-        { id: 't1', filePath: '/t1', priority: 1, requiresSerialization: false, dependencies: [], retryCount: 0, maxRetries: 0 },
-        { id: 't2', filePath: '/t2', priority: 5, requiresSerialization: false, dependencies: [], retryCount: 0, maxRetries: 0 },
-        { id: 't3', filePath: '/t3', priority: 3, requiresSerialization: false, dependencies: [], retryCount: 0, maxRetries: 0 },
+        {
+          id: 't1',
+          filePath: '/t1',
+          priority: 1,
+          requiresSerialization: false,
+          dependencies: [],
+          retryCount: 0,
+          maxRetries: 0,
+        },
+        {
+          id: 't2',
+          filePath: '/t2',
+          priority: 5,
+          requiresSerialization: false,
+          dependencies: [],
+          retryCount: 0,
+          maxRetries: 0,
+        },
+        {
+          id: 't3',
+          filePath: '/t3',
+          priority: 3,
+          requiresSerialization: false,
+          dependencies: [],
+          retryCount: 0,
+          maxRetries: 0,
+        },
       ];
 
       for (const task of tasks) {
@@ -331,11 +361,11 @@ describe('WorkerManager', () => {
 
       await manager.scheduleTask(task);
 
-      let workersBeforeExecution = manager.getWorkers();
-      expect(workersBeforeExecution.every(w => w.state === 'idle')).toBe(true);
+      const workersBeforeExecution = manager.getWorkers();
+      expect(workersBeforeExecution.every((w) => w.state === 'idle')).toBe(true);
 
       const executor = vi.fn().mockImplementation(() => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
               taskId: 'state-task',
@@ -441,7 +471,7 @@ describe('WorkerManager', () => {
       await manager.scheduleTask(task);
 
       const executor = vi.fn().mockImplementation(() => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
               taskId: 'shutdown-task',

@@ -230,9 +230,14 @@ function buildConfig(env: NodeJS.ProcessEnv): EnvironmentConfig {
   const oauth = loadOAuthConfig(env);
   const basicAuth = loadBasicAuthConfig(env);
 
-  const requestTimeout = parseInteger(env.REQUEST_TIMEOUT, DEFAULT_CONFIG.requestTimeout) ?? DEFAULT_CONFIG.requestTimeout;
-  const maxRetries = parseInteger(env.MAX_RETRIES, DEFAULT_CONFIG.maxRetries) ?? DEFAULT_CONFIG.maxRetries;
-  const parallelWorkers = parseInteger(env.PARALLEL_WORKERS, DEFAULT_CONFIG.parallelWorkers) ?? DEFAULT_CONFIG.parallelWorkers;
+  const requestTimeout =
+    parseInteger(env.REQUEST_TIMEOUT, DEFAULT_CONFIG.requestTimeout) ??
+    DEFAULT_CONFIG.requestTimeout;
+  const maxRetries =
+    parseInteger(env.MAX_RETRIES, DEFAULT_CONFIG.maxRetries) ?? DEFAULT_CONFIG.maxRetries;
+  const parallelWorkers =
+    parseInteger(env.PARALLEL_WORKERS, DEFAULT_CONFIG.parallelWorkers) ??
+    DEFAULT_CONFIG.parallelWorkers;
 
   const logLevel = parseLogLevel(env.LOG_LEVEL);
   const ci = parseBoolean(env.CI, DEFAULT_CONFIG.ci);
@@ -242,9 +247,18 @@ function buildConfig(env: NodeJS.ProcessEnv): EnvironmentConfig {
   const fakerSeed = parseInteger(env.FAKER_SEED);
 
   const includeAuthTests = parseBoolean(env.INCLUDE_AUTH_TESTS, DEFAULT_CONFIG.includeAuthTests);
-  const includeValidationTests = parseBoolean(env.INCLUDE_VALIDATION_TESTS, DEFAULT_CONFIG.includeValidationTests);
-  const includeEdgeCaseTests = parseBoolean(env.INCLUDE_EDGE_CASE_TESTS, DEFAULT_CONFIG.includeEdgeCaseTests);
-  const includePerformanceTests = parseBoolean(env.INCLUDE_PERFORMANCE_TESTS, DEFAULT_CONFIG.includePerformanceTests);
+  const includeValidationTests = parseBoolean(
+    env.INCLUDE_VALIDATION_TESTS,
+    DEFAULT_CONFIG.includeValidationTests
+  );
+  const includeEdgeCaseTests = parseBoolean(
+    env.INCLUDE_EDGE_CASE_TESTS,
+    DEFAULT_CONFIG.includeEdgeCaseTests
+  );
+  const includePerformanceTests = parseBoolean(
+    env.INCLUDE_PERFORMANCE_TESTS,
+    DEFAULT_CONFIG.includePerformanceTests
+  );
 
   const testOutputDir = env.TEST_OUTPUT_DIR || DEFAULT_CONFIG.testOutputDir;
   const testReportDir = env.TEST_REPORT_DIR || DEFAULT_CONFIG.testReportDir;
@@ -332,7 +346,7 @@ export function getEnvironmentBaseUrl(environment: Environment): string {
  */
 export function hasAuthentication(): boolean {
   const config = getConfig();
-  return !!(config.apiKey || config.authToken || config.oauth || config.basicAuth);
+  return Boolean(config.apiKey || config.authToken || config.oauth || config.basicAuth);
 }
 
 /**

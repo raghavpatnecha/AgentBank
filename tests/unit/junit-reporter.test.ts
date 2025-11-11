@@ -756,7 +756,8 @@ function createMockTestReport(): TestReport {
           type: 'AssertionError',
           expected: 400,
           actual: 422,
-          stack: 'AssertionError: Expected status 400 but got 422\n    at Test.assert (test.js:123:45)',
+          stack:
+            'AssertionError: Expected status 400 but got 422\n    at Test.assert (test.js:123:45)',
         },
       },
       {

@@ -159,9 +159,7 @@ describe('auth-helper', () => {
 
       const cookies = generateAuthCookie(config, 'cookie-value');
 
-      expect(cookies).toEqual([
-        { name: 'auth_token', value: 'cookie-value' },
-      ]);
+      expect(cookies).toEqual([{ name: 'auth_token', value: 'cookie-value' }]);
     });
 
     test('returns empty for non-cookie auth types', () => {
@@ -472,10 +470,7 @@ describe('auth-helper', () => {
     });
 
     test('returns false when all requirements have schemes', () => {
-      const requirements = [
-        { bearerAuth: [] },
-        { apiKeyHeader: [] },
-      ];
+      const requirements = [{ bearerAuth: [] }, { apiKeyHeader: [] }];
 
       const result = isAuthOptional(requirements);
 
@@ -507,10 +502,7 @@ describe('auth-helper', () => {
         ['apiKeyHeader', scheme2],
       ]);
 
-      const requirements = [
-        { bearerAuth: [] },
-        { apiKeyHeader: [] },
-      ];
+      const requirements = [{ bearerAuth: [] }, { apiKeyHeader: [] }];
 
       const extracted = extractAuthSchemes(requirements, allSchemes);
 
@@ -702,7 +694,7 @@ describe('auth-helper', () => {
       expect(code).toContain('Username');
       expect(code).toContain('Password');
       expect(code).toContain('Buffer.from');
-      expect(code).toContain('toString(\'base64\')');
+      expect(code).toContain("toString('base64')");
     });
   });
 });

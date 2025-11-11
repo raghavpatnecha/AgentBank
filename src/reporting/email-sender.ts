@@ -293,10 +293,7 @@ export class EmailSender {
     }
 
     // Send with retry logic
-    return this.handleRetry(
-      () => this.sendEmailInternal(options),
-      this.config.maxRetries
-    );
+    return this.handleRetry(() => this.sendEmailInternal(options), this.config.maxRetries);
   }
 
   /**
@@ -315,8 +312,16 @@ export class EmailSender {
       const info: SentMessageInfo = await this.transporter.sendMail({
         from: options.from,
         to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
-        cc: options.cc ? (Array.isArray(options.cc) ? options.cc.join(', ') : options.cc) : undefined,
-        bcc: options.bcc ? (Array.isArray(options.bcc) ? options.bcc.join(', ') : options.bcc) : undefined,
+        cc: options.cc
+          ? Array.isArray(options.cc)
+            ? options.cc.join(', ')
+            : options.cc
+          : undefined,
+        bcc: options.bcc
+          ? Array.isArray(options.bcc)
+            ? options.bcc.join(', ')
+            : options.bcc
+          : undefined,
         replyTo: options.replyTo,
         subject: options.subject,
         text: options.text,
@@ -365,7 +370,10 @@ export class EmailSender {
     }
 
     if (this.config.includeTimestampInSubject ?? true) {
-      const timestamp = new Date(report.metadata.timestamp).toISOString().replace('T', ' ').split('.')[0];
+      const timestamp = new Date(report.metadata.timestamp)
+        .toISOString()
+        .replace('T', ' ')
+        .split('.')[0];
       subject += ` - ${timestamp}`;
     }
 
@@ -488,7 +496,7 @@ export class EmailSender {
    * @param ms - Milliseconds to sleep
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -594,7 +602,7 @@ export class EmailSender {
     } else {
       // Extract email from "Name <email@example.com>" format
       const emailMatch = options.from.match(/<(.+)>/);
-      const emailToValidate = (emailMatch && emailMatch[1]) ? emailMatch[1] : options.from;
+      const emailToValidate = emailMatch?.[1] ? emailMatch[1] : options.from;
       if (!this.isValidEmail(emailToValidate)) {
         errors.push('From address is invalid');
       }
@@ -699,7 +707,7 @@ export class EmailSender {
     const statusEmoji = successRate === 100 ? '✅' : '❌';
 
     // Format timestamp
-    const timestamp = new Date(metadata.timestamp).toISOString().replace('T', ' ').split('.')[0] + ' UTC';
+    const timestamp = `${new Date(metadata.timestamp).toISOString().replace('T', ' ').split('.')[0]} UTC`;
 
     // Replace template variables
     return template

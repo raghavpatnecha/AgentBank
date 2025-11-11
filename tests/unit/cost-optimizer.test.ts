@@ -41,9 +41,7 @@ describe('CostOptimizer', () => {
     ...overrides,
   });
 
-  const createMockHealingContext = (
-    overrides: Partial<HealingContext> = {}
-  ): HealingContext => ({
+  const createMockHealingContext = (overrides: Partial<HealingContext> = {}): HealingContext => ({
     failureType: FailureType.ASSERTION,
     specDiff: { added: ['newField'] },
     testCode: 'expect(response.status).toBe(200)',
@@ -160,9 +158,7 @@ describe('CostOptimizer', () => {
       const prompt = 'a'.repeat(400);
       const estimate = optimizer.estimateCost(prompt);
 
-      expect(estimate.totalTokens).toBe(
-        estimate.promptTokens + estimate.completionTokens
-      );
+      expect(estimate.totalTokens).toBe(estimate.promptTokens + estimate.completionTokens);
     });
   });
 
@@ -356,9 +352,7 @@ describe('CostOptimizer', () => {
   });
 
   describe('optimizeBatchRequests', () => {
-    const createMockHealingRequest = (
-      overrides: Partial<HealingRequest> = {}
-    ): HealingRequest => ({
+    const createMockHealingRequest = (overrides: Partial<HealingRequest> = {}): HealingRequest => ({
       id: 'heal-1',
       test: {
         id: 'test-1',

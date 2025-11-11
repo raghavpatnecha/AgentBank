@@ -93,7 +93,7 @@ describe('auth-fixture-generator', () => {
       expect(fixture).toContain('USERNAME');
       expect(fixture).toContain('PASSWORD');
       expect(fixture).toContain('Buffer.from');
-      expect(fixture).toContain('toString(\'base64\')');
+      expect(fixture).toContain("toString('base64')");
     });
 
     test('generates fixture for OAuth2', () => {
@@ -139,15 +139,15 @@ describe('auth-fixture-generator', () => {
     test('uses ESM imports by default', () => {
       const fixture = generateAuthFixture([bearerScheme], { useESM: true });
 
-      expect(fixture).toContain("import { test as base }");
-      expect(fixture).toContain("export { expect }");
+      expect(fixture).toContain('import { test as base }');
+      expect(fixture).toContain('export { expect }');
     });
 
     test('uses CommonJS when useESM is false', () => {
       const fixture = generateAuthFixture([bearerScheme], { useESM: false });
 
-      expect(fixture).toContain("const { test: base } = require");
-      expect(fixture).toContain("exports.expect = require");
+      expect(fixture).toContain('const { test: base } = require');
+      expect(fixture).toContain('exports.expect = require');
     });
   });
 
@@ -155,10 +155,10 @@ describe('auth-fixture-generator', () => {
     test('generates complete fixture file', () => {
       const file = generateFixtureFile([bearerScheme, apiKeyScheme]);
 
-      expect(file).toContain("import { test as base }");
+      expect(file).toContain('import { test as base }');
       expect(file).toContain('bearerAuth');
       expect(file).toContain('apiKeyHeader');
-      expect(file).toContain("export { expect }");
+      expect(file).toContain('export { expect }');
     });
   });
 

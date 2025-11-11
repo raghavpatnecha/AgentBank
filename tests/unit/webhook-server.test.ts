@@ -19,7 +19,9 @@ import type {
 } from '../../src/types/webhook-types.js';
 
 // Helper to create mock webhook payloads
-function createMockIssueCommentEvent(overrides: Partial<IssueCommentEvent> = {}): IssueCommentEvent {
+function createMockIssueCommentEvent(
+  overrides: Partial<IssueCommentEvent> = {}
+): IssueCommentEvent {
   return {
     action: 'created',
     repository: {
@@ -256,9 +258,7 @@ describe('WebhookServer', () => {
 
   describe('Health Check Endpoint', () => {
     it('should return healthy status', async () => {
-      const response = await request(server.getApp())
-        .get('/health')
-        .expect(200);
+      const response = await request(server.getApp()).get('/health').expect(200);
 
       expect(response.body.status).toBe('healthy');
       expect(response.body.uptime).toBeDefined();
@@ -268,23 +268,17 @@ describe('WebhookServer', () => {
     it('should not rate limit health checks', async () => {
       // Make many health check requests
       for (let i = 0; i < 20; i++) {
-        await request(server.getApp())
-          .get('/health')
-          .expect(200);
+        await request(server.getApp()).get('/health').expect(200);
       }
 
       // Should still work after many requests
-      await request(server.getApp())
-        .get('/health')
-        .expect(200);
+      await request(server.getApp()).get('/health').expect(200);
     });
   });
 
   describe('Stats Endpoint', () => {
     it('should return server statistics', async () => {
-      const response = await request(server.getApp())
-        .get('/stats')
-        .expect(200);
+      const response = await request(server.getApp()).get('/stats').expect(200);
 
       expect(response.body.totalReceived).toBe(0);
       expect(response.body.totalProcessed).toBe(0);
@@ -294,26 +288,20 @@ describe('WebhookServer', () => {
 
   describe('Jobs Endpoint', () => {
     it('should list all jobs', async () => {
-      const response = await request(server.getApp())
-        .get('/jobs')
-        .expect(200);
+      const response = await request(server.getApp()).get('/jobs').expect(200);
 
       expect(response.body.total).toBe(0);
       expect(response.body.jobs).toEqual([]);
     });
 
     it('should filter jobs by status', async () => {
-      const response = await request(server.getApp())
-        .get('/jobs?status=queued')
-        .expect(200);
+      const response = await request(server.getApp()).get('/jobs?status=queued').expect(200);
 
       expect(response.body.total).toBe(0);
     });
 
     it('should get job details by ID', async () => {
-      const response = await request(server.getApp())
-        .get('/jobs/nonexistent')
-        .expect(404);
+      const response = await request(server.getApp()).get('/jobs/nonexistent').expect(404);
 
       expect(response.body.error).toBe('Job not found');
     });
@@ -742,9 +730,7 @@ describe('WebhookServer', () => {
 
   describe('Error Handling', () => {
     it('should handle 404 for unknown routes', async () => {
-      const response = await request(server.getApp())
-        .get('/unknown')
-        .expect(404);
+      const response = await request(server.getApp()).get('/unknown').expect(404);
 
       expect(response.body.error).toBe('Not found');
     });

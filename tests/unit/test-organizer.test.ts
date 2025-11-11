@@ -73,9 +73,7 @@ describe('TestOrganizer', () => {
     });
 
     it('should handle tests with no tags', () => {
-      const tests = [
-        createTestCase('/api/data', 'GET', 'happy-path', []),
-      ];
+      const tests = [createTestCase('/api/data', 'GET', 'happy-path', [])];
 
       const organized = organizer.organize(tests, 'by-tag');
 
@@ -83,9 +81,7 @@ describe('TestOrganizer', () => {
     });
 
     it('should use first tag when multiple tags exist', () => {
-      const tests = [
-        createTestCase('/users', 'GET', 'happy-path', ['users', 'admin']),
-      ];
+      const tests = [createTestCase('/users', 'GET', 'happy-path', ['users', 'admin'])];
 
       const organized = organizer.organize(tests, 'by-tag');
 
@@ -106,8 +102,8 @@ describe('TestOrganizer', () => {
 
       expect(organized.strategy).toBe('by-endpoint');
       expect(organized.files.size).toBe(2);
-      expect(Array.from(organized.files.keys()).some(k => k.includes('users'))).toBe(true);
-      expect(Array.from(organized.files.keys()).some(k => k.includes('products'))).toBe(true);
+      expect(Array.from(organized.files.keys()).some((k) => k.includes('users'))).toBe(true);
+      expect(Array.from(organized.files.keys()).some((k) => k.includes('products'))).toBe(true);
     });
 
     it('should group endpoints with and without IDs together', () => {
@@ -169,10 +165,7 @@ describe('TestOrganizer', () => {
     });
 
     it('should handle case-insensitive methods', () => {
-      const tests = [
-        createTestCase('/users', 'GET'),
-        createTestCase('/users', 'get'),
-      ];
+      const tests = [createTestCase('/users', 'GET'), createTestCase('/users', 'get')];
 
       const organized = organizer.organize(tests, 'by-method');
 
@@ -218,7 +211,7 @@ describe('TestOrganizer', () => {
       const organized = organizer.organize(tests, 'flat');
       const files = organizer.generateTestFiles(organized);
 
-      expect(files[0]?.content).toContain("import { test, expect }");
+      expect(files[0]?.content).toContain('import { test, expect }');
     });
 
     it('should generate valid Playwright test code', () => {
@@ -302,9 +295,7 @@ describe('TestOrganizer', () => {
     });
 
     it('should recommend by-endpoint for many endpoints', () => {
-      const tests = Array.from({ length: 15 }, (_, i) =>
-        createTestCase(`/endpoint${i}`, 'GET')
-      );
+      const tests = Array.from({ length: 15 }, (_, i) => createTestCase(`/endpoint${i}`, 'GET'));
 
       const strategy = organizer.getRecommendedStrategy(tests);
       expect(strategy).toBe('by-endpoint');
@@ -338,9 +329,7 @@ describe('TestOrganizer', () => {
     });
 
     it('should sanitize filenames with special characters', () => {
-      const tests = [
-        createTestCase('/api/v1/users', 'GET', 'happy-path', ['API V1']),
-      ];
+      const tests = [createTestCase('/api/v1/users', 'GET', 'happy-path', ['API V1'])];
 
       const organized = organizer.organize(tests, 'by-tag');
       const filenames = Array.from(organized.files.keys());

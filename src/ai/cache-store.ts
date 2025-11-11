@@ -435,8 +435,7 @@ export class CacheStore {
     if (items.length === 0) return hitRate * 100;
 
     const recentlyAccessed = items.filter((item) => {
-      const hoursSinceAccess =
-        (Date.now() - item.lastAccessedAt.getTime()) / (1000 * 60 * 60);
+      const hoursSinceAccess = (Date.now() - item.lastAccessedAt.getTime()) / (1000 * 60 * 60);
       return hoursSinceAccess < 1;
     }).length;
 
