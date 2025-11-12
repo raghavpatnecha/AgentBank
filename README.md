@@ -17,7 +17,8 @@ Generate comprehensive Playwright test suites from OpenAPI/Swagger specification
 
 - **🔍 OpenAPI Parser** - Full support for OpenAPI 3.0 and Swagger 2.0 specifications
 - **🧪 Test Generator** - Automatic generation of comprehensive Playwright test suites
-- **🤖 AI-Powered Self-Healing** - Automatically repairs broken tests using GPT-4
+- **🤖 AI-Powered Test Generation** - GPT-4 generates intelligent tests that understand business logic, security, and workflows (optional)
+- **🔧 AI-Powered Self-Healing** - Automatically repairs broken tests using GPT-4
 - **🔄 GitHub Integration** - Seamless CI/CD integration with GitHub Actions
 - **📊 Advanced Reporting** - HTML, JSON, and JUnit reports with detailed metrics
 - **⚡ Parallel Execution** - Multi-worker test execution for optimal performance
@@ -29,6 +30,7 @@ Generate comprehensive Playwright test suites from OpenAPI/Swagger specification
 - ✅ **Error Case Tests** - Client (4xx) and server (5xx) error scenarios
 - ✅ **Edge Case Tests** - Boundary values, missing fields, invalid data
 - ✅ **Workflow Tests** - Multi-step API flows with dependencies
+- ✅ **AI-Generated Tests** - Intelligent tests for business logic, security vulnerabilities, and implicit requirements (optional, requires OpenAI API key)
 
 ---
 
@@ -89,11 +91,47 @@ Options:
   --no-errors                Skip error case tests
   --no-edge-cases            Skip edge case tests
   --no-flows                 Skip workflow tests
+  --ai-tests                 Enable AI-powered intelligent test generation (requires OPENAI_API_KEY)
   --organization <strategy>  Organization strategy (default: "by-tag")
                              Options: by-tag, by-endpoint, by-type, by-method, flat
   --base-url <url>           Base URL for API (overrides spec servers)
   -v, --verbose              Verbose output
 ```
+
+### 🤖 AI-Powered Test Generation
+
+Enable intelligent test generation that goes beyond schema validation to understand business logic, security vulnerabilities, and implicit requirements.
+
+**Requirements:**
+- OpenAI API key (set `OPENAI_API_KEY` environment variable)
+- Optional: Set `OPENAI_MODEL` (defaults to `gpt-4`)
+
+**Usage:**
+```bash
+# Set your OpenAI API key
+export OPENAI_API_KEY=sk-...
+
+# Generate tests with AI-powered intelligence
+node dist/cli/index.js generate \
+  --spec ./api.yaml \
+  --ai-tests \
+  --verbose
+```
+
+**What AI Tests Provide:**
+- **Business Logic Validation** - Tests that understand domain constraints and rules
+- **Security Testing** - Identifies OWASP vulnerabilities and authorization issues
+- **Workflow Analysis** - Tests multi-step flows and endpoint dependencies
+- **Edge Case Discovery** - Finds implicit requirements and real-world scenarios
+- **Context-Aware** - Analyzes related endpoints for comprehensive coverage
+
+**AI Test Organization:**
+- AI-generated tests are placed in `ai-tests/` subdirectory
+- Each file is prefixed with `ai-` for easy identification
+- Tests are marked as `experimental` stability
+- Tagged with `ai-generated` for filtering
+
+**Note:** AI test generation makes API calls to OpenAI and may incur costs. Tests are generated at 3 per endpoint by default.
 
 ### Advanced Examples
 
@@ -164,9 +202,9 @@ INITIAL_DELAY_MS=1000
 MAX_DELAY_MS=30000
 BACKOFF_MULTIPLIER=2
 
-# OpenAI Configuration (for self-healing)
+# OpenAI Configuration (for AI test generation and self-healing)
 OPENAI_API_KEY=your-api-key-here
-OPENAI_MODEL=gpt-4
+OPENAI_MODEL=gpt-4  # Optional: defaults to gpt-4
 
 # Test Configuration
 WORKERS=4

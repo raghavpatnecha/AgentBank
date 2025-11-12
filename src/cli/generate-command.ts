@@ -17,6 +17,7 @@ import { ErrorCaseGenerator } from '../generators/error-case-generator.js';
 import { EdgeCaseGenerator } from '../generators/edge-case-generator.js';
 import { TestOrganizer } from '../generators/test-organizer.js';
 import { CodeGenerator } from '../utils/code-generator.js';
+import { AITestGenerator } from '../generators/ai-test-generator.js';
 
 /**
  * Command line options interface
@@ -29,6 +30,7 @@ interface GenerateCommandOptions {
   errors?: boolean;
   edgeCases?: boolean;
   flows?: boolean;
+  aiTests?: boolean;
   organization?: OrganizationStrategy;
   baseUrl?: string;
   verbose?: boolean;
@@ -51,6 +53,7 @@ export function createGenerateCommand(): Command {
     .option('--no-errors', 'Skip error case tests')
     .option('--no-edge-cases', 'Skip edge case tests')
     .option('--no-flows', 'Skip workflow tests')
+    .option('--ai-tests', 'Enable AI-powered intelligent test generation (requires OPENAI_API_KEY)', false)
     .option(
       '--organization <strategy>',
       'Organization strategy: by-tag, by-endpoint, by-type, by-method, flat',
@@ -248,6 +251,82 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
     reporter.start('Generating tests...');
 
     const result = await generator.generateTests();
+
+    // Step 4.5: AI-powered test generation (optional, runs separately)
+    if (options.aiTests) {
+      const aiGen = new AITestGenerator({
+        apiKey: process.env.OPENAI_API_KEY,
+        model: process.env.OPENAI_MODEL,
+        testsPerEndpoint: 3,
+        focus: ['business-logic', 'security', 'workflows', 'edge-cases'],
+        verbose: options.verbose
+      });
+
+      if (aiGen.isEnabled()) {
+        reporter.start('🤖 Generating AI-powered intelligent tests...');
+
+        try {
+          const aiTests = await aiGen.generateTests(endpoints);
+
+          if (aiTests.length > 0) {
+            // Organize AI tests by endpoint
+            const aiTestsByEndpoint = new Map<string, typeof aiTests>();
+            for (const test of aiTests) {
+              const key = test.endpoint;
+              if (!aiTestsByEndpoint.has(key)) {
+                aiTestsByEndpoint.set(key, []);
+              }
+              aiTestsByEndpoint.get(key)!.push(test);
+            }
+
+            // Generate AI test files using the code generator
+            const codeGen = new CodeGenerator();
+            const aiFiles = [];
+            for (const [endpoint, tests] of aiTestsByEndpoint) {
+              const fileName = `ai-${endpoint.replace(/\//g, '-').replace(/^-/, '')}.spec.ts`;
+              const metadata = {
+                endpoints: [endpoint],
+                testTypes: ['validation' as const],
+                testCount: tests.length,
+                tags: ['ai-generated'],
+                generatedAt: new Date().toISOString()
+              };
+              const content = codeGen.generateTestFile(tests, metadata);
+              aiFiles.push({
+                fileName,
+                filePath: `ai-tests/${fileName}`,
+                content,
+                tests,
+                imports: [],
+                metadata
+              });
+            }
+
+            // Merge AI files with standard results
+            result.files.push(...aiFiles);
+            result.totalTests += aiTests.length;
+
+            // Update statistics
+            if (!result.statistics.testsByType.validation) {
+              result.statistics.testsByType.validation = 0;
+            }
+            result.statistics.testsByType.validation += aiTests.length;
+
+            reporter.success(`✨ Generated ${aiTests.length} AI-powered tests in ${aiFiles.length} files`);
+          } else {
+            reporter.warning('AI generation produced no tests');
+          }
+        } catch (error) {
+          reporter.error(`AI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          if (options.verbose && error instanceof Error && error.stack) {
+            console.error(error.stack);
+          }
+        }
+      } else {
+        reporter.warning('⚠️  AI test generation requested but OPENAI_API_KEY not found');
+        reporter.info('Set OPENAI_API_KEY environment variable to enable AI-powered test generation');
+      }
+    }
 
     // Check for errors
     if (result.errors.length > 0) {
