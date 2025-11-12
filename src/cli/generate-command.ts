@@ -10,6 +10,13 @@ import { TestGenerator } from '../core/test-generator.js';
 import { loadConfig } from './config-loader.js';
 import { ProgressReporter } from './progress-reporter.js';
 import type { OrganizationStrategy } from '../types/test-generator-types.js';
+import { DataFactory } from '../utils/data-factory.js';
+import { RequestBodyGenerator } from '../generators/request-body-generator.js';
+import { HappyPathGenerator } from '../generators/happy-path-generator.js';
+import { ErrorCaseGenerator } from '../generators/error-case-generator.js';
+import { EdgeCaseGenerator } from '../generators/edge-case-generator.js';
+import { TestOrganizer } from '../generators/test-organizer.js';
+import { CodeGenerator } from '../utils/code-generator.js';
 
 /**
  * Command line options interface
@@ -123,6 +130,102 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
         useFixtures: config.options?.useFixtures ?? true,
         useHooks: config.options?.useHooks ?? true,
       },
+    });
+
+    // Initialize generator dependencies
+    const dataFactory = new DataFactory();
+    const bodyGenerator = new RequestBodyGenerator();
+
+    // Create and register all test generators
+    const happyPathGen = new HappyPathGenerator(dataFactory, bodyGenerator);
+    generator.setGenerator('happy-path', happyPathGen);
+
+    if (config.includeErrors) {
+      const errorGen = new ErrorCaseGenerator(bodyGenerator);
+      // Wrap to match interface
+      generator.setGenerator('error-case', {
+        generateTests: (endpoints) => endpoints.flatMap(ep => errorGen.generateTests(ep))
+      });
+    }
+
+    if (config.includeEdgeCases) {
+      const edgeGen = new EdgeCaseGenerator(dataFactory);
+      // Wrap to match interface
+      generator.setGenerator('edge-case', {
+        generateTests: (endpoints) => endpoints.flatMap(ep => edgeGen.generateTests(ep))
+      });
+    }
+
+    // TODO: Fix auth and flow generators - complex interface mismatches
+    // if (config.includeAuth) {
+    //   Auth generator needs proper integration
+    // }
+
+    // if (config.includeFlows) {
+    //   Flow generator needs proper integration
+    // }
+
+    // Set up test organizer
+    const organizer = new TestOrganizer();
+    // Wrap to match interface
+    generator.setOrganizer({
+      organize: (tests, strategy) => {
+        const result = organizer.organize(tests, strategy);
+        return {
+          files: result.files,
+          metadata: {
+            strategy: result.strategy,
+            fileCount: result.files.size,
+            testCount: result.totalTests
+          }
+        };
+      }
+    });
+
+    // Set up code generator
+    const codeGen = new CodeGenerator();
+    // Wrap to match interface
+    generator.setCodeGenerator({
+      generateFiles: (organized) => {
+        const files: any[] = [];
+        for (const [fileName, tests] of organized.files) {
+          const metadata = {
+            endpoints: [...new Set(tests.map(t => t.endpoint))],
+            testTypes: [...new Set(tests.map(t => t.type))],
+            testCount: tests.length,
+            tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
+            generatedAt: new Date().toISOString()
+          };
+          const content = codeGen.generateTestFile(tests, metadata);
+          files.push({
+            fileName,
+            filePath: fileName,
+            content,
+            tests,
+            imports: [],
+            metadata
+          });
+        }
+        return files;
+      },
+      generateFile: (fileName, tests) => {
+        const metadata = {
+          endpoints: [...new Set(tests.map(t => t.endpoint))],
+          testTypes: [...new Set(tests.map(t => t.type))],
+          testCount: tests.length,
+          tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
+          generatedAt: new Date().toISOString()
+        };
+        const content = codeGen.generateTestFile(tests, metadata);
+        return {
+          fileName,
+          filePath: fileName,
+          content,
+          tests,
+          imports: [],
+          metadata
+        };
+      }
     });
 
     // Extract endpoints first
