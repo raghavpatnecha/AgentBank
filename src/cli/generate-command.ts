@@ -53,7 +53,8 @@ export function createGenerateCommand(): Command {
     .option('--no-errors', 'Skip error case tests')
     .option('--no-edge-cases', 'Skip edge case tests')
     .option('--no-flows', 'Skip workflow tests')
-    .option('--ai-tests', 'Enable AI-powered intelligent test generation (requires OPENAI_API_KEY)', false)
+    .option('--ai-tests', 'Force enable AI-powered test generation (auto-enabled if OPENAI_API_KEY is set)')
+    .option('--no-ai-tests', 'Disable AI-powered test generation even if OPENAI_API_KEY is set')
     .option(
       '--organization <strategy>',
       'Organization strategy: by-tag, by-endpoint, by-type, by-method, flat',
@@ -252,8 +253,13 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
 
     const result = await generator.generateTests();
 
-    // Step 4.5: AI-powered test generation (optional, runs separately)
-    if (options.aiTests) {
+    // Step 4.5: AI-powered test generation
+    // Smart default: auto-enable if OPENAI_API_KEY is set, unless explicitly disabled
+    const shouldUseAI = options.aiTests === undefined
+      ? !!process.env.OPENAI_API_KEY  // Auto-enable if API key is present
+      : options.aiTests;               // Respect explicit user choice
+
+    if (shouldUseAI) {
       const aiGen = new AITestGenerator({
         apiKey: process.env.OPENAI_API_KEY,
         model: process.env.OPENAI_MODEL,
@@ -323,9 +329,13 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
           }
         }
       } else {
-        reporter.warning('⚠️  AI test generation requested but OPENAI_API_KEY not found');
-        reporter.info('Set OPENAI_API_KEY environment variable to enable AI-powered test generation');
+        reporter.warning('⚠️  AI test generation enabled but OPENAI_API_KEY not found');
+        reporter.info('Set OPENAI_API_KEY environment variable or use --no-ai-tests to disable');
       }
+    } else if (options.verbose && process.env.OPENAI_API_KEY) {
+      reporter.info('AI test generation disabled (use --ai-tests to enable)');
+    } else if (options.verbose) {
+      reporter.info('AI test generation not available (set OPENAI_API_KEY to enable)');
     }
 
     // Check for errors

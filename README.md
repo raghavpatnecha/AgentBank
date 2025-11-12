@@ -91,16 +91,19 @@ Options:
   --no-errors                Skip error case tests
   --no-edge-cases            Skip edge case tests
   --no-flows                 Skip workflow tests
-  --ai-tests                 Enable AI-powered intelligent test generation (requires OPENAI_API_KEY)
+  --ai-tests                 Force enable AI test generation
+  --no-ai-tests              Disable AI test generation
   --organization <strategy>  Organization strategy (default: "by-tag")
                              Options: by-tag, by-endpoint, by-type, by-method, flat
   --base-url <url>           Base URL for API (overrides spec servers)
   -v, --verbose              Verbose output
+
+Note: AI-powered test generation is automatically enabled when OPENAI_API_KEY is set.
 ```
 
 ### 🤖 AI-Powered Test Generation
 
-Enable intelligent test generation that goes beyond schema validation to understand business logic, security vulnerabilities, and implicit requirements.
+**Enabled by Default!** When you set `OPENAI_API_KEY`, AI-powered intelligent test generation runs automatically. This goes beyond schema validation to understand business logic, security vulnerabilities, and implicit requirements.
 
 **Requirements:**
 - OpenAI API key (set `OPENAI_API_KEY` environment variable)
@@ -108,14 +111,17 @@ Enable intelligent test generation that goes beyond schema validation to underst
 
 **Usage:**
 ```bash
-# Set your OpenAI API key
+# Set your OpenAI API key - AI tests will run automatically!
 export OPENAI_API_KEY=sk-...
 
-# Generate tests with AI-powered intelligence
-node dist/cli/index.js generate \
-  --spec ./api.yaml \
-  --ai-tests \
-  --verbose
+# Generate tests (AI automatically included)
+node dist/cli/index.js generate --spec ./api.yaml
+
+# Disable AI tests even with API key set
+node dist/cli/index.js generate --spec ./api.yaml --no-ai-tests
+
+# Force enable (will warn if no API key)
+node dist/cli/index.js generate --spec ./api.yaml --ai-tests
 ```
 
 **What AI Tests Provide:**
