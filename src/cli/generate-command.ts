@@ -103,9 +103,21 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
 
     const specPath = path.resolve(process.cwd(), config.spec);
 
+    // Check file size to determine if we should use fast mode
+    const stats = await fs.stat(specPath);
+    const fileSizeMB = stats.size / (1024 * 1024);
+    const isLargeSpec = fileSizeMB > 2; // Files > 2MB use fast mode
+
+    if (isLargeSpec) {
+      reporter.update(`⚡ Large spec detected (${fileSizeMB.toFixed(1)}MB) - using fast mode`);
+    }
+
     let spec;
     try {
-      spec = await parseOpenAPIFile(specPath);
+      spec = await parseOpenAPIFile(specPath, {
+        skipDereference: isLargeSpec, // Use bundle mode for large specs
+        skipValidation: isLargeSpec,  // Skip validation for speed
+      });
     } catch (error) {
       reporter.error(
         `Failed to parse OpenAPI spec: ${error instanceof Error ? error.message : 'Unknown error'}`
