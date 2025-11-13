@@ -6,7 +6,14 @@
  */
 
 import OpenAI from 'openai';
-import type { RegenerationContext, RegenerationResult } from '../types/self-healing-types.js';
+import type {
+  RegenerationContext,
+  RegenerationResult,
+  ValidationResult,
+  ValidationError,
+  ValidationWarning,
+} from '../types/ai-types.js';
+import { ValidationType } from '../types/ai-types.js';
 import fs from 'fs/promises';
 
 /**
@@ -73,9 +80,12 @@ export class AITestRegenerator {
     if (!this.enabled || !this.client) {
       return {
         success: false,
+        modelUsed: this.config.model,
+        duration: 0,
+        timestamp: new Date(),
         error: {
-          code: 'NOT_ENABLED',
           message: 'AI Test Regenerator is not enabled (missing OPENAI_API_KEY)',
+          type: 'unknown' as any,
         },
       };
     }
@@ -102,9 +112,12 @@ export class AITestRegenerator {
       if (!regeneratedCode) {
         return {
           success: false,
+          modelUsed: this.config.model,
+          duration: Date.now() - startTime,
+          timestamp: new Date(),
           error: {
-            code: 'EMPTY_RESPONSE',
             message: 'GPT-4 returned empty response',
+            type: 'unknown' as any,
           },
         };
       }
@@ -118,12 +131,14 @@ export class AITestRegenerator {
       if (!validation.valid) {
         return {
           success: false,
-          originalTest: context.originalTestCode,
-          regeneratedTest: code,
+          regeneratedCode: code,
           validation,
+          modelUsed: this.config.model,
+          duration: Date.now() - startTime,
+          timestamp: new Date(),
           error: {
-            code: 'VALIDATION_FAILED',
             message: `Regenerated code failed validation: ${validation.errors.join(', ')}`,
+            type: 'validation_error' as any,
           },
         };
       }
@@ -147,20 +162,23 @@ export class AITestRegenerator {
 
       return {
         success: true,
-        originalTest: context.originalTestCode,
-        regeneratedTest: code,
+        regeneratedCode: code,
         savedPath,
         tokensUsed: response.usage?.total_tokens,
+        modelUsed: this.config.model,
         duration,
+        timestamp: new Date(),
         validation,
-        changes: this.summarizeChanges(context.originalTestCode, code),
       };
     } catch (error) {
       return {
         success: false,
+        modelUsed: this.config.model,
+        duration: 0,
+        timestamp: new Date(),
         error: {
-          code: 'REGENERATION_ERROR',
           message: error instanceof Error ? error.message : String(error),
+          type: 'unknown' as any,
         },
       };
     }
@@ -215,7 +233,7 @@ The test should:
     if (specChanges && specChanges.length > 0) {
       prompt += `## API Specification Changes\n`;
       for (const change of specChanges) {
-        prompt += `- **${change.changeType}** in ${change.path}: ${change.description}\n`;
+        prompt += `- **${change.type}** in ${change.path}: ${change.description}\n`;
       }
       prompt += `\n`;
     }
@@ -249,29 +267,55 @@ The test should:
   private validateRegeneratedCode(
     code: string,
     context: RegenerationContext
-  ): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
 
     // Basic syntax checks
-    if (!code.includes('test(')) {
-      errors.push('Missing test() function');
+    const hasTestFunction = code.includes('test(');
+    const hasExpect = code.includes('expect(');
+    const hasAwait = code.includes('await');
+    const hasRequest = code.includes('request');
+
+    if (!hasTestFunction) {
+      errors.push({
+        message: 'Missing test() function',
+        type: ValidationType.STRUCTURE,
+        severity: 'error',
+      });
     }
 
-    if (!code.includes('expect(')) {
-      errors.push('Missing expect() assertions');
+    if (!hasExpect) {
+      errors.push({
+        message: 'Missing expect() assertions',
+        type: ValidationType.ASSERTIONS,
+        severity: 'error',
+      });
     }
 
-    if (!code.includes('await')) {
-      errors.push('Missing await for async operations');
+    if (!hasAwait) {
+      errors.push({
+        message: 'Missing await for async operations',
+        type: ValidationType.SYNTAX,
+        severity: 'error',
+      });
     }
 
-    if (!code.includes('request')) {
-      errors.push('Missing Playwright request fixture');
+    if (!hasRequest) {
+      errors.push({
+        message: 'Missing Playwright request fixture',
+        type: ValidationType.PLAYWRIGHT,
+        severity: 'error',
+      });
     }
 
     // Check for common issues
     if (code.includes('console.log(')) {
-      errors.push('Contains console.log (should be removed)');
+      warnings.push({
+        message: 'Contains console.log statements',
+        type: ValidationType.SYNTAX,
+        recommendation: 'Remove console.log statements from test code',
+      });
     }
 
     // Ensure test name is similar to original
@@ -279,40 +323,42 @@ The test should:
     const codeTestName = code.match(/test\(['"]([^'"]+)['"]/)?.[1]?.toLowerCase();
 
     if (codeTestName && !codeTestName.includes(originalTestName.split(' ')[0] || '')) {
-      errors.push('Test name significantly changed');
+      warnings.push({
+        message: 'Test name differs from original',
+        type: ValidationType.STRUCTURE,
+        recommendation: 'Ensure test name reflects original intent',
+      });
     }
 
     return {
       valid: errors.length === 0,
+      syntax: {
+        valid: hasAwait && hasTestFunction,
+        errors: [],
+        parser: 'simple',
+      },
+      imports: {
+        valid: true,
+        hasPlaywrightImports: hasRequest,
+        missingImports: [],
+        invalidImports: [],
+      },
+      structure: {
+        valid: hasTestFunction,
+        hasTestBlocks: hasTestFunction,
+        testCount: (code.match(/test\(/g) || []).length,
+        hasDescribeBlocks: code.includes('describe('),
+        issues: [],
+      },
+      assertions: {
+        valid: hasExpect,
+        assertionCount: (code.match(/expect\(/g) || []).length,
+        hasExpectStatements: hasExpect,
+        issues: [],
+      },
       errors,
+      warnings,
     };
   }
 
-  /**
-   * Summarize changes between original and regenerated code
-   */
-  private summarizeChanges(original: string, regenerated: string): string[] {
-    const changes: string[] = [];
-
-    // Simple change detection
-    if (original.length !== regenerated.length) {
-      const diff = regenerated.length - original.length;
-      changes.push(`Code size changed by ${diff} characters`);
-    }
-
-    // Check for specific changes
-    if (!original.includes('toBeValid') && regenerated.includes('toBeValid')) {
-      changes.push('Added schema validation');
-    }
-
-    if (original.includes('toBe(200)') && !regenerated.includes('toBe(200)')) {
-      changes.push('Updated expected status code');
-    }
-
-    if (changes.length === 0) {
-      changes.push('Minor code adjustments');
-    }
-
-    return changes;
-  }
 }

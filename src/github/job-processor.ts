@@ -100,17 +100,19 @@ export class JobProcessor {
     // Extract spec path from command args or use default
     const specPath = command.args.spec || this.config.defaultSpecPath || './openapi.yaml';
 
-    // Extract output dir from command args or use default
-    const outputDir = command.args.output || this.config.defaultOutputDir || './tests/generated';
+    // Extract output dir - use default (not configurable via command)
+    const outputDir = this.config.defaultOutputDir || './tests/generated';
 
     // Extract base URL from command args or use default
     const baseUrl = command.args.baseUrl || this.config.defaultBaseUrl;
 
     // Determine if AI should be used (default: yes if API key is available)
-    const useAI = command.args.ai !== false && !!(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
+    // NO FLAGS NEEDED - automatic based on API key presence
+    const useAI = !!(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
 
     // Determine if healing should be enabled (default: yes if API key is available)
-    const enableHealing = command.args.heal !== false && !!(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
+    // NO FLAGS NEEDED - automatic based on API key presence
+    const enableHealing = !!(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
 
     return {
       specPath,

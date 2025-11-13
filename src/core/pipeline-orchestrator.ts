@@ -24,9 +24,9 @@ import { AITestGenerator } from '../generators/ai-test-generator.js';
 import { TestOrganizer } from '../generators/test-organizer.js';
 import { CodeGenerator } from '../utils/code-generator.js';
 import type { TestResult, ExecutionSummary } from '../types/executor-types.js';
-import type { HealingReport } from '../types/self-healing-types.js';
+import type { HealingReport } from '../types/ai-types.js';
 import type { ParsedApiSpec } from '../types/openapi-types.js';
-import type { TestGenerationResult, GenerationConfig } from '../types/test-generator-types.js';
+import type { TestGenerationResult } from '../types/test-generator-types.js';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -124,11 +124,7 @@ export class PipelineOrchestrator {
 
     // Initialize GitHub client if credentials provided
     if (config.githubToken && config.repository) {
-      this.githubClient = new GitHubClient({
-        token: config.githubToken,
-        owner: config.repository.split('/')[0]!,
-        repo: config.repository.split('/')[1]!,
-      });
+      this.githubClient = new GitHubClient(config.githubToken);
     }
   }
 
@@ -163,7 +159,6 @@ export class PipelineOrchestrator {
       }
 
       // Calculate final results
-      const finalPassed = execution.passed + (healing?.successfullyHealed || 0);
       const finalFailed = execution.failed - (healing?.successfullyHealed || 0);
       const success = finalFailed === 0;
 
@@ -253,9 +248,9 @@ export class PipelineOrchestrator {
     this.log('🤖 Step 2: Generating tests (Agent 1: Test Generator)...');
 
     try {
-      const config: GenerationConfig = {
+      const config = {
         output: this.config.outputDir,
-        organization: 'by-tag',
+        organization: 'by-tag' as const,
         includeAuth: true,
         includeErrors: true,
         includeEdgeCases: true,
@@ -453,7 +448,7 @@ export class PipelineOrchestrator {
    *
    * This agent runs all generated tests and captures failures for the healer.
    */
-  private async executeTests(generation: TestGenerationResult): Promise<ExecutionSummary> {
+  private async executeTests(_generation: TestGenerationResult): Promise<ExecutionSummary> {
     const stepStart = Date.now();
     this.log('🧪 Step 3: Executing tests (Agent 2: Test Executor)...');
 
@@ -504,13 +499,31 @@ export class PipelineOrchestrator {
     this.log(`   Found ${execution.failed} failures to analyze`);
 
     try {
+      // Create test runner adapter
+      const executor = new PlaywrightExecutor({
+        outputDir: this.config.outputDir,
+        baseUrl: this.config.baseUrl,
+      });
+
       const healer = new SelfHealingOrchestrator(
         {
           failureAnalyzer: new SimpleFailureAnalyzer(),
+          specChangeDetector: {
+            async detectChanges(_oldSpec: unknown, _newSpec: unknown) {
+              // Spec change detection not yet implemented
+              return [];
+            },
+          },
           testRegenerator: new AITestRegenerator({
             apiKey: this.config.openaiApiKey || process.env.OPENAI_API_KEY,
             model: 'gpt-4',
           }),
+          testRunner: {
+            async runTest(testPath: string, _testName: string) {
+              const result = await executor.runTest(testPath);
+              return result;
+            },
+          },
         },
         {
           maxAttemptsPerTest: 2,
@@ -560,7 +573,7 @@ export class PipelineOrchestrator {
    * Post results to GitHub PR
    */
   private async postResults(result: PipelineResult): Promise<void> {
-    if (!this.githubClient || !this.config.prNumber) {
+    if (!this.githubClient || !this.config.prNumber || !this.config.repository) {
       return;
     }
 
@@ -570,7 +583,13 @@ export class PipelineOrchestrator {
 
       const comment = this.formatResultsComment(result, finalPassed, finalFailed);
 
-      await this.githubClient.createComment(this.config.prNumber, comment);
+      // Parse owner and repo from repository string (format: "owner/repo")
+      const [owner, repo] = this.config.repository.split('/');
+      if (!owner || !repo) {
+        throw new Error(`Invalid repository format: ${this.config.repository}`);
+      }
+
+      await this.githubClient.postComment(owner, repo, this.config.prNumber, comment);
 
       // Update GitHub status
       const status = finalFailed === 0 ? 'success' : 'failure';

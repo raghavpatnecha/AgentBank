@@ -8,7 +8,8 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
-import type { ExecutionSummary, TestResult, TestStatus, TestError, ErrorType } from '../types/executor-types.js';
+import type { ExecutionSummary, TestResult } from '../types/executor-types.js';
+import { TestStatus, ErrorType } from '../types/executor-types.js';
 
 /**
  * Playwright executor configuration
@@ -100,14 +101,14 @@ export class PlaywrightExecutor {
         id: `test-${Date.now()}`,
         name: testName || path.basename(filePath),
         filePath,
-        status: 'error' as TestStatus,
+        status: TestStatus.ERROR,
         duration: Date.now() - startTime.getTime(),
         retries: 0,
         startTime,
         endTime: new Date(),
         error: {
           message: error instanceof Error ? error.message : String(error),
-          type: 'unknown' as ErrorType,
+          type: ErrorType.UNKNOWN,
         },
       };
     }
@@ -180,7 +181,7 @@ export class PlaywrightExecutor {
         stderr += data.toString();
       });
 
-      playwright.on('close', (code) => {
+      playwright.on('close', (_code) => {
         try {
           // Parse JSON output
           const results = this.parsePlaywrightOutput(stdout);
@@ -258,15 +259,15 @@ export class PlaywrightExecutor {
   private mapPlaywrightStatus(status: string): TestStatus {
     switch (status) {
       case 'passed':
-        return 'passed';
+        return TestStatus.PASSED;
       case 'failed':
-        return 'failed';
+        return TestStatus.FAILED;
       case 'skipped':
-        return 'skipped';
+        return TestStatus.SKIPPED;
       case 'timedOut':
-        return 'timeout';
+        return TestStatus.TIMEOUT;
       default:
-        return 'error';
+        return TestStatus.ERROR;
     }
   }
 
@@ -277,19 +278,19 @@ export class PlaywrightExecutor {
     const message = error.message?.toLowerCase() || '';
 
     if (message.includes('timeout')) {
-      return 'timeout';
+      return ErrorType.TIMEOUT;
     }
     if (message.includes('network') || message.includes('econnrefused')) {
-      return 'network';
+      return ErrorType.NETWORK;
     }
     if (message.includes('validation') || message.includes('schema')) {
-      return 'validation';
+      return ErrorType.VALIDATION;
     }
     if (message.includes('expect')) {
-      return 'assertion';
+      return ErrorType.ASSERTION;
     }
 
-    return 'unknown';
+    return ErrorType.UNKNOWN;
   }
 
   /**
@@ -303,7 +304,7 @@ export class PlaywrightExecutor {
         id: 'mock-test-1',
         name: 'Mock Test',
         filePath: 'mock.spec.ts',
-        status: 'passed',
+        status: TestStatus.PASSED,
         duration: 100,
         retries: 0,
         startTime: new Date(),
