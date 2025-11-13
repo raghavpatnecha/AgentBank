@@ -57,9 +57,14 @@ export class OpenAPIParser {
   /**
    * Parse an OpenAPI/Swagger specification from an object
    * @param spec - Specification object
+   * @param options - Parsing options for performance tuning
    * @returns Parsed and normalized API specification
    */
-  async parse(spec: unknown): Promise<ParsedApiSpec> {
+  async parse(spec: unknown, options?: {
+    skipDereference?: boolean;
+    skipValidation?: boolean;
+    timeout?: number;
+  }): Promise<ParsedApiSpec> {
     if (!this.isValidSpec(spec)) {
       throw new ValidationError('Invalid specification format', [
         'Specification must have either "openapi" or "swagger" property',
@@ -72,11 +77,24 @@ export class OpenAPIParser {
     this.validateVersion(version);
 
     try {
-      this.dereferencedSpec = (await SwaggerParser.dereference(spec as never)) as
-        | OpenAPISpec
-        | SwaggerSpec;
+      // For large specs, use bundle instead of dereference (much faster)
+      // Bundle resolves external refs but keeps internal refs intact
+      if (options?.skipDereference) {
+        console.log('⚡ Using fast bundle mode (skipping full dereferencing)...');
+        this.dereferencedSpec = (await SwaggerParser.bundle(spec as never)) as
+          | OpenAPISpec
+          | SwaggerSpec;
+      } else {
+        // Full dereferencing (slower but complete for smaller specs)
+        this.dereferencedSpec = (await SwaggerParser.dereference(spec as never)) as
+          | OpenAPISpec
+          | SwaggerSpec;
+      }
 
-      await SwaggerParser.validate(spec as never);
+      // Validation can be slow on large specs, make it optional
+      if (!options?.skipValidation) {
+        await SwaggerParser.validate(spec as never);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new ValidationError('Specification validation failed', [errorMessage]);
@@ -311,19 +329,36 @@ export class OpenAPIParser {
 /**
  * Convenience function to parse a specification file
  * @param filePath - Path to the specification file
+ * @param options - Parsing options for performance tuning
  * @returns Parsed API specification
  */
-export async function parseOpenAPIFile(filePath: string): Promise<ParsedApiSpec> {
+export async function parseOpenAPIFile(
+  filePath: string,
+  options?: {
+    skipDereference?: boolean;
+    skipValidation?: boolean;
+    timeout?: number;
+  }
+): Promise<ParsedApiSpec> {
   const parser = new OpenAPIParser();
-  return parser.parseFromFile(filePath);
+  const rawSpec = await loadSpec(filePath);
+  return parser.parse(rawSpec, options);
 }
 
 /**
  * Convenience function to parse a specification object
  * @param spec - Specification object
+ * @param options - Parsing options for performance tuning
  * @returns Parsed API specification
  */
-export async function parseOpenAPISpec(spec: unknown): Promise<ParsedApiSpec> {
+export async function parseOpenAPISpec(
+  spec: unknown,
+  options?: {
+    skipDereference?: boolean;
+    skipValidation?: boolean;
+    timeout?: number;
+  }
+): Promise<ParsedApiSpec> {
   const parser = new OpenAPIParser();
-  return parser.parse(spec);
+  return parser.parse(spec, options);
 }

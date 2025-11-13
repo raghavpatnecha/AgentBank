@@ -10,6 +10,14 @@ import { TestGenerator } from '../core/test-generator.js';
 import { loadConfig } from './config-loader.js';
 import { ProgressReporter } from './progress-reporter.js';
 import type { OrganizationStrategy } from '../types/test-generator-types.js';
+import { DataFactory } from '../utils/data-factory.js';
+import { RequestBodyGenerator } from '../generators/request-body-generator.js';
+import { HappyPathGenerator } from '../generators/happy-path-generator.js';
+import { ErrorCaseGenerator } from '../generators/error-case-generator.js';
+import { EdgeCaseGenerator } from '../generators/edge-case-generator.js';
+import { TestOrganizer } from '../generators/test-organizer.js';
+import { CodeGenerator } from '../utils/code-generator.js';
+import { AITestGenerator } from '../generators/ai-test-generator.js';
 
 /**
  * Command line options interface
@@ -22,6 +30,7 @@ interface GenerateCommandOptions {
   errors?: boolean;
   edgeCases?: boolean;
   flows?: boolean;
+  aiTests?: boolean;
   organization?: OrganizationStrategy;
   baseUrl?: string;
   verbose?: boolean;
@@ -44,6 +53,8 @@ export function createGenerateCommand(): Command {
     .option('--no-errors', 'Skip error case tests')
     .option('--no-edge-cases', 'Skip edge case tests')
     .option('--no-flows', 'Skip workflow tests')
+    .option('--ai-tests', 'Force enable AI-powered test generation (auto-enabled if OPENAI_API_KEY is set)')
+    .option('--no-ai-tests', 'Disable AI-powered test generation even if OPENAI_API_KEY is set')
     .option(
       '--organization <strategy>',
       'Organization strategy: by-tag, by-endpoint, by-type, by-method, flat',
@@ -96,9 +107,21 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
 
     const specPath = path.resolve(process.cwd(), config.spec);
 
+    // Check file size to determine if we should use fast mode
+    const stats = await fs.stat(specPath);
+    const fileSizeMB = stats.size / (1024 * 1024);
+    const isLargeSpec = fileSizeMB > 2; // Files > 2MB use fast mode
+
+    if (isLargeSpec) {
+      reporter.update(`⚡ Large spec detected (${fileSizeMB.toFixed(1)}MB) - using fast mode`);
+    }
+
     let spec;
     try {
-      spec = await parseOpenAPIFile(specPath);
+      spec = await parseOpenAPIFile(specPath, {
+        skipDereference: isLargeSpec, // Use bundle mode for large specs
+        skipValidation: isLargeSpec,  // Skip validation for speed
+      });
     } catch (error) {
       reporter.error(
         `Failed to parse OpenAPI spec: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -125,6 +148,102 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       },
     });
 
+    // Initialize generator dependencies
+    const dataFactory = new DataFactory();
+    const bodyGenerator = new RequestBodyGenerator();
+
+    // Create and register all test generators
+    const happyPathGen = new HappyPathGenerator(dataFactory, bodyGenerator);
+    generator.setGenerator('happy-path', happyPathGen);
+
+    if (config.includeErrors) {
+      const errorGen = new ErrorCaseGenerator(bodyGenerator);
+      // Wrap to match interface
+      generator.setGenerator('error-case', {
+        generateTests: (endpoints) => endpoints.flatMap(ep => errorGen.generateTests(ep))
+      });
+    }
+
+    if (config.includeEdgeCases) {
+      const edgeGen = new EdgeCaseGenerator(dataFactory);
+      // Wrap to match interface
+      generator.setGenerator('edge-case', {
+        generateTests: (endpoints) => endpoints.flatMap(ep => edgeGen.generateTests(ep))
+      });
+    }
+
+    // TODO: Fix auth and flow generators - complex interface mismatches
+    // if (config.includeAuth) {
+    //   Auth generator needs proper integration
+    // }
+
+    // if (config.includeFlows) {
+    //   Flow generator needs proper integration
+    // }
+
+    // Set up test organizer
+    const organizer = new TestOrganizer();
+    // Wrap to match interface
+    generator.setOrganizer({
+      organize: (tests, strategy) => {
+        const result = organizer.organize(tests, strategy);
+        return {
+          files: result.files,
+          metadata: {
+            strategy: result.strategy,
+            fileCount: result.files.size,
+            testCount: result.totalTests
+          }
+        };
+      }
+    });
+
+    // Set up code generator
+    const codeGen = new CodeGenerator();
+    // Wrap to match interface
+    generator.setCodeGenerator({
+      generateFiles: (organized) => {
+        const files: any[] = [];
+        for (const [fileName, tests] of organized.files) {
+          const metadata = {
+            endpoints: [...new Set(tests.map(t => t.endpoint))],
+            testTypes: [...new Set(tests.map(t => t.type))],
+            testCount: tests.length,
+            tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
+            generatedAt: new Date().toISOString()
+          };
+          const content = codeGen.generateTestFile(tests, metadata);
+          files.push({
+            fileName,
+            filePath: fileName,
+            content,
+            tests,
+            imports: [],
+            metadata
+          });
+        }
+        return files;
+      },
+      generateFile: (fileName, tests) => {
+        const metadata = {
+          endpoints: [...new Set(tests.map(t => t.endpoint))],
+          testTypes: [...new Set(tests.map(t => t.type))],
+          testCount: tests.length,
+          tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
+          generatedAt: new Date().toISOString()
+        };
+        const content = codeGen.generateTestFile(tests, metadata);
+        return {
+          fileName,
+          filePath: fileName,
+          content,
+          tests,
+          imports: [],
+          metadata
+        };
+      }
+    });
+
     // Extract endpoints first
     const endpoints = generator.extractEndpoints();
     reporter.success(`Found ${endpoints.length} endpoints`);
@@ -133,6 +252,91 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
     reporter.start('Generating tests...');
 
     const result = await generator.generateTests();
+
+    // Step 4.5: AI-powered test generation
+    // Smart default: auto-enable if OPENAI_API_KEY is set, unless explicitly disabled
+    const shouldUseAI = options.aiTests === undefined
+      ? !!process.env.OPENAI_API_KEY  // Auto-enable if API key is present
+      : options.aiTests;               // Respect explicit user choice
+
+    if (shouldUseAI) {
+      const aiGen = new AITestGenerator({
+        apiKey: process.env.OPENAI_API_KEY,
+        model: process.env.OPENAI_MODEL,
+        testsPerEndpoint: 3,
+        focus: ['business-logic', 'security', 'workflows', 'edge-cases'],
+        verbose: options.verbose
+      });
+
+      if (aiGen.isEnabled()) {
+        reporter.start('🤖 Generating AI-powered intelligent tests...');
+
+        try {
+          const aiTests = await aiGen.generateTests(endpoints);
+
+          if (aiTests.length > 0) {
+            // Organize AI tests by endpoint
+            const aiTestsByEndpoint = new Map<string, typeof aiTests>();
+            for (const test of aiTests) {
+              const key = test.endpoint;
+              if (!aiTestsByEndpoint.has(key)) {
+                aiTestsByEndpoint.set(key, []);
+              }
+              aiTestsByEndpoint.get(key)!.push(test);
+            }
+
+            // Generate AI test files using the code generator
+            const codeGen = new CodeGenerator();
+            const aiFiles = [];
+            for (const [endpoint, tests] of aiTestsByEndpoint) {
+              const fileName = `ai-${endpoint.replace(/\//g, '-').replace(/^-/, '')}.spec.ts`;
+              const metadata = {
+                endpoints: [endpoint],
+                testTypes: ['validation' as const],
+                testCount: tests.length,
+                tags: ['ai-generated'],
+                generatedAt: new Date().toISOString()
+              };
+              const content = codeGen.generateTestFile(tests, metadata);
+              aiFiles.push({
+                fileName,
+                filePath: `ai-tests/${fileName}`,
+                content,
+                tests,
+                imports: [],
+                metadata
+              });
+            }
+
+            // Merge AI files with standard results
+            result.files.push(...aiFiles);
+            result.totalTests += aiTests.length;
+
+            // Update statistics
+            if (!result.statistics.testsByType.validation) {
+              result.statistics.testsByType.validation = 0;
+            }
+            result.statistics.testsByType.validation += aiTests.length;
+
+            reporter.success(`✨ Generated ${aiTests.length} AI-powered tests in ${aiFiles.length} files`);
+          } else {
+            reporter.warning('AI generation produced no tests');
+          }
+        } catch (error) {
+          reporter.error(`AI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          if (options.verbose && error instanceof Error && error.stack) {
+            console.error(error.stack);
+          }
+        }
+      } else {
+        reporter.warning('⚠️  AI test generation enabled but OPENAI_API_KEY not found');
+        reporter.info('Set OPENAI_API_KEY environment variable or use --no-ai-tests to disable');
+      }
+    } else if (options.verbose && process.env.OPENAI_API_KEY) {
+      reporter.info('AI test generation disabled (use --ai-tests to enable)');
+    } else if (options.verbose) {
+      reporter.info('AI test generation not available (set OPENAI_API_KEY to enable)');
+    }
 
     // Check for errors
     if (result.errors.length > 0) {
