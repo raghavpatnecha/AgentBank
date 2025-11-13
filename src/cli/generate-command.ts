@@ -18,6 +18,7 @@ import { EdgeCaseGenerator } from '../generators/edge-case-generator.js';
 import { TestOrganizer } from '../generators/test-organizer.js';
 import { CodeGenerator } from '../utils/code-generator.js';
 import { AITestGenerator } from '../generators/ai-test-generator.js';
+import { PerformanceTestGenerator } from '../generators/performance-test-generator.js';
 
 /**
  * Command line options interface
@@ -31,6 +32,9 @@ interface GenerateCommandOptions {
   edgeCases?: boolean;
   flows?: boolean;
   aiTests?: boolean;
+  performance?: boolean;
+  loadUsers?: number;
+  duration?: number;
   organization?: OrganizationStrategy;
   baseUrl?: string;
   verbose?: boolean;
@@ -55,6 +59,9 @@ export function createGenerateCommand(): Command {
     .option('--no-flows', 'Skip workflow tests')
     .option('--ai-tests', 'Force enable AI-powered test generation (auto-enabled if OPENAI_API_KEY is set)')
     .option('--no-ai-tests', 'Disable AI-powered test generation even if OPENAI_API_KEY is set')
+    .option('--performance', 'Generate performance/load tests')
+    .option('--load-users <number>', 'Number of virtual users for load tests', '10')
+    .option('--duration <seconds>', 'Duration for performance tests in seconds', '60')
     .option(
       '--organization <strategy>',
       'Organization strategy: by-tag, by-endpoint, by-type, by-method, flat',
@@ -88,10 +95,13 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       includeErrors: options.errors !== false,
       includeEdgeCases: options.edgeCases !== false,
       includeFlows: options.flows !== false,
+      includePerformance: options.performance ?? false,
       organizationStrategy: (options.organization as OrganizationStrategy) || 'by-tag',
       baseUrl: options.baseUrl,
       options: {
         verbose: options.verbose,
+        loadUsers: typeof options.loadUsers === 'number' ? options.loadUsers : parseInt(String(options.loadUsers || '10'), 10),
+        duration: typeof options.duration === 'number' ? options.duration : parseInt(String(options.duration || '60'), 10),
       },
     });
 
@@ -139,6 +149,7 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       includeErrors: config.includeErrors,
       includeEdgeCases: config.includeEdgeCases,
       includeFlows: config.includeFlows,
+      includePerformance: config.includePerformance,
       baseUrl: config.baseUrl,
       outputDir: config.output,
       organizationStrategy: config.organizationStrategy,
@@ -170,6 +181,20 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       generator.setGenerator('edge-case', {
         generateTests: (endpoints) => endpoints.flatMap(ep => edgeGen.generateTests(ep))
       });
+    }
+
+    // Performance test generator
+    if (config.includePerformance) {
+      const perfGen = new PerformanceTestGenerator({
+        defaultUsers: config.options?.loadUsers ?? 10,
+        defaultDuration: config.options?.duration ?? 60,
+        generateMultipleScenarios: true,
+      });
+      generator.setGenerator('performance', perfGen);
+
+      if (options.verbose) {
+        reporter.verbose(`Performance tests enabled: ${config.options?.loadUsers ?? 10} users, ${config.options?.duration ?? 60}s duration`);
+      }
     }
 
     // TODO: Fix auth and flow generators - complex interface mismatches

@@ -142,3 +142,42 @@ export type { CRUDSet, DependencyGraph } from './utils/dependency-analyzer.js';
 
 // Test Organizer Types
 export type { OrganizedTests } from './generators/test-organizer.js';
+
+// Docker Test Executor (Feature 3.1)
+export { DockerTestExecutor, createDockerExecutor, executeTestsInDocker } from './executor/docker-test-executor.js';
+export { DockerConfig } from './config/docker-config.js';
+export {
+  DEFAULT_DOCKER_IMAGES,
+  DEFAULT_RESOURCES,
+  RESOURCE_PRESETS,
+  DEFAULT_NETWORK,
+  NETWORK_PRESETS,
+  DEFAULT_RETRY_CONFIG,
+  DEFAULT_DOCKER_OPTIONS,
+} from './config/docker-config.js';
+
+// Docker Types
+export type {
+  DockerExecutorOptions,
+  ContainerConfig,
+  ContainerResources,
+  NetworkConfig,
+  VolumeMount,
+  ContainerRetryConfig,
+  ContainerExecutionResult,
+  DockerExecutionResult,
+  DockerExecutorStats,
+  ContainerResourceUsage,
+  ContainerError,
+  ContainerLifecycleEvent,
+  DockerTestRunner,
+  ContainerEventCallback,
+} from './types/docker-types.js';
+
+export {
+  NetworkMode,
+  CleanupStrategy,
+  ContainerStatus,
+  ContainerErrorCode,
+  ContainerLifecycleEventType,
+} from './types/docker-types.js';

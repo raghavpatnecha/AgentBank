@@ -19,8 +19,12 @@ Generate comprehensive Playwright test suites from OpenAPI/Swagger specification
 - **🧪 Test Generator** - Automatic generation of comprehensive Playwright test suites
 - **🤖 AI-Powered Test Generation** - GPT-4 generates intelligent tests that understand business logic, security, and workflows (optional)
 - **🔧 AI-Powered Self-Healing** - Automatically repairs broken tests using GPT-4
+- **🐳 Docker Test Isolation** - Run tests in isolated containers for security and consistency (FR-3.1)
+- **⚡ Performance Testing** - Load, stress, spike, and endurance testing with detailed metrics
+- **🔌 WebSocket Support** - Complete WebSocket testing capabilities for real-time APIs
+- **📦 Test Data Management** - Sophisticated fixture management, entity factories, and database seeding
 - **🔄 GitHub Integration** - Seamless CI/CD integration with GitHub Actions
-- **📊 Advanced Reporting** - HTML, JSON, and JUnit reports with detailed metrics
+- **📊 Advanced Reporting** - HTML, JSON, JUnit, CSV, and Markdown reports with detailed metrics
 - **⚡ Parallel Execution** - Multi-worker test execution for optimal performance
 
 ### 🎯 Test Coverage
@@ -30,6 +34,8 @@ Generate comprehensive Playwright test suites from OpenAPI/Swagger specification
 - ✅ **Error Case Tests** - Client (4xx) and server (5xx) error scenarios
 - ✅ **Edge Case Tests** - Boundary values, missing fields, invalid data
 - ✅ **Workflow Tests** - Multi-step API flows with dependencies
+- ✅ **Performance Tests** - Load testing, stress testing, spike testing, endurance testing
+- ✅ **WebSocket Tests** - Connection, messaging, heartbeat, reconnection, authentication
 - ✅ **AI-Generated Tests** - Intelligent tests for business logic, security vulnerabilities, and implicit requirements (optional, requires OpenAI API key)
 
 ---
@@ -84,19 +90,22 @@ node dist/cli/index.js generate --spec ./api.yaml --verbose
 Usage: api-test-agent generate [options]
 
 Options:
-  -s, --spec <path>          Path to OpenAPI spec file (required)
-  -o, --output <dir>         Output directory (default: "./tests/generated")
-  -c, --config <path>        Path to config file (JSON or JS)
-  --no-auth                  Skip authentication tests
-  --no-errors                Skip error case tests
-  --no-edge-cases            Skip edge case tests
-  --no-flows                 Skip workflow tests
-  --ai-tests                 Force enable AI test generation
-  --no-ai-tests              Disable AI test generation
-  --organization <strategy>  Organization strategy (default: "by-tag")
-                             Options: by-tag, by-endpoint, by-type, by-method, flat
-  --base-url <url>           Base URL for API (overrides spec servers)
-  -v, --verbose              Verbose output
+  -s, --spec <path>           Path to OpenAPI spec file (required)
+  -o, --output <dir>          Output directory (default: "./tests/generated")
+  -c, --config <path>         Path to config file (JSON or JS)
+  --no-auth                   Skip authentication tests
+  --no-errors                 Skip error case tests
+  --no-edge-cases             Skip edge case tests
+  --no-flows                  Skip workflow tests
+  --ai-tests                  Force enable AI test generation
+  --no-ai-tests               Disable AI test generation
+  --performance               Generate performance/load tests
+  --load-users <number>       Number of virtual users for load tests (default: 10)
+  --duration <seconds>        Duration for performance tests (default: 60)
+  --organization <strategy>   Organization strategy (default: "by-tag")
+                              Options: by-tag, by-endpoint, by-type, by-method, flat
+  --base-url <url>            Base URL for API (overrides spec servers)
+  -v, --verbose               Verbose output
 
 Note: AI-powered test generation is automatically enabled when OPENAI_API_KEY is set.
 ```
@@ -527,17 +536,20 @@ npm run test:watch
 - [x] GitHub Actions integration
 - [x] HTML/JSON/JUnit reporting
 - [x] Docker containerization
+- [x] **Docker test isolation** - Run tests in isolated containers (FR-3.1)
+- [x] **Performance testing** - Load, stress, spike, and endurance tests
+- [x] **WebSocket testing** - Complete WebSocket support for real-time APIs
+- [x] **Test data management** - Fixtures, entity factories, database seeding
 
 ### Planned 🎯
 
 - [ ] GraphQL support
-- [ ] Performance testing (load/stress tests)
-- [ ] WebSocket testing
 - [ ] gRPC API support
 - [ ] Visual regression testing
-- [ ] Test data management
 - [ ] Advanced mock server
-- [ ] Multi-environment orchestration
+- [ ] Multi-environment orchestration improvements
+- [ ] Contract testing (Pact.js integration)
+- [ ] Mutation testing
 
 ---
 
