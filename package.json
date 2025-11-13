@@ -15,6 +15,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "cli": "node dist/cli/index.js",
+    "generate": "node dist/cli/index.js generate",
     "test": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
