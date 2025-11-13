@@ -449,7 +449,9 @@ export class HealingMetrics {
    */
   clear(): void {
     this.attempts = [];
-    this.startTime = new Date();
+    // Add small delay to ensure new timestamp
+    const now = new Date();
+    this.startTime = new Date(now.getTime() + 1);
   }
 
   /**

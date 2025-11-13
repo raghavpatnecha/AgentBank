@@ -1,0 +1,117 @@
+openapi: 3.0.0
+info:
+  title: API Test Agent Example API v2
+  version: 2.0.0
+  description: Sample API v2 specification for testing API Test Agent
+
+servers:
+  - url: https://api-dev.example.com/v2
+    description: Development server v2
+  - url: https://api-staging.example.com/v2
+    description: Staging server v2
+  - url: https://api.example.com/v2
+    description: Production server v2
+
+paths:
+  /status:
+    get:
+      operationId: getStatus
+      summary: API status endpoint
+      description: Returns the status of the API v2
+      tags:
+        - system
+        - smoke
+      responses:
+        '200':
+          description: API status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: operational
+                  version:
+                    type: string
+                    example: 2.0.0
+
+  /products:
+    get:
+      operationId: listProducts
+      summary: List products
+      description: Retrieve a list of products
+      tags:
+        - product-api
+        - critical
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        category:
+          type: string
+
+    Error:
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

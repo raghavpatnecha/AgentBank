@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "specHash": "348a46c045fddbf718607b8a79f0f79bea98e51b8ae9179e8fa4ede084f78452",
+  "specPath": "/home/user/AgentBank/tests/fixtures/real-world-specs/petstore.yaml",
+  "generatedAt": "2025-11-13T21:02:22.816Z",
+  "outputDir": "/tmp/generated-tests",
+  "organizationStrategy": "by-tag",
+  "endpoints": {
+    "POST:/pet": {
+      "checksum": "e486eefeb005727cc3d5f23bb732d81b2d0ca035c2cc4eda4680efbe430451c3",
+      "method": "post",
+      "path": "/pet",
+      "files": [],
+      "generatedAt": "2025-11-13T21:02:22.816Z",
+      "lastModified": "2025-11-13T21:02:22.816Z",
+      "testTypes": [
+        "error-case",
+        "edge-case",
+        "auth"
+      ],
+      "testCount": 12
+    },
+    "PUT:/pet": {
+      "checksum": "cfd803bb7e4739fd0219923297d7e7a7299ccd8d7b89fbcea61db202b5330daa",
+      "method": "put",
+      "path": "/pet",
+      "files": [],
+      "generatedAt": "2025-11-13T21:02:22.817Z",
+      "lastModified": "2025-11-13T21:02:22.817Z",
+      "testTypes": [
+        "error-case",
+        "edge-case",
+        "auth"
+      ],
+      "testCount": 12
+    },
+    "GET:/pet/findByStatus": {
+      "checksum": "9109b78b893da8a2533b51ee3de41a5e129605e5491863882027d10aef4bca70",
+      "method": "get",
+      "path": "/pet/findByStatus",
+      "files": [],
+      "generatedAt": "2025-11-13T21:02:22.817Z",
+      "lastModified": "2025-11-13T21:02:22.817Z",
+      "testTypes": [
+        "error-case",
+        "auth"
+      ],
+      "testCount": 6
+    },
+    "GET:/pet/{petId}": {
+      "checksum": "c24f736b4a2357cba1bc7035908cf54fbe6203e2a22fe9ecb189bd45b2096fb5",
+      "method": "get",
+      "path": "/pet/{petId}",
+      "files": [],
+      "generatedAt": "2025-11-13T21:02:22.817Z",
+      "lastModified": "2025-11-13T21:02:22.817Z",
+      "testTypes": [
+        "error-case",
+        "auth"
+      ],
+      "testCount": 8
+    },
+    "DELETE:/pet/{petId}": {
+      "checksum": "0d353114c394892ce56917a6992b02f47e0f1db52ea746a0648c4be5b25f96b5",
+      "method": "delete",
+      "path": "/pet/{petId}",
+      "files": [],
+      "generatedAt": "2025-11-13T21:02:22.817Z",
+      "lastModified": "2025-11-13T21:02:22.817Z",
+      "testTypes": [
+        "error-case",
+        "auth"
+      ],
+      "testCount": 8
+    },
+    "POST:/store/order": {
+      "checksum": "f647d75692c1aaf500b708a58e7d9f2379ec9e6364cf1ae9383d3c69dd339639",
+      "method": "post",
+      "path": "/store/order",
+      "files": [],
+      "generatedAt": "2025-11-13T21:02:22.817Z",
+      "lastModified": "2025-11-13T21:02:22.817Z",
+      "testTypes": [
+        "error-case",
+        "edge-case"
+      ],
+      "testCount": 5
+    },
+    "GET:/store/order/{orderId}": {
+      "checksum": "e761ef26299e5c930035b2535f8eeec32c5011f52091e42ba40c7ee40aa2f546",
+      "method": "get",
+      "path": "/store/order/{orderId}",
+      "files": [],
+      "generatedAt": "2025-11-13T21:02:22.817Z",
+      "lastModified": "2025-11-13T21:02:22.817Z",
+      "testTypes": [
+        "error-case"
+      ],
+      "testCount": 2
+    }
+  },
+  "generationOptions": {
+    "includeAuth": true,
+    "includeErrors": true,
+    "includeEdgeCases": true,
+    "includeFlows": true,
+    "includePerformance": false
+  }
+}

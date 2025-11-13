@@ -55,7 +55,10 @@ export class JobProcessor {
    *
    * This is called when a job is pulled from the queue (typically by a background worker).
    */
-  async processJob(job: TestJob, updateStatus: (jobId: string, status: JobStatus) => void): Promise<PipelineResult> {
+  async processJob(
+    job: TestJob,
+    updateStatus: (jobId: string, status: JobStatus) => void
+  ): Promise<PipelineResult> {
     // Check if already processing
     if (this.processingJobs.has(job.id)) {
       throw new Error(`Job ${job.id} is already being processed`);
@@ -108,11 +111,23 @@ export class JobProcessor {
 
     // Determine if AI should be used (default: yes if API key is available)
     // NO FLAGS NEEDED - automatic based on API key presence
-    const useAI = !!(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
+    const useAI = Boolean(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
 
     // Determine if healing should be enabled (default: yes if API key is available)
     // NO FLAGS NEEDED - automatic based on API key presence
-    const enableHealing = !!(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
+    const enableHealing = Boolean(this.config.openaiApiKey || process.env.OPENAI_API_KEY);
+
+    // Check if performance testing is requested
+    const includePerformance =
+      command.args.performance === true || command.args.performance === 'true';
+
+    // Parse performance test parameters
+    const performanceConfig = includePerformance
+      ? {
+          users: command.args.users ? parseInt(command.args.users, 10) : 10,
+          duration: command.args.duration ? parseInt(command.args.duration, 10) : 60,
+        }
+      : undefined;
 
     return {
       specPath,
@@ -120,6 +135,8 @@ export class JobProcessor {
       baseUrl,
       useAI,
       enableHealing,
+      includePerformance,
+      performanceConfig,
       repository,
       prNumber,
       githubToken: this.config.githubToken,
@@ -207,7 +224,7 @@ export class JobWorker {
     while (this.running) {
       try {
         // Get queued jobs
-        const jobs = this.getJobs().filter(job => job.status === 'queued');
+        const jobs = this.getJobs().filter((job) => job.status === 'queued');
 
         if (jobs.length > 0) {
           console.log(`📋 Found ${jobs.length} queued job(s)`);
@@ -235,7 +252,7 @@ export class JobWorker {
    * Sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

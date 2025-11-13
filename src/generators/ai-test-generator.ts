@@ -109,7 +109,9 @@ export class AITestGenerator {
     const prompt = this.buildPrompt(endpoint, allEndpoints);
 
     if (this.options.verbose) {
-      console.log(`🤖 Generating AI tests for ${endpoint.method.toUpperCase()} ${endpoint.path}...`);
+      console.log(
+        `🤖 Generating AI tests for ${endpoint.method.toUpperCase()} ${endpoint.path}...`
+      );
     }
 
     const response = await this.client.chat.completions.create({
@@ -197,7 +199,7 @@ ${JSON.stringify(endpoint.responses || {}, null, 2)}
 ${JSON.stringify(endpoint.security || [], null, 2)}
 
 **Related Endpoints:**
-${relatedEndpoints.map(e => `${e.method.toUpperCase()} ${e.path}`).join('\n')}
+${relatedEndpoints.map((e) => `${e.method.toUpperCase()} ${e.path}`).join('\n')}
 
 **Focus Areas:** ${this.options.focus.join(', ')}
 
@@ -218,7 +220,7 @@ Return ONLY a JSON array of test scenarios, no additional text.`;
     const basePath = endpoint.path.split('/').slice(0, -1).join('/') || endpoint.path;
 
     return allEndpoints
-      .filter(e => {
+      .filter((e) => {
         if (e.path === endpoint.path) return false;
 
         const eBasePath = e.path.split('{')[0] || e.path;
@@ -248,21 +250,19 @@ Return ONLY a JSON array of test scenarios, no additional text.`;
         request: {
           pathParams: this.extractPathParams(aiTest.scenario?.requestData),
           queryParams: this.extractQueryParams(aiTest.scenario?.requestData),
-          body: aiTest.scenario?.requestData?.body ? {
-            contentType: 'application/json',
-            data: aiTest.scenario.requestData.body,
-            generated: true,
-          } : undefined,
+          body: aiTest.scenario?.requestData?.body
+            ? {
+                contentType: 'application/json',
+                data: aiTest.scenario.requestData.body,
+                generated: true,
+              }
+            : undefined,
         },
         expectedResponse: {
           status: aiTest.scenario?.expectedStatus || 200,
         },
         metadata: {
-          tags: [
-            ...(endpoint.tags || []),
-            'ai-generated',
-            aiTest.category || 'intelligent',
-          ],
+          tags: [...(endpoint.tags || []), 'ai-generated', aiTest.category || 'intelligent'],
           priority: aiTest.priority || 'medium',
           stability: 'experimental' as const,
           operationId: endpoint.operationId,

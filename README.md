@@ -19,9 +19,15 @@ Generate comprehensive Playwright test suites from OpenAPI/Swagger specification
 - **🧪 Test Generator** - Automatic generation of comprehensive Playwright test suites
 - **🤖 AI-Powered Test Generation** - GPT-4 generates intelligent tests that understand business logic, security, and workflows (optional)
 - **🔧 AI-Powered Self-Healing** - Automatically repairs broken tests using GPT-4
-- **🔄 GitHub Integration** - Seamless CI/CD integration with GitHub Actions
-- **📊 Advanced Reporting** - HTML, JSON, and JUnit reports with detailed metrics
+- **🐳 Docker Test Isolation** - Run tests in isolated containers for security and consistency (FR-3.1)
+- **⚡ Performance Testing** - Load, stress, spike, and endurance testing with detailed metrics
+- **🔌 WebSocket Support** - Complete WebSocket testing capabilities for real-time APIs
+- **📦 Test Data Management** - Sophisticated fixture management, entity factories, and database seeding
+- **🔄 GitHub Integration** - Seamless CI/CD integration with GitHub Actions, Check Runs, and rich PR comments (FR-5.2, FR-5.3)
+- **📧 Email Reporting** - Automated SMTP email reports with detailed test results (FR-6.3)
+- **📊 Advanced Reporting** - HTML, JSON, JUnit, CSV, and Markdown reports with detailed metrics
 - **⚡ Parallel Execution** - Multi-worker test execution for optimal performance
+- **🔄 Incremental Test Generation** - Smart test regeneration only for changed endpoints
 
 ### 🎯 Test Coverage
 
@@ -30,6 +36,8 @@ Generate comprehensive Playwright test suites from OpenAPI/Swagger specification
 - ✅ **Error Case Tests** - Client (4xx) and server (5xx) error scenarios
 - ✅ **Edge Case Tests** - Boundary values, missing fields, invalid data
 - ✅ **Workflow Tests** - Multi-step API flows with dependencies
+- ✅ **Performance Tests** - Load testing, stress testing, spike testing, endurance testing
+- ✅ **WebSocket Tests** - Connection, messaging, heartbeat, reconnection, authentication
 - ✅ **AI-Generated Tests** - Intelligent tests for business logic, security vulnerabilities, and implicit requirements (optional, requires OpenAI API key)
 
 ---
@@ -84,19 +92,24 @@ node dist/cli/index.js generate --spec ./api.yaml --verbose
 Usage: api-test-agent generate [options]
 
 Options:
-  -s, --spec <path>          Path to OpenAPI spec file (required)
-  -o, --output <dir>         Output directory (default: "./tests/generated")
-  -c, --config <path>        Path to config file (JSON or JS)
-  --no-auth                  Skip authentication tests
-  --no-errors                Skip error case tests
-  --no-edge-cases            Skip edge case tests
-  --no-flows                 Skip workflow tests
-  --ai-tests                 Force enable AI test generation
-  --no-ai-tests              Disable AI test generation
-  --organization <strategy>  Organization strategy (default: "by-tag")
-                             Options: by-tag, by-endpoint, by-type, by-method, flat
-  --base-url <url>           Base URL for API (overrides spec servers)
-  -v, --verbose              Verbose output
+  -s, --spec <path>           Path to OpenAPI spec file (required)
+  -o, --output <dir>          Output directory (default: "./tests/generated")
+  -c, --config <path>         Path to config file (JSON or JS)
+  --no-auth                   Skip authentication tests
+  --no-errors                 Skip error case tests
+  --no-edge-cases             Skip edge case tests
+  --no-flows                  Skip workflow tests
+  --ai-tests                  Force enable AI test generation
+  --no-ai-tests               Disable AI test generation
+  --performance               Generate performance/load tests
+  --load-users <number>       Number of virtual users for load tests (default: 10)
+  --duration <seconds>        Duration for performance tests (default: 60)
+  --use-docker                Execute tests in isolated Docker containers (FR-3.1)
+  --email <address>           Send test results via email to specified address (FR-6.3)
+  --organization <strategy>   Organization strategy (default: "by-tag")
+                              Options: by-tag, by-endpoint, by-type, by-method, flat
+  --base-url <url>            Base URL for API (overrides spec servers)
+  -v, --verbose               Verbose output
 
 Note: AI-powered test generation is automatically enabled when OPENAI_API_KEY is set.
 ```
@@ -184,6 +197,57 @@ EOF
 node dist/cli/index.js generate --config ./api-test-agent.config.json
 ```
 
+### New Features Usage Examples
+
+**Email reporting:**
+```bash
+# Generate tests and send results via email
+npm run generate -- --spec openapi.yaml --email "qa@example.com"
+
+# Configure SMTP settings in .env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+```
+
+**Docker test execution:**
+```bash
+# Run tests in isolated Docker container
+npm run generate -- --spec openapi.yaml --use-docker
+
+# Docker provides consistent environment and enhanced security
+```
+
+**Performance testing:**
+```bash
+# Run performance tests with custom load
+npm run generate -- --spec openapi.yaml --performance --load-users 50
+
+# Run endurance test with extended duration
+npm run generate -- --spec openapi.yaml --performance --duration 300
+```
+
+**GitHub PR automation:**
+```bash
+# Comment on a PR to trigger tests
+@api-test-agent run --env staging --performance
+
+# Start webhook server for GitHub integration
+npm run webhook:dev
+
+# Webhook listens on http://localhost:3000/webhook
+```
+
+**Incremental test generation:**
+```bash
+# Only regenerate tests for changed endpoints
+# Automatically detected when spec file changes
+npm run generate -- --spec openapi.yaml
+
+# Tests are cached and only updated when needed
+```
+
 ---
 
 ## ⚙️ Configuration
@@ -211,6 +275,23 @@ BACKOFF_MULTIPLIER=2
 # OpenAI Configuration (for AI test generation and self-healing)
 OPENAI_API_KEY=your-api-key-here
 OPENAI_MODEL=gpt-4  # Optional: defaults to gpt-4
+
+# SMTP Configuration (for email reports - FR-6.3)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=api-test-agent@example.com
+
+# GitHub Configuration (for PR comments and Check Runs - FR-5.2, FR-5.3)
+GITHUB_TOKEN=your-github-token
+GITHUB_OWNER=your-org
+GITHUB_REPO=your-repo
+
+# Docker Configuration (for test isolation - FR-3.1)
+DOCKER_IMAGE=playwright:latest
+DOCKER_NETWORK=bridge
 
 # Test Configuration
 WORKERS=4
@@ -521,23 +602,34 @@ npm run test:watch
 ### Completed ✅
 
 - [x] OpenAPI 3.0 and Swagger 2.0 parser
-- [x] Comprehensive test generation
+- [x] Comprehensive test generation (auth, errors, edge cases, workflows)
 - [x] Multi-worker test execution
+- [x] AI-powered test generation (GPT-4 integration)
 - [x] AI-powered self-healing
 - [x] GitHub Actions integration
-- [x] HTML/JSON/JUnit reporting
+- [x] **GitHub Check Runs** - Automated check status updates (FR-5.3)
+- [x] **Rich GitHub PR comments** - Detailed test results in PR comments (FR-5.2)
+- [x] HTML/JSON/JUnit/CSV/Markdown reporting
+- [x] **Email reporting** - SMTP-based email notifications (FR-6.3)
 - [x] Docker containerization
+- [x] **Docker test isolation** - Run tests in isolated containers (FR-3.1)
+- [x] **Performance testing** - Load, stress, spike, and endurance tests
+- [x] **WebSocket testing** - Complete WebSocket support for real-time APIs
+- [x] **Test data management** - Fixtures, entity factories, database seeding
+- [x] **Incremental test generation** - Smart regeneration for changed endpoints only
+- [x] **Webhook server** - GitHub webhook integration for PR automation
 
 ### Planned 🎯
 
 - [ ] GraphQL support
-- [ ] Performance testing (load/stress tests)
-- [ ] WebSocket testing
 - [ ] gRPC API support
 - [ ] Visual regression testing
-- [ ] Test data management
 - [ ] Advanced mock server
-- [ ] Multi-environment orchestration
+- [ ] Multi-environment orchestration improvements
+- [ ] Contract testing (Pact.js integration)
+- [ ] Mutation testing
+- [ ] Real-time test execution dashboard
+- [ ] Advanced AI test recommendations
 
 ---
 

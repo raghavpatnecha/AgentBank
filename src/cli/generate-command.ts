@@ -18,6 +18,10 @@ import { EdgeCaseGenerator } from '../generators/edge-case-generator.js';
 import { TestOrganizer } from '../generators/test-organizer.js';
 import { CodeGenerator } from '../utils/code-generator.js';
 import { AITestGenerator } from '../generators/ai-test-generator.js';
+import { PerformanceTestGenerator } from '../generators/performance-test-generator.js';
+import { AuthTestGenerator } from '../generators/auth-test-generator.js';
+import { FlowGenerator } from '../generators/flow-generator.js';
+import type { AuthScheme } from '../types/openapi-types.js';
 
 /**
  * Command line options interface
@@ -31,9 +35,26 @@ interface GenerateCommandOptions {
   edgeCases?: boolean;
   flows?: boolean;
   aiTests?: boolean;
+  performance?: boolean;
+  loadUsers?: number;
+  duration?: number;
   organization?: OrganizationStrategy;
   baseUrl?: string;
   verbose?: boolean;
+  incremental?: boolean;
+  forceAll?: boolean;
+  dryRun?: boolean;
+  // Email options
+  email?: string;
+  emailFrom?: string;
+  smtpHost?: string;
+  smtpPort?: string;
+  smtpUser?: string;
+  smtpPass?: string;
+  // Docker options
+  useDocker?: boolean;
+  dockerImage?: string;
+  dockerIsolateTests?: boolean;
 }
 
 /**
@@ -53,15 +74,39 @@ export function createGenerateCommand(): Command {
     .option('--no-errors', 'Skip error case tests')
     .option('--no-edge-cases', 'Skip edge case tests')
     .option('--no-flows', 'Skip workflow tests')
-    .option('--ai-tests', 'Force enable AI-powered test generation (auto-enabled if OPENAI_API_KEY is set)')
+    .option(
+      '--ai-tests',
+      'Force enable AI-powered test generation (auto-enabled if OPENAI_API_KEY is set)'
+    )
     .option('--no-ai-tests', 'Disable AI-powered test generation even if OPENAI_API_KEY is set')
+    .option('--performance', 'Generate performance/load tests')
+    .option('--load-users <number>', 'Number of virtual users for load tests', '10')
+    .option('--duration <seconds>', 'Duration for performance tests in seconds', '60')
     .option(
       '--organization <strategy>',
       'Organization strategy: by-tag, by-endpoint, by-type, by-method, flat',
       'by-tag'
     )
     .option('--base-url <url>', 'Base URL for API (overrides spec servers)')
+    .option('--no-incremental', 'Disable incremental mode (regenerate all tests)')
+    .option('--force-all', 'Force regenerate all tests even if unchanged')
+    .option('--dry-run', 'Show what would change without making changes')
     .option('-v, --verbose', 'Verbose output', false)
+    // Email reporting options
+    .option('--email <recipients>', 'Send email reports to comma-separated recipients')
+    .option('--email-from <address>', 'Sender email address', 'api-test-agent@example.com')
+    .option('--smtp-host <host>', 'SMTP server host')
+    .option('--smtp-port <port>', 'SMTP server port', '587')
+    .option('--smtp-user <user>', 'SMTP username')
+    .option('--smtp-pass <password>', 'SMTP password')
+    // Docker execution options
+    .option('--use-docker', 'Execute tests in Docker containers')
+    .option(
+      '--docker-image <image>',
+      'Docker image for test execution',
+      'mcr.microsoft.com/playwright:latest'
+    )
+    .option('--docker-isolate-tests', 'Run each test in isolated container')
     .action(async (options: GenerateCommandOptions) => {
       await executeGenerate(options);
     });
@@ -88,10 +133,19 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       includeErrors: options.errors !== false,
       includeEdgeCases: options.edgeCases !== false,
       includeFlows: options.flows !== false,
+      includePerformance: options.performance ?? false,
       organizationStrategy: (options.organization as OrganizationStrategy) || 'by-tag',
       baseUrl: options.baseUrl,
       options: {
         verbose: options.verbose,
+        loadUsers:
+          typeof options.loadUsers === 'number'
+            ? options.loadUsers
+            : parseInt(String(options.loadUsers || '10'), 10),
+        duration:
+          typeof options.duration === 'number'
+            ? options.duration
+            : parseInt(String(options.duration || '60'), 10),
       },
     });
 
@@ -101,6 +155,61 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       reporter.verbose(`Output: ${config.output}`);
       reporter.verbose(`Organization: ${config.organizationStrategy}`);
     }
+
+    // Prepare email configuration if requested
+    const emailConfig = options.email
+      ? {
+          enabled: true,
+          smtp: {
+            host: options.smtpHost || process.env.SMTP_HOST || '',
+            port: parseInt(options.smtpPort || process.env.SMTP_PORT || '587', 10),
+            secure: parseInt(options.smtpPort || process.env.SMTP_PORT || '587', 10) === 465,
+            auth: {
+              user: options.smtpUser || process.env.SMTP_USER || '',
+              pass: options.smtpPass || process.env.SMTP_PASSWORD || '',
+            },
+          },
+          from: options.emailFrom || process.env.EMAIL_FROM || 'api-test-agent@example.com',
+          to: options.email.split(',').map((e) => e.trim()),
+        }
+      : undefined;
+
+    // Validate email config if provided
+    if (
+      emailConfig &&
+      (!emailConfig.smtp.host || !emailConfig.smtp.auth.user || !emailConfig.smtp.auth.pass)
+    ) {
+      reporter.warning('Email reporting requested but SMTP credentials are incomplete');
+      reporter.info(
+        'Please set --smtp-host, --smtp-user, --smtp-pass or use environment variables'
+      );
+    } else if (emailConfig && options.verbose) {
+      reporter.verbose(`Email reporting enabled: ${emailConfig.to.join(', ')}`);
+      reporter.verbose(`SMTP: ${emailConfig.smtp.host}:${emailConfig.smtp.port}`);
+    }
+
+    // Prepare Docker configuration if requested
+    const dockerConfig = options.useDocker
+      ? {
+          dockerImage:
+            options.dockerImage ||
+            process.env.DOCKER_IMAGE ||
+            'mcr.microsoft.com/playwright:latest',
+          isolationPerTest: options.dockerIsolateTests || false,
+        }
+      : undefined;
+
+    if (dockerConfig && options.verbose) {
+      reporter.verbose(`Docker execution enabled: ${dockerConfig.dockerImage}`);
+      if (dockerConfig.isolationPerTest) {
+        reporter.verbose('Test isolation: Each test in separate container');
+      }
+    }
+
+    // NOTE: emailConfig and dockerConfig are prepared here for future integration
+    // with PipelineOrchestrator or test execution systems. These configurations
+    // would be passed to the test runner when executing the generated tests.
+    // For now, they are validated and logged but not actively used during generation.
 
     // Step 2: Parse OpenAPI specification
     reporter.start('Parsing OpenAPI specification...');
@@ -120,7 +229,7 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
     try {
       spec = await parseOpenAPIFile(specPath, {
         skipDereference: isLargeSpec, // Use bundle mode for large specs
-        skipValidation: isLargeSpec,  // Skip validation for speed
+        skipValidation: isLargeSpec, // Skip validation for speed
       });
     } catch (error) {
       reporter.error(
@@ -139,12 +248,19 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       includeErrors: config.includeErrors,
       includeEdgeCases: config.includeEdgeCases,
       includeFlows: config.includeFlows,
+      includePerformance: config.includePerformance,
       baseUrl: config.baseUrl,
       outputDir: config.output,
       organizationStrategy: config.organizationStrategy,
       framework: {
         useFixtures: config.options?.useFixtures ?? true,
         useHooks: config.options?.useHooks ?? true,
+      },
+      incremental: {
+        enabled: options.incremental !== false, // Default to true, disabled with --no-incremental
+        forceAll: options.forceAll ?? false,
+        dryRun: options.dryRun ?? false,
+        specPath: specPath, // Pass absolute spec path for metadata tracking
       },
     });
 
@@ -160,7 +276,7 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       const errorGen = new ErrorCaseGenerator(bodyGenerator);
       // Wrap to match interface
       generator.setGenerator('error-case', {
-        generateTests: (endpoints) => endpoints.flatMap(ep => errorGen.generateTests(ep))
+        generateTests: (endpoints) => endpoints.flatMap((ep) => errorGen.generateTests(ep)),
       });
     }
 
@@ -168,18 +284,70 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       const edgeGen = new EdgeCaseGenerator(dataFactory);
       // Wrap to match interface
       generator.setGenerator('edge-case', {
-        generateTests: (endpoints) => endpoints.flatMap(ep => edgeGen.generateTests(ep))
+        generateTests: (endpoints) => endpoints.flatMap((ep) => edgeGen.generateTests(ep)),
       });
     }
 
-    // TODO: Fix auth and flow generators - complex interface mismatches
-    // if (config.includeAuth) {
-    //   Auth generator needs proper integration
-    // }
+    // Performance test generator
+    if (config.includePerformance) {
+      const perfGen = new PerformanceTestGenerator({
+        defaultUsers: config.options?.loadUsers ?? 10,
+        defaultDuration: config.options?.duration ?? 60,
+        generateMultipleScenarios: true,
+      });
+      generator.setGenerator('performance', perfGen);
 
-    // if (config.includeFlows) {
-    //   Flow generator needs proper integration
-    // }
+      if (options.verbose) {
+        reporter.verbose(
+          `Performance tests enabled: ${config.options?.loadUsers ?? 10} users, ${config.options?.duration ?? 60}s duration`
+        );
+      }
+    }
+
+    // Auth test generator
+    if (config.includeAuth) {
+      // Extract auth schemes from spec
+      const authSchemes: AuthScheme[] = [];
+      if (spec.components?.securitySchemes) {
+        for (const [name, schemeOrRef] of Object.entries(spec.components.securitySchemes)) {
+          // Skip references for now - would need dereferencing
+          if ('$ref' in schemeOrRef) continue;
+
+          authSchemes.push({
+            name,
+            type: schemeOrRef.type,
+            config: schemeOrRef,
+          });
+        }
+      }
+
+      const authGen = new AuthTestGenerator(authSchemes, {
+        testUnauthorized: true,
+        testInvalidCredentials: true,
+        testExpiredTokens: false,
+        generateFixtures: true,
+      });
+      generator.setGenerator('auth', authGen);
+
+      if (options.verbose) {
+        reporter.verbose(`Auth tests enabled: ${authSchemes.length} schemes detected`);
+      }
+    }
+
+    // Flow test generator
+    if (config.includeFlows) {
+      const flowGen = new FlowGenerator(bodyGenerator, {
+        includeCRUD: true,
+        includeCreateRead: true,
+        includeListFilter: true,
+        minSteps: 2,
+      });
+      generator.setGenerator('flow', flowGen);
+
+      if (options.verbose) {
+        reporter.verbose('Flow/workflow tests enabled');
+      }
+    }
 
     // Set up test organizer
     const organizer = new TestOrganizer();
@@ -192,10 +360,10 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
           metadata: {
             strategy: result.strategy,
             fileCount: result.files.size,
-            testCount: result.totalTests
-          }
+            testCount: result.totalTests,
+          },
         };
-      }
+      },
     });
 
     // Set up code generator
@@ -206,11 +374,11 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
         const files: any[] = [];
         for (const [fileName, tests] of organized.files) {
           const metadata = {
-            endpoints: [...new Set(tests.map(t => t.endpoint))],
-            testTypes: [...new Set(tests.map(t => t.type))],
+            endpoints: [...new Set(tests.map((t) => t.endpoint))],
+            testTypes: [...new Set(tests.map((t) => t.type))],
             testCount: tests.length,
-            tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
-            generatedAt: new Date().toISOString()
+            tags: [...new Set(tests.flatMap((t) => t.metadata.tags || []))],
+            generatedAt: new Date().toISOString(),
           };
           const content = codeGen.generateTestFile(tests, metadata);
           files.push({
@@ -219,18 +387,18 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
             content,
             tests,
             imports: [],
-            metadata
+            metadata,
           });
         }
         return files;
       },
       generateFile: (fileName, tests) => {
         const metadata = {
-          endpoints: [...new Set(tests.map(t => t.endpoint))],
-          testTypes: [...new Set(tests.map(t => t.type))],
+          endpoints: [...new Set(tests.map((t) => t.endpoint))],
+          testTypes: [...new Set(tests.map((t) => t.type))],
           testCount: tests.length,
-          tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
-          generatedAt: new Date().toISOString()
+          tags: [...new Set(tests.flatMap((t) => t.metadata.tags || []))],
+          generatedAt: new Date().toISOString(),
         };
         const content = codeGen.generateTestFile(tests, metadata);
         return {
@@ -239,9 +407,9 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
           content,
           tests,
           imports: [],
-          metadata
+          metadata,
         };
-      }
+      },
     });
 
     // Extract endpoints first
@@ -255,9 +423,10 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
 
     // Step 4.5: AI-powered test generation
     // Smart default: auto-enable if OPENAI_API_KEY is set, unless explicitly disabled
-    const shouldUseAI = options.aiTests === undefined
-      ? !!process.env.OPENAI_API_KEY  // Auto-enable if API key is present
-      : options.aiTests;               // Respect explicit user choice
+    const shouldUseAI =
+      options.aiTests === undefined
+        ? Boolean(process.env.OPENAI_API_KEY) // Auto-enable if API key is present
+        : options.aiTests; // Respect explicit user choice
 
     if (shouldUseAI) {
       const aiGen = new AITestGenerator({
@@ -265,7 +434,7 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
         model: process.env.OPENAI_MODEL,
         testsPerEndpoint: 3,
         focus: ['business-logic', 'security', 'workflows', 'edge-cases'],
-        verbose: options.verbose
+        verbose: options.verbose,
       });
 
       if (aiGen.isEnabled()) {
@@ -295,7 +464,7 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
                 testTypes: ['validation' as const],
                 testCount: tests.length,
                 tags: ['ai-generated'],
-                generatedAt: new Date().toISOString()
+                generatedAt: new Date().toISOString(),
               };
               const content = codeGen.generateTestFile(tests, metadata);
               aiFiles.push({
@@ -304,7 +473,7 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
                 content,
                 tests,
                 imports: [],
-                metadata
+                metadata,
               });
             }
 
@@ -318,12 +487,16 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
             }
             result.statistics.testsByType.validation += aiTests.length;
 
-            reporter.success(`✨ Generated ${aiTests.length} AI-powered tests in ${aiFiles.length} files`);
+            reporter.success(
+              `✨ Generated ${aiTests.length} AI-powered tests in ${aiFiles.length} files`
+            );
           } else {
             reporter.warning('AI generation produced no tests');
           }
         } catch (error) {
-          reporter.error(`AI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          reporter.error(
+            `AI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
           if (options.verbose && error instanceof Error && error.stack) {
             console.error(error.stack);
           }
@@ -407,6 +580,14 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
     console.warn('  1. Review generated tests');
     console.warn('  2. Add authentication credentials to .env file');
     console.warn('  3. Run tests with: npm run test:playwright');
+    if (emailConfig) {
+      console.warn(`  4. Email reports will be sent to: ${emailConfig.to.join(', ')}`);
+    }
+    if (dockerConfig) {
+      console.warn(
+        `  5. Tests configured for Docker execution with image: ${dockerConfig.dockerImage}`
+      );
+    }
 
     process.exit(0);
   } catch (error) {

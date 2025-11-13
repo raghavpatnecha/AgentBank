@@ -60,11 +60,14 @@ export class OpenAPIParser {
    * @param options - Parsing options for performance tuning
    * @returns Parsed and normalized API specification
    */
-  async parse(spec: unknown, options?: {
-    skipDereference?: boolean;
-    skipValidation?: boolean;
-    timeout?: number;
-  }): Promise<ParsedApiSpec> {
+  async parse(
+    spec: unknown,
+    options?: {
+      skipDereference?: boolean;
+      skipValidation?: boolean;
+      timeout?: number;
+    }
+  ): Promise<ParsedApiSpec> {
     if (!this.isValidSpec(spec)) {
       throw new ValidationError('Invalid specification format', [
         'Specification must have either "openapi" or "swagger" property',

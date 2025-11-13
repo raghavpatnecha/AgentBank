@@ -1,0 +1,84 @@
+---
+# Example post fixtures in YAML format
+# Demonstrates composition and relationships
+
+- id: post-1
+  type: post
+  data:
+    id: pst_1
+    userId: usr_2
+    title: "Getting Started with API Testing"
+    content: |
+      This is a comprehensive guide to API testing.
+      We'll cover various strategies and best practices.
+    status: published
+    publishedAt: 2024-01-15T10:00:00.000Z
+    tags:
+      - api
+      - testing
+      - tutorial
+  traits:
+    - published
+  relationships:
+    - type: belongsTo
+      target: user
+      targetId: user-2
+      field: author
+    - type: hasMany
+      target: comment
+      targetId:
+        - comment-1
+        - comment-2
+      field: comments
+  metadata:
+    description: "Featured tutorial post"
+    tags:
+      - featured
+      - tutorial
+
+- id: post-2
+  type: post
+  extends: post-1
+  data:
+    id: pst_2
+    userId: usr_3
+    title: "Advanced TypeScript Patterns"
+    content: |
+      Learn advanced TypeScript patterns for better type safety.
+      Includes generics, conditional types, and more.
+    tags:
+      - typescript
+      - advanced
+      - patterns
+  relationships:
+    - type: belongsTo
+      target: user
+      targetId: user-3
+      field: author
+
+- id: post-draft
+  type: post
+  data:
+    id: pst_3
+    userId: usr_2
+    title: "Work in Progress"
+    content: "This post is still being written..."
+    status: draft
+    tags:
+      - draft
+  traits:
+    - draft
+
+- id: post-archived
+  type: post
+  data:
+    id: pst_4
+    userId: usr_1
+    title: "Old Announcement"
+    content: "This is an archived announcement."
+    status: archived
+    tags:
+      - archived
+      - announcement
+  traits:
+    - archived

@@ -140,6 +140,13 @@ export interface ExecutionSummary {
 
   /** Statistics by tag */
   byTag?: Record<string, TagSummary>;
+
+  /** Details of failed tests */
+  failedTestDetails?: Array<{
+    testName: string;
+    file: string;
+    error: string;
+  }>;
 }
 
 /**

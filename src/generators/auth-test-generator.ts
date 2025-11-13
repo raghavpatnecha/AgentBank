@@ -90,6 +90,13 @@ export class AuthTestGenerator {
   }
 
   /**
+   * Generate auth tests for multiple endpoints (implements TestGeneratorInterface)
+   */
+  generateTests(endpoints: ApiEndpoint[]): TestCase[] {
+    return endpoints.flatMap((endpoint) => this.generateAuthTests(endpoint));
+  }
+
+  /**
    * Generate auth tests for an endpoint
    */
   generateAuthTests(endpoint: ApiEndpoint): TestCase[] {

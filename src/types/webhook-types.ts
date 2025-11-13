@@ -633,6 +633,21 @@ export interface CommandArgs {
   baseUrl?: string;
 
   /**
+   * Enable performance testing
+   */
+  performance?: boolean | string;
+
+  /**
+   * Number of virtual users for performance tests
+   */
+  users?: string;
+
+  /**
+   * Duration for performance tests in seconds
+   */
+  duration?: string;
+
+  /**
    * Additional options
    */
   options?: Record<string, string>;

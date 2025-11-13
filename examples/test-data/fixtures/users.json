@@ -1,0 +1,76 @@
+[
+  {
+    "id": "user-1",
+    "type": "user",
+    "data": {
+      "id": "usr_1",
+      "email": "admin@example.com",
+      "username": "admin",
+      "firstName": "Admin",
+      "lastName": "User",
+      "role": "admin",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    "traits": ["admin"],
+    "metadata": {
+      "description": "Primary admin user",
+      "tags": ["admin", "test-user"]
+    }
+  },
+  {
+    "id": "user-2",
+    "type": "user",
+    "extends": "user-1",
+    "data": {
+      "id": "usr_2",
+      "email": "john.doe@example.com",
+      "username": "johndoe",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "user"
+    },
+    "metadata": {
+      "description": "Regular user for testing",
+      "tags": ["test-user"]
+    }
+  },
+  {
+    "id": "user-3",
+    "type": "user",
+    "data": {
+      "id": "usr_3",
+      "email": "jane.smith@example.com",
+      "username": "janesmith",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "role": "moderator",
+      "isActive": true,
+      "createdAt": "2024-01-02T00:00:00.000Z"
+    },
+    "traits": ["moderator"],
+    "relationships": [
+      {
+        "type": "hasOne",
+        "target": "userProfile",
+        "targetId": "profile-3",
+        "field": "profile"
+      }
+    ]
+  },
+  {
+    "id": "user-inactive",
+    "type": "user",
+    "data": {
+      "id": "usr_4",
+      "email": "inactive@example.com",
+      "username": "inactive",
+      "firstName": "Inactive",
+      "lastName": "User",
+      "role": "user",
+      "isActive": false,
+      "createdAt": "2024-01-03T00:00:00.000Z"
+    },
+    "traits": ["inactive"]
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "profile-1",
+    "type": "userProfile",
+    "data": {
+      "id": "prof_1",
+      "userId": "usr_1",
+      "bio": "System administrator with a passion for automation and testing.",
+      "avatar": "https://i.pravatar.cc/150?u=admin",
+      "website": "https://admin.example.com",
+      "location": "San Francisco, CA"
+    }
+  },
+  {
+    "id": "profile-2",
+    "type": "userProfile",
+    "data": {
+      "id": "prof_2",
+      "userId": "usr_2",
+      "bio": "Software engineer focusing on API development and testing frameworks.",
+      "avatar": "https://i.pravatar.cc/150?u=johndoe",
+      "website": "https://johndoe.dev",
+      "location": "New York, NY"
+    }
+  },
+  {
+    "id": "profile-3",
+    "type": "userProfile",
+    "data": {
+      "id": "prof_3",
+      "userId": "usr_3",
+      "bio": "Community moderator and TypeScript enthusiast.",
+      "avatar": "https://i.pravatar.cc/150?u=janesmith",
+      "website": "https://janesmith.blog",
+      "location": "Austin, TX"
+    }
+  }
+]

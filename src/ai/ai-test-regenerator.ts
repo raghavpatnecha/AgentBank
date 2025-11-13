@@ -264,10 +264,7 @@ The test should:
   /**
    * Validate regenerated code
    */
-  private validateRegeneratedCode(
-    code: string,
-    context: RegenerationContext
-  ): ValidationResult {
+  private validateRegeneratedCode(code: string, context: RegenerationContext): ValidationResult {
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
 
@@ -360,5 +357,4 @@ The test should:
       warnings,
     };
   }
-
 }

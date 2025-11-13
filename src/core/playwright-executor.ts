@@ -77,7 +77,9 @@ export class PlaywrightExecutor {
 
       return summary;
     } catch (error) {
-      throw new Error(`Test execution failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Test execution failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 

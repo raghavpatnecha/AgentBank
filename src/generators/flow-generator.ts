@@ -97,6 +97,14 @@ export class FlowGenerator {
   }
 
   /**
+   * Generate workflow tests for endpoints (implements TestGeneratorInterface)
+   */
+  generateTests(endpoints: ApiEndpoint[]): TestCase[] {
+    const flows = this.detectFlows(endpoints);
+    return flows.map((flow) => this.generateFlowTest(flow));
+  }
+
+  /**
    * Detect all possible flows from endpoints
    */
   detectFlows(endpoints: ApiEndpoint[]): WorkflowFlow[] {

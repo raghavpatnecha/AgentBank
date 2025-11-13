@@ -29,6 +29,9 @@ export interface CliConfig {
   /** Include workflow tests */
   includeFlows: boolean;
 
+  /** Include performance tests */
+  includePerformance?: boolean;
+
   /** Test organization strategy */
   organizationStrategy: OrganizationStrategy;
 
@@ -45,6 +48,12 @@ export interface CliConfig {
 
     /** Verbose output */
     verbose?: boolean;
+
+    /** Number of virtual users for load tests */
+    loadUsers?: number;
+
+    /** Duration for performance tests in seconds */
+    duration?: number;
   };
 }
 
@@ -58,11 +67,14 @@ const DEFAULT_CONFIG: CliConfig = {
   includeErrors: true,
   includeEdgeCases: true,
   includeFlows: true,
+  includePerformance: false,
   organizationStrategy: 'by-tag',
   options: {
     useFixtures: true,
     useHooks: true,
     verbose: false,
+    loadUsers: 10,
+    duration: 60,
   },
 };
 
