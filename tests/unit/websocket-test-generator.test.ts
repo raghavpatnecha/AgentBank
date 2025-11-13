@@ -76,33 +76,23 @@ describe('WebSocketTestGenerator', () => {
 
   describe('Constructor', () => {
     it('should create generator with spec and base URL', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com');
 
       expect(generator).toBeDefined();
     });
 
     it('should create generator with custom options', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection', 'echo'],
-          includeAuth: false,
-          defaultTimeout: 5000,
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection', 'echo'],
+        includeAuth: false,
+        defaultTimeout: 5000,
+      });
 
       expect(generator).toBeDefined();
     });
 
     it('should use default options when not provided', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com');
 
       expect(generator).toBeDefined();
     });
@@ -110,10 +100,7 @@ describe('WebSocketTestGenerator', () => {
 
   describe('Extract WebSocket Endpoints', () => {
     it('should extract endpoints from OpenAPI spec', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com');
 
       const endpoints = generator.extractWebSocketEndpoints();
 
@@ -123,10 +110,7 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should convert HTTP to WS protocol', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'http://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'http://api.example.com');
 
       const endpoints = generator.extractWebSocketEndpoints();
 
@@ -134,10 +118,7 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should convert HTTPS to WSS protocol', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com');
 
       const endpoints = generator.extractWebSocketEndpoints();
 
@@ -145,10 +126,7 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should extract endpoint parameters', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com');
 
       const endpoints = generator.extractWebSocketEndpoints();
 
@@ -158,10 +136,7 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should extract security requirements', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com');
 
       const endpoints = generator.extractWebSocketEndpoints();
 
@@ -169,10 +144,7 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should extract message schemas', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com');
 
       const endpoints = generator.extractWebSocketEndpoints();
 
@@ -186,10 +158,7 @@ describe('WebSocketTestGenerator', () => {
         paths: {},
       };
 
-      const generator = createWebSocketTestGenerator(
-        emptySpec,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(emptySpec, 'https://api.example.com');
 
       const endpoints = generator.extractWebSocketEndpoints();
 
@@ -199,13 +168,9 @@ describe('WebSocketTestGenerator', () => {
 
   describe('Generate Tests', () => {
     it('should generate tests for extracted endpoints', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection', 'echo'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection', 'echo'],
+      });
 
       const tests = generator.generateTests();
 
@@ -213,125 +178,93 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should generate connection test', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection'],
+      });
 
       const tests = generator.generateTests();
-      const connectionTest = tests.find(t => t.id.includes('connection'));
+      const connectionTest = tests.find((t) => t.id.includes('connection'));
 
       expect(connectionTest).toBeDefined();
       expect(connectionTest?.name).toContain('Connection');
     });
 
     it('should generate echo test', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['echo'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['echo'],
+      });
 
       const tests = generator.generateTests();
-      const echoTest = tests.find(t => t.id.includes('echo'));
+      const echoTest = tests.find((t) => t.id.includes('echo'));
 
       expect(echoTest).toBeDefined();
       expect(echoTest?.name).toContain('Echo');
     });
 
     it('should generate JSON test', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['json'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['json'],
+      });
 
       const tests = generator.generateTests();
-      const jsonTest = tests.find(t => t.id.includes('json'));
+      const jsonTest = tests.find((t) => t.id.includes('json'));
 
       expect(jsonTest).toBeDefined();
       expect(jsonTest?.name).toContain('JSON');
     });
 
     it('should generate heartbeat test', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['heartbeat'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['heartbeat'],
+      });
 
       const tests = generator.generateTests();
-      const heartbeatTest = tests.find(t => t.id.includes('heartbeat'));
+      const heartbeatTest = tests.find((t) => t.id.includes('heartbeat'));
 
       expect(heartbeatTest).toBeDefined();
       expect(heartbeatTest?.name).toContain('Heartbeat');
     });
 
     it('should include authentication tests when enabled', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['authentication'],
-          includeAuth: true,
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['authentication'],
+        includeAuth: true,
+      });
 
       const tests = generator.generateTests();
-      const authTests = tests.filter(t => t.id.includes('auth'));
+      const authTests = tests.filter((t) => t.id.includes('auth'));
 
       expect(authTests.length).toBeGreaterThan(0);
     });
 
     it('should skip authentication tests when disabled', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['authentication'],
-          includeAuth: false,
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['authentication'],
+        includeAuth: false,
+      });
 
       const tests = generator.generateTests();
-      const authTests = tests.filter(t => t.id.includes('auth'));
+      const authTests = tests.filter((t) => t.id.includes('auth'));
 
       expect(authTests).toHaveLength(0);
     });
 
     it('should include reconnection tests when enabled', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['reconnection'],
-          includeReconnection: true,
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['reconnection'],
+        includeReconnection: true,
+      });
 
       const tests = generator.generateTests();
-      const reconnectTests = tests.filter(t => t.id.includes('reconnect'));
+      const reconnectTests = tests.filter((t) => t.id.includes('reconnect'));
 
       expect(reconnectTests.length).toBeGreaterThan(0);
     });
 
     it('should set proper test metadata', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection'],
+      });
 
       const tests = generator.generateTests();
       const test = tests[0];
@@ -345,14 +278,10 @@ describe('WebSocketTestGenerator', () => {
 
     it('should set default timeout', () => {
       const customTimeout = 15000;
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection'],
-          defaultTimeout: customTimeout,
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection'],
+        defaultTimeout: customTimeout,
+      });
 
       const tests = generator.generateTests();
       const test = tests[0];
@@ -361,13 +290,9 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should generate tests with assertions', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection'],
+      });
 
       const tests = generator.generateTests();
       const test = tests[0];
@@ -377,17 +302,13 @@ describe('WebSocketTestGenerator', () => {
 
     it('should generate ordering test with correct message count', () => {
       const messageCount = 10;
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['ordering'],
-          messageCount,
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['ordering'],
+        messageCount,
+      });
 
       const tests = generator.generateTests();
-      const orderingTest = tests.find(t => t.id.includes('ordering'));
+      const orderingTest = tests.find((t) => t.id.includes('ordering'));
 
       expect(orderingTest).toBeDefined();
       expect(orderingTest?.messages.length).toBe(messageCount);
@@ -395,17 +316,13 @@ describe('WebSocketTestGenerator', () => {
 
     it('should generate concurrent test with connection count', () => {
       const concurrentConnections = 5;
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['concurrent'],
-          concurrentConnections,
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['concurrent'],
+        concurrentConnections,
+      });
 
       const tests = generator.generateTests();
-      const concurrentTest = tests.find(t => t.id.includes('concurrent'));
+      const concurrentTest = tests.find((t) => t.id.includes('concurrent'));
 
       expect(concurrentTest).toBeDefined();
       expect(concurrentTest?.name).toContain(String(concurrentConnections));
@@ -414,29 +331,21 @@ describe('WebSocketTestGenerator', () => {
 
   describe('Test Properties', () => {
     it('should generate unique test IDs', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection', 'echo', 'json'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection', 'echo', 'json'],
+      });
 
       const tests = generator.generateTests();
-      const ids = tests.map(t => t.id);
+      const ids = tests.map((t) => t.id);
       const uniqueIds = new Set(ids);
 
       expect(uniqueIds.size).toBe(ids.length);
     });
 
     it('should generate descriptive test names', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection'],
+      });
 
       const tests = generator.generateTests();
       const test = tests[0];
@@ -446,13 +355,9 @@ describe('WebSocketTestGenerator', () => {
     });
 
     it('should include endpoint URL in tests', () => {
-      const generator = createWebSocketTestGenerator(
-        mockSpec,
-        'https://api.example.com',
-        {
-          scenarios: ['connection'],
-        }
-      );
+      const generator = createWebSocketTestGenerator(mockSpec, 'https://api.example.com', {
+        scenarios: ['connection'],
+      });
 
       const tests = generator.generateTests();
       const test = tests[0];
@@ -475,10 +380,7 @@ describe('WebSocketTestGenerator', () => {
         },
       };
 
-      const generator = createWebSocketTestGenerator(
-        specNoMessages,
-        'https://api.example.com'
-      );
+      const generator = createWebSocketTestGenerator(specNoMessages, 'https://api.example.com');
 
       const tests = generator.generateTests();
       expect(tests.length).toBeGreaterThan(0);
@@ -498,17 +400,13 @@ describe('WebSocketTestGenerator', () => {
         },
       };
 
-      const generator = createWebSocketTestGenerator(
-        specNoSecurity,
-        'https://api.example.com',
-        {
-          scenarios: ['authentication'],
-          includeAuth: true,
-        }
-      );
+      const generator = createWebSocketTestGenerator(specNoSecurity, 'https://api.example.com', {
+        scenarios: ['authentication'],
+        includeAuth: true,
+      });
 
       const tests = generator.generateTests();
-      const authTests = tests.filter(t => t.id.includes('auth'));
+      const authTests = tests.filter((t) => t.id.includes('auth'));
 
       // Should not generate auth tests for endpoints without security
       expect(authTests).toHaveLength(0);

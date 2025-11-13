@@ -256,7 +256,7 @@ export class CommentParser {
    * Check if argument is a known argument
    */
   private isKnownArg(key: string): boolean {
-    return ['env', 'spec', 'baseUrl'].includes(key);
+    return ['env', 'spec', 'baseUrl', 'performance', 'users', 'duration'].includes(key);
   }
 
   /**
@@ -308,6 +308,23 @@ export class CommentParser {
       if (command.args.baseUrl) {
         if (!this.isValidUrl(command.args.baseUrl)) {
           errors.push(`Invalid base URL: ${command.args.baseUrl}`);
+        }
+      }
+
+      // Validate performance test parameters
+      if (command.args.users) {
+        const users = parseInt(command.args.users, 10);
+        if (isNaN(users) || users < 1 || users > 1000) {
+          errors.push(`Invalid users count: ${command.args.users}. Must be between 1 and 1000`);
+        }
+      }
+
+      if (command.args.duration) {
+        const duration = parseInt(command.args.duration, 10);
+        if (isNaN(duration) || duration < 1 || duration > 3600) {
+          errors.push(
+            `Invalid duration: ${command.args.duration}. Must be between 1 and 3600 seconds`
+          );
         }
       }
     }
@@ -398,7 +415,13 @@ Options:
   --env <environment>    Target environment (dev, staging, production)
   --spec <path>          Path to OpenAPI spec file
   --base-url <url>       Override base URL for API
-Example: @api-test-agent run --env staging --spec api/v2/openapi.yaml`,
+  --performance          Enable performance/load testing
+  --users <count>        Number of virtual users for load tests (default: 10)
+  --duration <seconds>   Duration for performance tests in seconds (default: 60)
+Examples:
+  @api-test-agent run --env staging --spec api/v2/openapi.yaml
+  @api-test-agent run --performance --users 50 --duration 120
+  @api-test-agent run --env prod --performance`,
 
       help: `Show available commands
 Usage: @api-test-agent help`,
@@ -440,6 +463,7 @@ Examples:
   @api-test-agent run
   @api-test-agent run --env staging
   @api-test-agent run --env prod --base-url https://api.example.com
+  @api-test-agent run --performance --users 50 --duration 120
   @api-test-agent help
   @api-test-agent config`;
   }

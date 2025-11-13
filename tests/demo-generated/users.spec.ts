@@ -9,7 +9,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('users API', () => {
-
   // Happy path test for GET /users: Retrieve a paginated list of users
   test('GET /users - List all users', async ({ request }) => {
     const endpoint = '/users';
@@ -39,7 +38,9 @@ test.describe('users API', () => {
         expect(body.users[0]).toHaveProperty('name');
         // Validate field types and formats
         expect(typeof body.users[0].id).toBe('string');
-        expect(body.users[0].id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        expect(body.users[0].id).toMatch(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        );
         expect(typeof body.users[0].email).toBe('string');
         expect(body.users[0].email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
         expect(typeof body.users[0].name).toBe('string');
@@ -52,7 +53,7 @@ test.describe('users API', () => {
         }
         if (body.users[0].role !== undefined) {
           expect(typeof body.users[0].role).toBe('string');
-          expect(["admin", "user", "guest"]).toContain(body.users[0].role);
+          expect(['admin', 'user', 'guest']).toContain(body.users[0].role);
         }
         if (body.users[0].createdAt !== undefined) {
           expect(typeof body.users[0].createdAt).toBe('string');
@@ -81,10 +82,10 @@ test.describe('users API', () => {
 
     const response = await request.post(endpoint, {
       data: {
-        "email": "Estel.Altenwerth24@yahoo.com",
-        "name": "Pecto corroboro timor arguo demonstro crustulum colo ager esse.",
-        "age": 133
-      }
+        email: 'Estel.Altenwerth24@yahoo.com',
+        name: 'Pecto corroboro timor arguo demonstro crustulum colo ager esse.',
+        age: 133,
+      },
     });
 
     // Validate response status
@@ -114,7 +115,7 @@ test.describe('users API', () => {
     }
     if (body.role !== undefined) {
       expect(typeof body.role).toBe('string');
-      expect(["admin", "user", "guest"]).toContain(body.role);
+      expect(['admin', 'user', 'guest']).toContain(body.role);
     }
     if (body.createdAt !== undefined) {
       expect(typeof body.createdAt).toBe('string');
@@ -159,7 +160,7 @@ test.describe('users API', () => {
     }
     if (body.role !== undefined) {
       expect(typeof body.role).toBe('string');
-      expect(["admin", "user", "guest"]).toContain(body.role);
+      expect(['admin', 'user', 'guest']).toContain(body.role);
     }
     if (body.createdAt !== undefined) {
       expect(typeof body.createdAt).toBe('string');
@@ -177,11 +178,11 @@ test.describe('users API', () => {
 
     const response = await request.put(endpoint, {
       data: {
-        "email": "Armando.Miller87@gmail.com",
-        "name": "Acquiro admitto enim ocer celer.",
-        "age": 71,
-        "role": "guest"
-      }
+        email: 'Armando.Miller87@gmail.com',
+        name: 'Acquiro admitto enim ocer celer.',
+        age: 71,
+        role: 'guest',
+      },
     });
 
     // Validate response status
@@ -211,7 +212,7 @@ test.describe('users API', () => {
     }
     if (body.role !== undefined) {
       expect(typeof body.role).toBe('string');
-      expect(["admin", "user", "guest"]).toContain(body.role);
+      expect(['admin', 'user', 'guest']).toContain(body.role);
     }
     if (body.createdAt !== undefined) {
       expect(typeof body.createdAt).toBe('string');
@@ -231,6 +232,5 @@ test.describe('users API', () => {
 
     // Validate response status
     expect(response.status()).toBe(204);
-
   });
 });

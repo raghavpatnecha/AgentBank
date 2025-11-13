@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  webhook-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.webhook
+    container_name: api-test-agent-webhook
+    restart: unless-stopped
+    ports:
+      - "${WEBHOOK_PORT:-3000}:3000"
+    environment:
+      # Webhook Configuration
+      - WEBHOOK_PORT=3000
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - WEBHOOK_PATH=/webhook
+
+      # GitHub Integration
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+      # Email Configuration (optional)
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+
+      # Docker-in-Docker (for running tests in containers)
+      - DOCKER_HOST=unix:///var/run/docker.sock
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker
+      - ./logs:/app/logs  # Log persistence
+      - ./.agentbank-cache:/app/.agentbank-cache  # Cache persistence
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - api-test-agent
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Job worker for background processing
+  job-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.webhook
+    container_name: api-test-agent-worker
+    restart: unless-stopped
+    command: node dist/github/job-worker.js
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WEBHOOK_PORT=3000  # To connect to webhook server
+    depends_on:
+      - webhook-server
+    networks:
+      - api-test-agent
+
+networks:
+  api-test-agent:
+    driver: bridge

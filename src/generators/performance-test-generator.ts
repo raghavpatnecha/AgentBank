@@ -286,7 +286,7 @@ export class PerformanceTestGenerator {
     }
 
     const jsonContent = content['application/json'];
-    if (!jsonContent || !jsonContent.schema) {
+    if (!jsonContent?.schema) {
       return {};
     }
 
@@ -483,17 +483,18 @@ export class PerformanceTestGenerator {
   /**
    * Generate load profile for complex scenarios
    */
-  generateLoadProfile(
-    pattern: LoadPattern,
-    peakUsers: number,
-    duration: number
-  ): LoadProfile {
+  generateLoadProfile(pattern: LoadPattern, peakUsers: number, duration: number): LoadProfile {
     const stages: LoadStage[] = [];
 
     switch (pattern) {
       case 'ramp':
         stages.push(
-          { name: 'Ramp Up', targetUsers: peakUsers, duration: duration * 0.3, rampTime: duration * 0.3 },
+          {
+            name: 'Ramp Up',
+            targetUsers: peakUsers,
+            duration: duration * 0.3,
+            rampTime: duration * 0.3,
+          },
           { name: 'Sustain', targetUsers: peakUsers, duration: duration * 0.4 },
           { name: 'Ramp Down', targetUsers: 0, duration: duration * 0.3, rampTime: duration * 0.3 }
         );
@@ -502,8 +503,18 @@ export class PerformanceTestGenerator {
       case 'spike':
         stages.push(
           { name: 'Baseline', targetUsers: Math.ceil(peakUsers * 0.1), duration: duration * 0.2 },
-          { name: 'Spike', targetUsers: peakUsers, duration: duration * 0.3, rampTime: duration * 0.05 },
-          { name: 'Recovery', targetUsers: Math.ceil(peakUsers * 0.1), duration: duration * 0.3, rampTime: duration * 0.1 },
+          {
+            name: 'Spike',
+            targetUsers: peakUsers,
+            duration: duration * 0.3,
+            rampTime: duration * 0.05,
+          },
+          {
+            name: 'Recovery',
+            targetUsers: Math.ceil(peakUsers * 0.1),
+            duration: duration * 0.3,
+            rampTime: duration * 0.1,
+          },
           { name: 'Ramp Down', targetUsers: 0, duration: duration * 0.2, rampTime: duration * 0.2 }
         );
         break;

@@ -144,7 +144,11 @@ export type { CRUDSet, DependencyGraph } from './utils/dependency-analyzer.js';
 export type { OrganizedTests } from './generators/test-organizer.js';
 
 // Docker Test Executor (Feature 3.1)
-export { DockerTestExecutor, createDockerExecutor, executeTestsInDocker } from './executor/docker-test-executor.js';
+export {
+  DockerTestExecutor,
+  createDockerExecutor,
+  executeTestsInDocker,
+} from './executor/docker-test-executor.js';
 export { DockerConfig } from './config/docker-config.js';
 export {
   DEFAULT_DOCKER_IMAGES,

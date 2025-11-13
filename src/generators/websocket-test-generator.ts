@@ -4,10 +4,7 @@
  */
 
 import type { ParsedApiSpec, SchemaObject } from '../types/openapi-types.js';
-import {
-  WebSocketAssertionType,
-  MessageType,
-} from '../types/websocket-types.js';
+import { WebSocketAssertionType, MessageType } from '../types/websocket-types.js';
 import type {
   WebSocketTestCase,
   WebSocketEndpoint,
@@ -32,15 +29,7 @@ export class WebSocketTestGenerator {
     this.spec = spec;
     this.baseURL = baseURL;
     this.options = {
-      scenarios: [
-        'connection',
-        'echo',
-        'json',
-        'heartbeat',
-        'close',
-        'error',
-        'ordering',
-      ],
+      scenarios: ['connection', 'echo', 'json', 'heartbeat', 'close', 'error', 'ordering'],
       includeAuth: true,
       includeReconnection: true,
       includePerformance: false,
@@ -80,22 +69,24 @@ export class WebSocketTestGenerator {
   /**
    * Parse WebSocket extension from OpenAPI
    */
-  private parseWebSocketExtension(path: string, extension: OpenAPIWebSocketExtension): WebSocketEndpoint {
+  private parseWebSocketExtension(
+    path: string,
+    extension: OpenAPIWebSocketExtension
+  ): WebSocketEndpoint {
     // Convert HTTP(S) base URL to WS(S)
-    const wsURL = this.baseURL
-      .replace(/^http:/, 'ws:')
-      .replace(/^https:/, 'wss:');
+    const wsURL = this.baseURL.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
 
     return {
       path: extension.path || path,
       url: `${wsURL}${extension.path || path}`,
       description: extension.description,
-      parameters: extension.parameters?.map(p => ({
-        name: p.name,
-        in: p.in,
-        required: p.required || false,
-        schema: p.schema,
-      })) || [],
+      parameters:
+        extension.parameters?.map((p) => ({
+          name: p.name,
+          in: p.in,
+          required: p.required || false,
+          schema: p.schema,
+        })) || [],
       security: extension.security || [],
       messages: {
         send: extension.messages?.send || [],
@@ -647,7 +638,10 @@ export class WebSocketTestGenerator {
   /**
    * Build connection configuration
    */
-  private buildConnectionConfig(endpoint: WebSocketEndpoint, includeAuth: boolean = true): WebSocketConnectionConfig {
+  private buildConnectionConfig(
+    endpoint: WebSocketEndpoint,
+    includeAuth: boolean = true
+  ): WebSocketConnectionConfig {
     const protocol = endpoint.url.startsWith('wss:') ? 'wss' : 'ws';
     const config: WebSocketConnectionConfig = {
       protocol,

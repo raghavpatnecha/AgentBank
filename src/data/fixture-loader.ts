@@ -52,7 +52,7 @@ export class FixtureLoader {
       return {
         fixtures,
         count: fixtures.length,
-        types: [...new Set(fixtures.map(f => f.type))],
+        types: [...new Set(fixtures.map((f) => f.type))],
         duration: Date.now() - startTime,
       };
     }
@@ -72,7 +72,7 @@ export class FixtureLoader {
       return {
         fixtures,
         count: fixtures.length,
-        types: [...new Set(fixtures.map(f => f.type))],
+        types: [...new Set(fixtures.map((f) => f.type))],
         duration: Date.now() - startTime,
       };
     } catch (error) {
@@ -109,7 +109,7 @@ export class FixtureLoader {
       return {
         fixtures: allFixtures,
         count: allFixtures.length,
-        types: [...new Set(allFixtures.map(f => f.type))],
+        types: [...new Set(allFixtures.map((f) => f.type))],
         errors: errors.length > 0 ? errors : undefined,
         duration: Date.now() - startTime,
       };
@@ -130,19 +130,16 @@ export class FixtureLoader {
   async loadByType<T = any>(type: string, dirPath?: string): Promise<Fixture<T>[]> {
     const path = dirPath || this.config.baseDir;
     const result = await this.loadDirectory<T>(path);
-    return result.fixtures.filter(f => f.type === type);
+    return result.fixtures.filter((f) => f.type === type);
   }
 
   /**
    * Get fixture by ID
    */
-  async getFixture<T = any>(
-    id: string,
-    dirPath?: string
-  ): Promise<Fixture<T> | undefined> {
+  async getFixture<T = any>(id: string, dirPath?: string): Promise<Fixture<T> | undefined> {
     const path = dirPath || this.config.baseDir;
     const result = await this.loadDirectory<T>(path);
-    return result.fixtures.find(f => f.id === id);
+    return result.fixtures.find((f) => f.id === id);
   }
 
   /**
@@ -155,10 +152,7 @@ export class FixtureLoader {
   /**
    * Process raw fixture data
    */
-  private async processFixtures<T>(
-    rawData: any,
-    sourcePath: string
-  ): Promise<Fixture<T>[]> {
+  private async processFixtures<T>(rawData: any, sourcePath: string): Promise<Fixture<T>[]> {
     const fixtures: Fixture<T>[] = [];
 
     // Handle array of fixtures
@@ -173,13 +167,11 @@ export class FixtureLoader {
     // Handle object with named fixtures
     else if (typeof rawData === 'object' && rawData !== null) {
       for (const [key, value] of Object.entries(rawData)) {
-        const fixtureData = typeof value === 'object' && value !== null
-          ? { id: key, ...value as object }
-          : { id: key, data: value };
-        const fixture = await this.processFixture<T>(
-          fixtureData,
-          sourcePath
-        );
+        const fixtureData =
+          typeof value === 'object' && value !== null
+            ? { id: key, ...value }
+            : { id: key, data: value };
+        const fixture = await this.processFixture<T>(fixtureData, sourcePath);
         if (fixture) {
           fixtures.push(fixture);
         }
@@ -193,10 +185,7 @@ export class FixtureLoader {
   /**
    * Process a single fixture
    */
-  private async processFixture<T>(
-    raw: any,
-    _sourcePath: string
-  ): Promise<Fixture<T> | null> {
+  private async processFixture<T>(raw: any, _sourcePath: string): Promise<Fixture<T> | null> {
     if (!raw || typeof raw !== 'object') {
       return null;
     }
@@ -204,9 +193,8 @@ export class FixtureLoader {
     // Apply template variables
     const processed = await this.applyTemplateVars(raw);
 
-    const baseMetadata = processed.metadata && typeof processed.metadata === 'object'
-      ? processed.metadata
-      : {};
+    const baseMetadata =
+      processed.metadata && typeof processed.metadata === 'object' ? processed.metadata : {};
 
     const fixture: Fixture<T> = {
       id: processed.id || this.generateId(),
@@ -234,7 +222,7 @@ export class FixtureLoader {
    * Resolve fixture composition (inheritance/extension)
    */
   private resolveComposition<T>(fixtures: Fixture<T>[]): Fixture<T>[] {
-    const fixtureMap = new Map(fixtures.map(f => [f.id, f]));
+    const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
     const resolved: Fixture<T>[] = [];
 
     for (const fixture of fixtures) {
@@ -267,9 +255,7 @@ export class FixtureLoader {
     // Get parent fixture
     const parent = fixtureMap.get(fixture.extends);
     if (!parent) {
-      throw new Error(
-        `Parent fixture not found: ${fixture.extends} for ${fixture.id}`
-      );
+      throw new Error(`Parent fixture not found: ${fixture.extends} for ${fixture.id}`);
     }
 
     // Resolve parent first
@@ -291,13 +277,10 @@ export class FixtureLoader {
         return {
           ...parent,
           ...child,
-          data: { ...parent.data, ...child.data } as T,
+          data: { ...parent.data, ...child.data },
           vars: { ...parent.vars, ...child.vars },
           traits: [...(parent.traits || []), ...(child.traits || [])],
-          relationships: [
-            ...(parent.relationships || []),
-            ...(child.relationships || []),
-          ],
+          relationships: [...(parent.relationships || []), ...(child.relationships || [])],
         };
 
       case 'merge':
@@ -344,7 +327,7 @@ export class FixtureLoader {
     const merged = [...parent];
 
     for (const childRel of child) {
-      const existingIndex = merged.findIndex(r => r.field === childRel.field);
+      const existingIndex = merged.findIndex((r) => r.field === childRel.field);
       if (existingIndex >= 0) {
         merged[existingIndex] = { ...merged[existingIndex], ...childRel };
       } else {
@@ -486,8 +469,6 @@ export class FixtureLoader {
 /**
  * Create a fixture loader instance
  */
-export function createFixtureLoader(
-  config?: FixtureLoaderConfig
-): FixtureLoader {
+export function createFixtureLoader(config?: FixtureLoaderConfig): FixtureLoader {
   return new FixtureLoader(config);
 }

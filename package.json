@@ -31,7 +31,14 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "clean": "rm -rf dist coverage test-results playwright-report"
+    "clean": "rm -rf dist coverage test-results playwright-report",
+    "webhook:dev": "npm run build && node dist/github/webhook-server-cli.js",
+    "webhook:start": "node dist/github/webhook-server-cli.js",
+    "docker:webhook:build": "docker-compose -f docker-compose.webhook.yml build",
+    "docker:webhook:up": "docker-compose -f docker-compose.webhook.yml up -d",
+    "docker:webhook:down": "docker-compose -f docker-compose.webhook.yml down",
+    "docker:webhook:logs": "docker-compose -f docker-compose.webhook.yml logs -f",
+    "docker:webhook:restart": "docker-compose -f docker-compose.webhook.yml restart"
   },
   "keywords": [
     "api-testing",

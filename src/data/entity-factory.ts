@@ -22,10 +22,7 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
   private relationshipData: Map<string, any> = new Map();
   private context: EntityContext;
 
-  constructor(
-    definition: EntityDefinition<T>,
-    config: EntityFactoryConfig = {}
-  ) {
+  constructor(definition: EntityDefinition<T>, config: EntityFactoryConfig = {}) {
     this.definition = definition;
     this.config = {
       maxDepth: 5,
@@ -45,7 +42,7 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
     const ctx = { ...this.context, depth: (this.context.depth || 0) + 1 };
 
     // Check max depth
-    if (ctx.depth! > this.config.maxDepth!) {
+    if (ctx.depth > this.config.maxDepth!) {
       throw new Error(
         `Max build depth ${this.config.maxDepth} exceeded for entity ${this.definition.type}`
       );
@@ -140,7 +137,7 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
    * Apply multiple traits
    */
   traits(...names: string[]): this {
-    names.forEach(name => this.trait(name));
+    names.forEach((name) => this.trait(name));
     return this;
   }
 
@@ -202,10 +199,7 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
   /**
    * Build base entity from factory function
    */
-  private async buildBaseEntity(
-    overrides: Partial<T>,
-    ctx: EntityContext
-  ): Promise<T> {
+  private async buildBaseEntity(overrides: Partial<T>, ctx: EntityContext): Promise<T> {
     const defaults = this.definition.defaults || {};
     const baseData = { ...defaults, ...overrides };
 
@@ -236,9 +230,7 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
 
       // Apply trait attributes
       const attributes =
-        typeof trait.attributes === 'function'
-          ? trait.attributes(result)
-          : trait.attributes;
+        typeof trait.attributes === 'function' ? trait.attributes(result) : trait.attributes;
 
       result = { ...result, ...attributes };
     }
@@ -281,19 +273,13 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
   /**
    * Build a specific relationship
    */
-  private async buildRelationship(
-    rel: any,
-    parent: T,
-    ctx: EntityContext
-  ): Promise<any> {
+  private async buildRelationship(rel: any, parent: T, ctx: EntityContext): Promise<any> {
     if (!rel.autoCreate) {
       return undefined;
     }
 
     // Get relationship factory
-    const factory = typeof rel.factory === 'string'
-      ? rel.factory
-      : rel.factory?.(parent);
+    const factory = typeof rel.factory === 'string' ? rel.factory : rel.factory?.(parent);
 
     if (!factory) {
       return undefined;
@@ -321,11 +307,7 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
   /**
    * Build single relationship (one-to-one, belongs-to, has-one)
    */
-  private async buildSingleRelation(
-    _factory: any,
-    _parent: T,
-    _ctx: EntityContext
-  ): Promise<any> {
+  private async buildSingleRelation(_factory: any, _parent: T, _ctx: EntityContext): Promise<any> {
     // TODO: Get factory from registry and build
     return { id: this.generateId() };
   }
@@ -339,9 +321,7 @@ export class EntityFactory<T = any> implements DataBuilder<T> {
     rel: any,
     _ctx: EntityContext
   ): Promise<any[]> {
-    const count = typeof rel.count === 'function'
-      ? rel.count(parent)
-      : rel.count || 3;
+    const count = typeof rel.count === 'function' ? rel.count(parent) : rel.count || 3;
 
     const items: any[] = [];
     for (let i = 0; i < count; i++) {
@@ -458,7 +438,7 @@ export class FactoryRegistry {
    * Reset all factories
    */
   resetAll(): void {
-    this.factories.forEach(factory => factory.reset());
+    this.factories.forEach((factory) => factory.reset());
   }
 
   /**
@@ -492,30 +472,26 @@ export const sequences = {
   /**
    * Incrementing integer sequence
    */
-  integer: (start = 1, step = 1) =>
-    sequence(n => n, { start, step }),
+  integer: (start = 1, step = 1) => sequence((n) => n, { start, step }),
 
   /**
    * Email sequence
    */
-  email: (domain = 'example.com', prefix = 'user') =>
-    sequence(n => `${prefix}${n}@${domain}`),
+  email: (domain = 'example.com', prefix = 'user') => sequence((n) => `${prefix}${n}@${domain}`),
 
   /**
    * Username sequence
    */
-  username: (prefix = 'user') =>
-    sequence(n => `${prefix}${n}`),
+  username: (prefix = 'user') => sequence((n) => `${prefix}${n}`),
 
   /**
    * UUID sequence (simple incrementing)
    */
-  uuid: () =>
-    sequence(n => `00000000-0000-0000-0000-${n.toString().padStart(12, '0')}`),
+  uuid: () => sequence((n) => `00000000-0000-0000-0000-${n.toString().padStart(12, '0')}`),
 
   /**
    * Date sequence
    */
   date: (startDate = new Date(), increment = 86400000) =>
-    sequence(n => new Date(startDate.getTime() + n * increment)),
+    sequence((n) => new Date(startDate.getTime() + n * increment)),
 };

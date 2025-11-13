@@ -12,9 +12,11 @@
 import { parseOpenAPIFile } from './openapi-parser.js';
 import { TestGenerator } from './test-generator.js';
 import { PlaywrightExecutor } from './playwright-executor.js';
+import { DockerTestExecutor } from '../executor/docker-test-executor.js';
 import { SelfHealingOrchestrator, SimpleFailureAnalyzer } from '../ai/self-healing-orchestrator.js';
 import { AITestRegenerator } from '../ai/ai-test-regenerator.js';
 import { GitHubClient } from '../github/github-client.js';
+import { EmailSender } from '../reporting/email-sender.js';
 import { DataFactory } from '../utils/data-factory.js';
 import { RequestBodyGenerator } from '../generators/request-body-generator.js';
 import { HappyPathGenerator } from '../generators/happy-path-generator.js';
@@ -23,10 +25,13 @@ import { EdgeCaseGenerator } from '../generators/edge-case-generator.js';
 import { AITestGenerator } from '../generators/ai-test-generator.js';
 import { TestOrganizer } from '../generators/test-organizer.js';
 import { CodeGenerator } from '../utils/code-generator.js';
+import { PerformanceTestGenerator } from '../generators/performance-test-generator.js';
 import type { TestResult, ExecutionSummary } from '../types/executor-types.js';
 import type { HealingReport } from '../types/ai-types.js';
 import type { ParsedApiSpec } from '../types/openapi-types.js';
 import type { TestGenerationResult } from '../types/test-generator-types.js';
+import type { EmailConfig } from '../types/email-types.js';
+import type { DockerExecutorOptions } from '../types/docker-types.js';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -60,6 +65,25 @@ export interface PipelineConfig {
 
   /** OpenAI API key for AI features */
   openaiApiKey?: string;
+
+  /** Email configuration for test reports */
+  emailConfig?: EmailConfig;
+
+  /** Use Docker for test execution */
+  useDocker?: boolean;
+
+  /** Docker executor configuration */
+  dockerConfig?: DockerExecutorOptions;
+
+  /** Enable performance testing */
+  includePerformance?: boolean;
+
+  /** Performance test configuration */
+  performanceConfig?: {
+    users?: number;
+    duration?: number;
+    rampUpTime?: number;
+  };
 
   /** Verbose output */
   verbose?: boolean;
@@ -179,6 +203,11 @@ export class PipelineOrchestrator {
       // Post final results to GitHub
       await this.postResults(result);
 
+      // Send email report if configured
+      if (this.config.emailConfig) {
+        await this.sendEmailReport(result);
+      }
+
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -268,13 +297,24 @@ export class PipelineOrchestrator {
 
       const errorGen = new ErrorCaseGenerator(bodyGenerator);
       generator.setGenerator('error-case', {
-        generateTests: (endpoints) => endpoints.flatMap(ep => errorGen.generateTests(ep))
+        generateTests: (endpoints) => endpoints.flatMap((ep) => errorGen.generateTests(ep)),
       });
 
       const edgeGen = new EdgeCaseGenerator(dataFactory);
       generator.setGenerator('edge-case', {
-        generateTests: (endpoints) => endpoints.flatMap(ep => edgeGen.generateTests(ep))
+        generateTests: (endpoints) => endpoints.flatMap((ep) => edgeGen.generateTests(ep)),
       });
+
+      // Performance tests (if enabled)
+      if (this.config.includePerformance) {
+        const perfGen = new PerformanceTestGenerator({
+          defaultUsers: this.config.performanceConfig?.users || 10,
+          defaultDuration: this.config.performanceConfig?.duration || 60,
+          generateMultipleScenarios: true,
+        });
+        generator.setGenerator('performance', perfGen);
+        this.log('⚡ Performance test generation enabled');
+      }
 
       // Set up test organizer and code generator
       const organizer = new TestOrganizer();
@@ -286,10 +326,10 @@ export class PipelineOrchestrator {
             metadata: {
               strategy: result.strategy,
               fileCount: result.files.size,
-              testCount: result.totalTests
-            }
+              testCount: result.totalTests,
+            },
           };
-        }
+        },
       });
 
       const codeGen = new CodeGenerator();
@@ -298,11 +338,11 @@ export class PipelineOrchestrator {
           const files: any[] = [];
           for (const [fileName, tests] of organized.files) {
             const metadata = {
-              endpoints: [...new Set(tests.map(t => t.endpoint))],
-              testTypes: [...new Set(tests.map(t => t.type))],
+              endpoints: [...new Set(tests.map((t) => t.endpoint))],
+              testTypes: [...new Set(tests.map((t) => t.type))],
               testCount: tests.length,
-              tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
-              generatedAt: new Date().toISOString()
+              tags: [...new Set(tests.flatMap((t) => t.metadata.tags || []))],
+              generatedAt: new Date().toISOString(),
             };
             const content = codeGen.generateTestFile(tests, metadata);
             files.push({
@@ -311,18 +351,18 @@ export class PipelineOrchestrator {
               content,
               tests,
               imports: [],
-              metadata
+              metadata,
             });
           }
           return files;
         },
         generateFile: (fileName, tests) => {
           const metadata = {
-            endpoints: [...new Set(tests.map(t => t.endpoint))],
-            testTypes: [...new Set(tests.map(t => t.type))],
+            endpoints: [...new Set(tests.map((t) => t.endpoint))],
+            testTypes: [...new Set(tests.map((t) => t.type))],
             testCount: tests.length,
-            tags: [...new Set(tests.flatMap(t => t.metadata.tags || []))],
-            generatedAt: new Date().toISOString()
+            tags: [...new Set(tests.flatMap((t) => t.metadata.tags || []))],
+            generatedAt: new Date().toISOString(),
           };
           const content = codeGen.generateTestFile(tests, metadata);
           return {
@@ -331,9 +371,9 @@ export class PipelineOrchestrator {
             content,
             tests,
             imports: [],
-            metadata
+            metadata,
           };
-        }
+        },
       });
 
       // Extract endpoints
@@ -343,9 +383,10 @@ export class PipelineOrchestrator {
       const result = await generator.generateTests();
 
       // Add AI-generated tests if enabled and API key is present
-      const shouldUseAI = this.config.useAI === undefined
-        ? !!(this.config.openaiApiKey || process.env.OPENAI_API_KEY)
-        : this.config.useAI;
+      const shouldUseAI =
+        this.config.useAI === undefined
+          ? Boolean(this.config.openaiApiKey || process.env.OPENAI_API_KEY)
+          : this.config.useAI;
 
       if (shouldUseAI) {
         this.log('✨ Generating AI-powered intelligent tests...');
@@ -355,7 +396,7 @@ export class PipelineOrchestrator {
           model: process.env.OPENAI_MODEL,
           testsPerEndpoint: 3,
           focus: ['business-logic', 'security', 'workflows', 'edge-cases'],
-          verbose: this.config.verbose
+          verbose: this.config.verbose,
         });
 
         if (aiGen.isEnabled()) {
@@ -381,7 +422,7 @@ export class PipelineOrchestrator {
                 testTypes: ['validation' as const],
                 testCount: tests.length,
                 tags: ['ai-generated'],
-                generatedAt: new Date().toISOString()
+                generatedAt: new Date().toISOString(),
               };
               const content = codeGen.generateTestFile(tests, metadata);
               aiFiles.push({
@@ -390,7 +431,7 @@ export class PipelineOrchestrator {
                 content,
                 tests,
                 imports: [],
-                metadata
+                metadata,
               });
             }
 
@@ -419,7 +460,9 @@ export class PipelineOrchestrator {
       }
 
       const duration = Date.now() - stepStart;
-      this.log(`✅ Generated ${result.totalTests} tests in ${result.files.length} files (${duration}ms)`);
+      this.log(
+        `✅ Generated ${result.totalTests} tests in ${result.files.length} files (${duration}ms)`
+      );
 
       this.steps.push({
         name: 'generate-tests',
@@ -448,31 +491,96 @@ export class PipelineOrchestrator {
    *
    * This agent runs all generated tests and captures failures for the healer.
    */
-  private async executeTests(_generation: TestGenerationResult): Promise<ExecutionSummary> {
+  private async executeTests(generation: TestGenerationResult): Promise<ExecutionSummary> {
     const stepStart = Date.now();
     this.log('🧪 Step 3: Executing tests (Agent 2: Test Executor)...');
 
     try {
-      const executor = new PlaywrightExecutor({
-        outputDir: this.config.outputDir,
-        baseUrl: this.config.baseUrl,
-        workers: 4,
-        timeout: 30000,
-        retries: 2,
-      });
+      // Choose executor based on configuration
+      if (this.config.useDocker) {
+        const dockerExecutor = new DockerTestExecutor(
+          this.config.dockerConfig || {
+            dockerImage: 'mcr.microsoft.com/playwright:latest',
+            isolationPerTest: false,
+          }
+        );
 
-      const summary = await executor.runAll();
+        this.log('🐳 Executing tests in Docker container...');
 
-      const duration = Date.now() - stepStart;
-      this.log(`✅ Execution complete: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped (${duration}ms)`);
+        // Set test path to the output directory containing generated tests
+        const testPath = generation.files.map((f) => path.join(this.config.outputDir, f.filePath));
 
-      this.steps.push({
-        name: 'execute-tests',
-        status: summary.failed > 0 ? 'failed' : 'success',
-        duration,
-      });
+        const dockerResult = await dockerExecutor.executeTests({
+          testPath,
+          outputDir: this.config.outputDir,
+        });
 
-      return summary;
+        // DockerExecutionResult extends ExecutionSummary, so we can use it directly
+        const summary: ExecutionSummary = {
+          totalTests: dockerResult.totalTests,
+          passed: dockerResult.passed,
+          failed: dockerResult.failed,
+          skipped: dockerResult.skipped,
+          timeout: dockerResult.timeout,
+          error: dockerResult.error,
+          duration: dockerResult.duration,
+          startTime: dockerResult.startTime,
+          endTime: dockerResult.endTime,
+          successRate: dockerResult.successRate,
+          averageDuration: dockerResult.averageDuration,
+          filesExecuted: dockerResult.filesExecuted,
+          totalRetries: dockerResult.totalRetries,
+          byFile: dockerResult.byFile,
+          failedTestDetails: dockerResult.failedTestDetails,
+        };
+
+        const duration = Date.now() - stepStart;
+        this.log(
+          `✅ Execution complete: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped (${duration}ms)`
+        );
+
+        this.steps.push({
+          name: 'execute-tests',
+          status: summary.failed > 0 ? 'failed' : 'success',
+          duration,
+        });
+
+        return summary;
+      } else {
+        // Existing PlaywrightExecutor logic
+        const executor = new PlaywrightExecutor({
+          outputDir: this.config.outputDir,
+          baseUrl: this.config.baseUrl,
+          workers: 4,
+          timeout: 30000,
+          retries: 2,
+        });
+
+        const summary = await executor.runAll();
+
+        const duration = Date.now() - stepStart;
+        this.log(
+          `✅ Execution complete: ${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} skipped (${duration}ms)`
+        );
+
+        this.steps.push({
+          name: 'execute-tests',
+          status: summary.failed > 0 ? 'failed' : 'success',
+          duration,
+        });
+
+        // Log performance test generation (they run as part of regular tests)
+        const perfTests = generation.files.filter((f) => f.filePath.includes('performance'));
+        if (perfTests.length > 0 && this.config.includePerformance) {
+          this.log(
+            `⚡ Generated ${perfTests.length} performance test file(s) ` +
+              `(${this.config.performanceConfig?.users || 10} users, ` +
+              `${this.config.performanceConfig?.duration || 60}s duration)`
+          );
+        }
+
+        return summary;
+      }
     } catch (error) {
       const duration = Date.now() - stepStart;
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -545,7 +653,9 @@ export class PipelineOrchestrator {
       const healingReport = await healer.healFailedTests(failedResults);
 
       const duration = Date.now() - stepStart;
-      this.log(`✅ Healing complete: ${healingReport.successfullyHealed} fixed, ${healingReport.failedHealing} failed (${duration}ms)`);
+      this.log(
+        `✅ Healing complete: ${healingReport.successfullyHealed} fixed, ${healingReport.failedHealing} failed (${duration}ms)`
+      );
 
       this.steps.push({
         name: 'self-heal',
@@ -581,15 +691,17 @@ export class PipelineOrchestrator {
       const finalPassed = result.execution.passed + (result.healing?.successfullyHealed || 0);
       const finalFailed = result.execution.failed - (result.healing?.successfullyHealed || 0);
 
-      const comment = this.formatResultsComment(result, finalPassed, finalFailed);
-
       // Parse owner and repo from repository string (format: "owner/repo")
       const [owner, repo] = this.config.repository.split('/');
       if (!owner || !repo) {
         throw new Error(`Invalid repository format: ${this.config.repository}`);
       }
 
-      await this.githubClient.postComment(owner, repo, this.config.prNumber, comment);
+      // Post rich comment
+      await this.postGitHubResults(result, owner, repo);
+
+      // Create check run
+      await this.createCheckRun(result, owner, repo);
 
       // Update GitHub status
       const status = finalFailed === 0 ? 'success' : 'failure';
@@ -603,46 +715,127 @@ export class PipelineOrchestrator {
   }
 
   /**
-   * Format pipeline results as GitHub comment
+   * Post rich formatted results to GitHub PR
    */
-  private formatResultsComment(result: PipelineResult, finalPassed: number, finalFailed: number): string {
-    const { generation, execution, healing } = result;
-
-    let comment = '## 🤖 API Test Agent Results\n\n';
-
-    // Overall status
-    const status = finalFailed === 0 ? '✅ All tests passed!' : `⚠️ ${finalFailed} test(s) failed`;
-    comment += `### ${status}\n\n`;
-
-    // Summary table
-    comment += '| Stage | Result |\n';
-    comment += '|-------|--------|\n';
-    comment += `| 📋 Specification | Parsed ${Object.keys(result.spec.paths).length} endpoints |\n`;
-    comment += `| 🤖 Test Generation | Generated ${generation.totalTests} tests in ${generation.files.length} files |\n`;
-    comment += `| 🧪 Test Execution | ${execution.passed} passed, ${execution.failed} failed, ${execution.skipped} skipped |\n`;
-
-    if (healing) {
-      comment += `| 🔧 Self-Healing | Fixed ${healing.successfullyHealed} of ${healing.failedTests} failures |\n`;
+  private async postGitHubResults(
+    result: PipelineResult,
+    owner: string,
+    repo: string
+  ): Promise<void> {
+    if (!this.githubClient || !this.config.prNumber) {
+      return;
     }
 
-    comment += `| ⏱️ Total Duration | ${(result.duration / 1000).toFixed(2)}s |\n\n`;
+    const emoji = result.execution.failed === 0 ? '✅' : '❌';
+    const status = result.execution.failed === 0 ? 'PASSED' : 'FAILED';
+    const successRate =
+      result.execution.totalTests > 0
+        ? ((result.execution.passed / result.execution.totalTests) * 100).toFixed(1)
+        : '0.0';
 
-    // Healing details
-    if (healing && healing.successfullyHealed > 0) {
-      comment += '### 🔧 Self-Healing Results\n\n';
-      comment += `The AI successfully healed **${healing.successfullyHealed}** failing test(s)!\n\n`;
-      comment += `- Attempts: ${healing.healingAttempts}\n`;
-      comment += `- Success Rate: ${((healing.successfullyHealed / healing.healingAttempts) * 100).toFixed(1)}%\n`;
-      comment += `- Time Spent: ${(healing.totalTime / 1000).toFixed(2)}s\n\n`;
+    const comment = `### ${emoji} API Tests ${status}
+
+**Test Summary**
+| Metric | Value |
+|--------|-------|
+| Total Tests | ${result.execution.totalTests} |
+| Passed | ✅ ${result.execution.passed} |
+| Failed | ❌ ${result.execution.failed} |
+| Success Rate | ${successRate}% |
+| Duration | ${(result.duration / 1000).toFixed(2)}s |
+
+**Test Generation**
+- Spec Endpoints: ${result.spec.paths.length}
+- Generated Files: ${result.generation.files.length}
+- Test Coverage: ${result.generation.totalTests} tests
+
+${
+  result.healing
+    ? `**Self-Healing Results** 🔧
+- Attempts: ${result.healing.healingAttempts}
+- Successful: ${result.healing.successfullyHealed}
+- Failed: ${result.healing.failedHealing}
+`
+    : ''
+}
+
+${
+  result.execution.failed > 0 && result.execution.failedTestDetails
+    ? `
+<details>
+<summary>❌ Failed Tests (${result.execution.failed})</summary>
+
+${result.execution.failedTestDetails
+  .slice(0, 10)
+  .map((f) => `- **${f.testName}** (${f.file})\n  \`\`\`\n  ${f.error}\n  \`\`\``)
+  .join('\n\n')}
+
+${result.execution.failed > 10 ? `\n_... and ${result.execution.failed - 10} more failures_` : ''}
+</details>
+`
+    : ''
+}
+
+---
+*Generated by API Test Agent at ${result.metadata.timestamp.toISOString()}*`;
+
+    await this.githubClient.postComment(owner, repo, this.config.prNumber, comment);
+  }
+
+  /**
+   * Create GitHub Check Run
+   */
+  private async createCheckRun(result: PipelineResult, owner: string, repo: string): Promise<void> {
+    if (!this.githubClient) {
+      return;
     }
 
-    // Final summary
-    comment += '### 📊 Final Results\n\n';
-    comment += `- ✅ **${finalPassed}** tests passing\n`;
-    comment += `- ❌ **${finalFailed}** tests failing\n`;
-    comment += `- ⏭️ **${execution.skipped}** tests skipped\n`;
+    const conclusion = result.execution.failed === 0 ? 'success' : 'failure';
+    const title =
+      result.execution.failed === 0
+        ? '✅ All API tests passed'
+        : `❌ ${result.execution.failed} test(s) failed`;
 
-    return comment;
+    const summary = `**${result.execution.passed}** passed, **${result.execution.failed}** failed out of **${result.execution.totalTests}** total tests`;
+
+    const text = `## Test Execution Details
+
+**Spec**: ${this.config.specPath}
+**Base URL**: ${this.config.baseUrl || 'Not specified'}
+**Duration**: ${(result.duration / 1000).toFixed(2)}s
+
+### Test Generation
+- Endpoints parsed: ${result.spec.paths.length}
+- Tests generated: ${result.generation.totalTests}
+- Files created: ${result.generation.files.length}
+
+### Execution Results
+- Total tests: ${result.execution.totalTests}
+- Passed: ${result.execution.passed}
+- Failed: ${result.execution.failed}
+- Success rate: ${result.execution.totalTests > 0 ? ((result.execution.passed / result.execution.totalTests) * 100).toFixed(1) : '0.0'}%
+
+${
+  result.healing
+    ? `### Self-Healing
+- Total attempts: ${result.healing.healingAttempts}
+- Successful: ${result.healing.successfullyHealed}
+- Failed: ${result.healing.failedHealing}
+`
+    : ''
+}`;
+
+    await this.githubClient.createCheckRun(owner, repo, {
+      name: 'API Test Agent',
+      head_sha: process.env.GITHUB_SHA || 'HEAD',
+      status: 'completed',
+      conclusion,
+      output: {
+        title,
+        summary,
+        text,
+      },
+    });
   }
 
   /**
@@ -661,6 +854,46 @@ export class PipelineOrchestrator {
       this.log(`📝 GitHub Status: ${status} - ${description}`);
     } catch (error) {
       this.log(`⚠️  Failed to update GitHub status: ${error}`);
+    }
+  }
+
+  /**
+   * Send email report with test results
+   */
+  private async sendEmailReport(result: PipelineResult): Promise<void> {
+    if (!this.config.emailConfig) return;
+
+    try {
+      const emailSender = new EmailSender(this.config.emailConfig);
+
+      // Build TestReport object matching the EmailSender's expected format
+      const testReport = {
+        execution: result.execution,
+        // For now, omit healing metrics - full integration would require complete HealingMetricsSummary
+        environment: {
+          baseUrl: this.config.baseUrl || 'http://localhost',
+          name: process.env.NODE_ENV || 'development',
+          nodeVersion: process.version,
+          platform: process.platform,
+          arch: process.arch,
+          hostname: process.env.HOSTNAME,
+        },
+        metadata: {
+          id: `test-${Date.now()}`,
+          timestamp: result.metadata.timestamp,
+          version: '1.0.0',
+          generatedBy: 'API Test Agent',
+          tags: ['api-test'],
+        },
+      };
+
+      // For now, pass empty HTML report - future enhancement can generate HTML
+      await emailSender.sendReport(testReport, '');
+      this.log('📧 Email report sent successfully');
+    } catch (error) {
+      this.log(
+        `⚠️  Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 

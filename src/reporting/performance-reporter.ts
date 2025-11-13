@@ -82,15 +82,15 @@ export class PerformanceReporter {
    */
   private createSummary(metrics: PerformanceMetrics): PerformanceSummary {
     const now = new Date();
-    const duration = metrics.timeSeries && metrics.timeSeries.length > 0
-      ? ((metrics.timeSeries[metrics.timeSeries.length - 1]?.timestamp ?? 0) -
-          (metrics.timeSeries[0]?.timestamp ?? 0)) /
-        1000
-      : 0;
+    const duration =
+      metrics.timeSeries && metrics.timeSeries.length > 0
+        ? ((metrics.timeSeries[metrics.timeSeries.length - 1]?.timestamp ?? 0) -
+            (metrics.timeSeries[0]?.timestamp ?? 0)) /
+          1000
+        : 0;
 
-    const successRate = metrics.totalRequests > 0
-      ? metrics.successfulRequests / metrics.totalRequests
-      : 0;
+    const successRate =
+      metrics.totalRequests > 0 ? metrics.successfulRequests / metrics.totalRequests : 0;
 
     const failedAssertions = metrics.assertions.filter((a) => !a.passed).length;
     const slaCompliance = failedAssertions === 0;
@@ -203,20 +203,11 @@ export class PerformanceReporter {
 
       // Compare error rate
       changes.push(
-        this.compareMetric(
-          'Error Rate',
-          baseline.metrics.errorRate,
-          metrics.errorRate,
-          false
-        )
+        this.compareMetric('Error Rate', baseline.metrics.errorRate, metrics.errorRate, false)
       );
 
-      const hasRegression = changes.some(
-        (c) => c.direction === 'regressed' && c.significant
-      );
-      const hasImprovement = changes.some(
-        (c) => c.direction === 'improved' && c.significant
-      );
+      const hasRegression = changes.some((c) => c.direction === 'regressed' && c.significant);
+      const hasImprovement = changes.some((c) => c.direction === 'improved' && c.significant);
 
       return {
         baselineFile: this.config.baselineFile,
@@ -240,9 +231,8 @@ export class PerformanceReporter {
     currentValue: number,
     higherIsBetter: boolean
   ): MetricChange {
-    const percentChange = baselineValue > 0
-      ? ((currentValue - baselineValue) / baselineValue) * 100
-      : 0;
+    const percentChange =
+      baselineValue > 0 ? ((currentValue - baselineValue) / baselineValue) * 100 : 0;
 
     const absChange = Math.abs(percentChange);
     const significant = absChange >= this.config.regressionThreshold;
@@ -269,10 +259,7 @@ export class PerformanceReporter {
   /**
    * Export report to file
    */
-  async exportReport(
-    report: PerformanceReport,
-    options: ReportExportOptions
-  ): Promise<void> {
+  async exportReport(report: PerformanceReport, options: ReportExportOptions): Promise<void> {
     await fs.mkdir(path.dirname(options.outputPath), { recursive: true });
 
     switch (options.format) {
@@ -307,10 +294,7 @@ export class PerformanceReporter {
   /**
    * Export as HTML
    */
-  private async exportHTML(
-    report: PerformanceReport,
-    options: ReportExportOptions
-  ): Promise<void> {
+  private async exportHTML(report: PerformanceReport, options: ReportExportOptions): Promise<void> {
     const html = this.generateHTMLReport(report, options);
     await fs.writeFile(options.outputPath, html, 'utf-8');
   }
@@ -318,10 +302,7 @@ export class PerformanceReporter {
   /**
    * Generate HTML report
    */
-  private generateHTMLReport(
-    report: PerformanceReport,
-    options: ReportExportOptions
-  ): string {
+  private generateHTMLReport(report: PerformanceReport, options: ReportExportOptions): string {
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -497,11 +478,11 @@ export class PerformanceReporter {
         line += value >= threshold ? '█' : ' ';
       }
 
-      chart += line + '\n';
+      chart += `${line}\n`;
     }
 
     chart += `Min: ${min.toFixed(0)}\n`;
-    chart += '─'.repeat(width) + '\n';
+    chart += `${'─'.repeat(width)}\n`;
     chart += `Time →\n`;
 
     return chart;
@@ -570,10 +551,7 @@ export class PerformanceReporter {
   /**
    * Export as JMeter XML
    */
-  private async exportJMeterXML(
-    report: PerformanceReport,
-    outputPath: string
-  ): Promise<void> {
+  private async exportJMeterXML(report: PerformanceReport, outputPath: string): Promise<void> {
     // Simplified JMeter XML format
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <testResults version="1.2">
@@ -598,10 +576,7 @@ export class PerformanceReporter {
   /**
    * Export as Markdown
    */
-  private async exportMarkdown(
-    report: PerformanceReport,
-    outputPath: string
-  ): Promise<void> {
+  private async exportMarkdown(report: PerformanceReport, outputPath: string): Promise<void> {
     let md = `# Performance Test Report\n\n`;
     md += `**Generated:** ${report.generatedAt.toISOString()}\n\n`;
     md += `**Duration:** ${report.summary.duration.toFixed(1)}s\n\n`;
@@ -643,34 +618,18 @@ export class PerformanceReporter {
   printSummary(report: PerformanceReport): void {
     console.log('\n📊 Performance Test Results\n');
     console.log('═'.repeat(60));
-    console.log(
-      `Total Requests:      ${report.metrics.totalRequests.toLocaleString()}`
-    );
-    console.log(
-      `Success Rate:        ${(report.summary.successRate * 100).toFixed(2)}%`
-    );
-    console.log(
-      `Error Rate:          ${(report.metrics.errorRate * 100).toFixed(2)}%`
-    );
+    console.log(`Total Requests:      ${report.metrics.totalRequests.toLocaleString()}`);
+    console.log(`Success Rate:        ${(report.summary.successRate * 100).toFixed(2)}%`);
+    console.log(`Error Rate:          ${(report.metrics.errorRate * 100).toFixed(2)}%`);
     console.log('─'.repeat(60));
-    console.log(
-      `Avg Response Time:   ${report.metrics.responseTime.mean.toFixed(0)}ms`
-    );
-    console.log(
-      `P95 Response Time:   ${report.metrics.responseTime.p95.toFixed(0)}ms`
-    );
-    console.log(
-      `P99 Response Time:   ${report.metrics.responseTime.p99.toFixed(0)}ms`
-    );
+    console.log(`Avg Response Time:   ${report.metrics.responseTime.mean.toFixed(0)}ms`);
+    console.log(`P95 Response Time:   ${report.metrics.responseTime.p95.toFixed(0)}ms`);
+    console.log(`P99 Response Time:   ${report.metrics.responseTime.p99.toFixed(0)}ms`);
     console.log('─'.repeat(60));
     console.log(`Throughput:          ${report.metrics.throughput.toFixed(1)} RPS`);
-    console.log(
-      `Peak Concurrent:     ${report.metrics.peakConcurrentUsers} users`
-    );
+    console.log(`Peak Concurrent:     ${report.metrics.peakConcurrentUsers} users`);
     console.log('─'.repeat(60));
-    console.log(
-      `SLA Compliance:      ${report.summary.slaCompliance ? '✓ PASS' : '✗ FAIL'}`
-    );
+    console.log(`SLA Compliance:      ${report.summary.slaCompliance ? '✓ PASS' : '✗ FAIL'}`);
     console.log('═'.repeat(60));
 
     // Print failed assertions
@@ -690,11 +649,7 @@ export class PerformanceReporter {
       console.log('\n📈 Baseline Comparison:\n');
       for (const change of report.comparison.changes) {
         const icon =
-          change.direction === 'improved'
-            ? '↑'
-            : change.direction === 'regressed'
-              ? '↓'
-              : '→';
+          change.direction === 'improved' ? '↑' : change.direction === 'regressed' ? '↓' : '→';
         console.log(
           `  ${icon} ${change.metric}: ${change.percentChange > 0 ? '+' : ''}${change.percentChange.toFixed(1)}% (${change.direction})`
         );

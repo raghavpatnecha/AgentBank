@@ -9,7 +9,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('products API', () => {
-
   // Happy path test for GET /products: List all products
   test('GET /products - List all products', async ({ request }) => {
     const endpoint = '/products';

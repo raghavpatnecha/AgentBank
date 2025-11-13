@@ -82,7 +82,9 @@ export class LoadTestRunner {
     timeSeriesData: TimeSeriesData[]
   ): Promise<void> {
     console.log(`\n📊 Running: ${test.name}`);
-    console.log(`   Users: ${test.performance.virtualUsers}, Duration: ${test.performance.duration}s`);
+    console.log(
+      `   Users: ${test.performance.virtualUsers}, Duration: ${test.performance.duration}s`
+    );
 
     const startTime = Date.now();
     const endTime = startTime + test.performance.duration * 1000;
@@ -141,7 +143,12 @@ export class LoadTestRunner {
     switch (pattern) {
       case 'ramp':
         return [
-          { name: 'Ramp Up', targetUsers: users, duration: duration * 0.3, rampTime: duration * 0.3 },
+          {
+            name: 'Ramp Up',
+            targetUsers: users,
+            duration: duration * 0.3,
+            rampTime: duration * 0.3,
+          },
           { name: 'Sustain', targetUsers: users, duration: duration * 0.4 },
           { name: 'Ramp Down', targetUsers: 0, duration: duration * 0.3, rampTime: duration * 0.3 },
         ];
@@ -200,8 +207,10 @@ export class LoadTestRunner {
       // Execute requests for current users
       const promises: Promise<void>[] = [];
       for (let i = 0; i < currentUsers; i++) {
-        if (this.virtualUsers.get(i)?.state === 'idle' ||
-            this.virtualUsers.get(i)?.state === 'thinking') {
+        if (
+          this.virtualUsers.get(i)?.state === 'idle' ||
+          this.virtualUsers.get(i)?.state === 'thinking'
+        ) {
           promises.push(this.executeUserRequest(test, i));
         }
       }
@@ -338,10 +347,7 @@ export class LoadTestRunner {
       case 'normal':
         const mean = config.mean || (config.min + config.max) / 2;
         const stdDev = config.stdDev || (config.max - config.min) / 6;
-        return Math.max(
-          config.min,
-          Math.min(config.max, this.normalRandom(mean, stdDev))
-        );
+        return Math.max(config.min, Math.min(config.max, this.normalRandom(mean, stdDev)));
 
       case 'exponential':
         const lambda = 1 / ((config.min + config.max) / 2);
@@ -443,10 +449,7 @@ export class LoadTestRunner {
     const resources = this.calculateResourceStats(timeSeriesData);
     const assertions = this.evaluateAssertions();
 
-    const peakConcurrentUsers = Math.max(
-      ...timeSeriesData.map((d) => d.activeUsers),
-      0
-    );
+    const peakConcurrentUsers = Math.max(...timeSeriesData.map((d) => d.activeUsers), 0);
 
     return {
       totalRequests,
@@ -492,8 +495,7 @@ export class LoadTestRunner {
     const p99 = durations[Math.floor(count * 0.99)] || 0;
 
     // Calculate standard deviation
-    const variance =
-      durations.reduce((sum, d) => sum + Math.pow(d - mean, 2), 0) / count;
+    const variance = durations.reduce((sum, d) => sum + Math.pow(d - mean, 2), 0) / count;
     const stdDev = Math.sqrt(variance);
 
     return { min, max, mean, median, p90, p95, p99, stdDev };
@@ -523,9 +525,7 @@ export class LoadTestRunner {
       return undefined;
     }
 
-    const cpuValues = timeSeriesData
-      .filter((d) => d.resources?.cpu)
-      .map((d) => d.resources!.cpu);
+    const cpuValues = timeSeriesData.filter((d) => d.resources?.cpu).map((d) => d.resources!.cpu);
 
     const memoryValues = timeSeriesData
       .filter((d) => d.resources?.memory)
@@ -555,9 +555,10 @@ export class LoadTestRunner {
   private evaluateAssertions(): AssertionResult[] {
     const results: AssertionResult[] = [];
     const responseTime = this.calculateResponseTimeStats();
-    const errorRate = this.results.length > 0
-      ? this.results.filter((r) => !r.success).length / this.results.length
-      : 0;
+    const errorRate =
+      this.results.length > 0
+        ? this.results.filter((r) => !r.success).length / this.results.length
+        : 0;
     const duration = (Date.now() - this.startTime) / 1000;
     const throughput = this.results.length / duration;
 
@@ -576,11 +577,7 @@ export class LoadTestRunner {
         throughput
       );
 
-      const passed = this.evaluateAssertion(
-        actualValue,
-        assertion.operator,
-        assertion.threshold
-      );
+      const passed = this.evaluateAssertion(actualValue, assertion.operator, assertion.threshold);
 
       results.push({
         name: assertion.name,
@@ -628,11 +625,7 @@ export class LoadTestRunner {
   /**
    * Evaluate assertion
    */
-  private evaluateAssertion(
-    actualValue: number,
-    operator: string,
-    threshold: number
-  ): boolean {
+  private evaluateAssertion(actualValue: number, operator: string, threshold: number): boolean {
     switch (operator) {
       case 'lt':
         return actualValue < threshold;

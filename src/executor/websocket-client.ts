@@ -4,10 +4,7 @@
  */
 
 import WebSocket from 'ws';
-import {
-  ConnectionState,
-  MessageType,
-} from '../types/websocket-types.js';
+import { ConnectionState, MessageType } from '../types/websocket-types.js';
 import type {
   WebSocketClientConfig,
   WebSocketMessageData,
@@ -334,12 +331,13 @@ export class WebSocketTestClient {
    */
   getMetrics(): WebSocketMetrics {
     const roundTripTimes = this.receivedMessages
-      .filter(m => m.responseTime !== undefined)
-      .map(m => m.responseTime!);
+      .filter((m) => m.responseTime !== undefined)
+      .map((m) => m.responseTime!);
 
-    const averageRoundTripTime = roundTripTimes.length > 0
-      ? roundTripTimes.reduce((sum, time) => sum + time, 0) / roundTripTimes.length
-      : 0;
+    const averageRoundTripTime =
+      roundTripTimes.length > 0
+        ? roundTripTimes.reduce((sum, time) => sum + time, 0) / roundTripTimes.length
+        : 0;
 
     return {
       connectionTime: this.metrics.connectionTime || 0,
@@ -554,7 +552,7 @@ export class WebSocketTestClient {
       attempt++;
       this.log(`Reconnection attempt ${attempt}/${maxAttempts} in ${delay}ms`);
 
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
 
       try {
         await this.connect();

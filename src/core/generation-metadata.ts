@@ -96,10 +96,7 @@ export class GenerationMetadataManager {
    * Calculate checksum for a single endpoint
    * This determines if the endpoint definition has changed
    */
-  calculateEndpointChecksum(
-    endpoint: ApiEndpoint,
-    options: Partial<ChecksumOptions> = {}
-  ): string {
+  calculateEndpointChecksum(endpoint: ApiEndpoint, options: Partial<ChecksumOptions> = {}): string {
     const opts = { ...DEFAULT_CHECKSUM_OPTIONS, ...options };
 
     // Build a deterministic object representing the endpoint
@@ -249,10 +246,7 @@ export class GenerationMetadataManager {
   /**
    * Get all files that were manually modified
    */
-  async getManuallyModifiedFiles(
-    metadata: GenerationMetadata,
-    baseDir: string
-  ): Promise<string[]> {
+  async getManuallyModifiedFiles(metadata: GenerationMetadata, baseDir: string): Promise<string[]> {
     const modifiedFiles: string[] = [];
 
     for (const endpoint of Object.values(metadata.endpoints)) {

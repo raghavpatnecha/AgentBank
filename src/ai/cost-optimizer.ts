@@ -109,10 +109,10 @@ export class CostOptimizer {
 
     if (!withinBudget || budgetStatus.exceeded) {
       recommendation = 'use-fallback';
-    } else if (this.config.cacheEnabled) {
-      recommendation = 'check-cache';
     } else if (estimatedCost > this.config.fallbackCostThreshold) {
       recommendation = 'use-fallback';
+    } else if (this.config.cacheEnabled) {
+      recommendation = 'check-cache';
     } else {
       recommendation = 'use-ai';
     }
@@ -280,8 +280,9 @@ export class CostOptimizer {
 
     const budgetStatus = this.checkBudgetLimit();
     const hasHighComplexity = sorted.some((r) => r.complexity === 'high');
+    const lowBudget = budgetStatus.percentUsed > 90 || budgetStatus.remaining < estimatedCost;
 
-    if (budgetStatus.percentUsed > 90 || hasHighComplexity) {
+    if (lowBudget || hasHighComplexity) {
       strategy = 'sequential'; // Process one at a time to control costs
     } else if (sorted.length <= 3 && budgetStatus.remaining > estimatedCost * 2) {
       strategy = 'parallel'; // Can afford to run all at once
@@ -399,7 +400,7 @@ export class CostOptimizer {
     const remaining = Math.max(0, limit - spent);
     const percentUsed = (spent / limit) * 100;
     const exceeded = spent >= limit;
-    const atWarningThreshold = percentUsed >= this.config.warningThreshold * 100;
+    const atWarningThreshold = spent / limit >= this.config.warningThreshold;
 
     const daysRemaining = this.getDaysRemaining();
     const dailyAverage = spent / Math.max(1, this.getDaysPassed());

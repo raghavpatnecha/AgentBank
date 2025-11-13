@@ -128,7 +128,7 @@ export class DockerTestExecutor extends EventEmitter {
       this.docker = new Docker({
         socketPath: dockerHost ? undefined : dockerSocket,
         host: dockerHost,
-      }) as any;
+      });
 
       // Verify Docker connection
       await this.verifyDockerConnection();
@@ -226,7 +226,9 @@ export class DockerTestExecutor extends EventEmitter {
       const testFiles = await this.findTestFiles(mergedOptions.testPath);
 
       if (testFiles.length === 0) {
-        throw new Error(`No test files found in ${mergedOptions.testPath || mergedOptions.outputDir}`);
+        throw new Error(
+          `No test files found in ${mergedOptions.testPath || mergedOptions.outputDir}`
+        );
       }
 
       this.log(`Found ${testFiles.length} test files`);
@@ -383,15 +385,16 @@ export class DockerTestExecutor extends EventEmitter {
     } catch (error) {
       this.stats.failedContainers++;
 
-      const containerError = error instanceof Error && 'code' in error
-        ? (error as any)
-        : this.createContainerError(
-            ContainerErrorCode.UNKNOWN,
-            error instanceof Error ? error.message : String(error),
-            error instanceof Error ? error : undefined,
-            containerId,
-            retryAttempt
-          );
+      const containerError =
+        error instanceof Error && 'code' in error
+          ? (error as any)
+          : this.createContainerError(
+              ContainerErrorCode.UNKNOWN,
+              error instanceof Error ? error.message : String(error),
+              error instanceof Error ? error : undefined,
+              containerId,
+              retryAttempt
+            );
 
       // Retry logic
       const shouldRetry = this.shouldRetryContainer(containerError, retryAttempt, options);
@@ -424,9 +427,7 @@ export class DockerTestExecutor extends EventEmitter {
         containerName,
         exitCode: -1,
         status: ContainerStatus.FAILED,
-        testResults: [
-          this.createFailedTestResult(testFile, containerError, startTime),
-        ],
+        testResults: [this.createFailedTestResult(testFile, containerError, startTime)],
         stdout: '',
         stderr: containerError.message,
         startTime,
@@ -591,7 +592,9 @@ export class DockerTestExecutor extends EventEmitter {
   /**
    * Get container resource usage
    */
-  private async getResourceUsage(container: DockerodeContainer): Promise<ContainerResourceUsage | undefined> {
+  private async getResourceUsage(
+    container: DockerodeContainer
+  ): Promise<ContainerResourceUsage | undefined> {
     try {
       const stats = await container.stats({ stream: false });
 
@@ -666,7 +669,7 @@ export class DockerTestExecutor extends EventEmitter {
     try {
       const jsonMatch = output.match(/\{[\s\S]*"suites"[\s\S]*\}/);
       if (jsonMatch) {
-        const json = JSON.parse(jsonMatch[0]!);
+        const json = JSON.parse(jsonMatch[0]);
         return this.convertPlaywrightResults(json, filePath);
       }
     } catch (error) {
@@ -707,11 +710,13 @@ export class DockerTestExecutor extends EventEmitter {
               retries: test.retries || 0,
               startTime: new Date(test.startTime || Date.now()),
               endTime: new Date(test.endTime || Date.now()),
-              error: test.error ? {
-                message: test.error.message,
-                stack: test.error.stack,
-                type: ErrorType.UNKNOWN,
-              } : undefined,
+              error: test.error
+                ? {
+                    message: test.error.message,
+                    stack: test.error.stack,
+                    type: ErrorType.UNKNOWN,
+                  }
+                : undefined,
             });
           }
         }
@@ -911,10 +916,7 @@ export class DockerTestExecutor extends EventEmitter {
   /**
    * Wait before retry with exponential backoff
    */
-  private async waitForRetry(
-    retryAttempt: number,
-    options: DockerExecutorOptions
-  ): Promise<void> {
+  private async waitForRetry(retryAttempt: number, options: DockerExecutorOptions): Promise<void> {
     const retryConfig = options.containerRetry;
     if (!retryConfig) return;
 
@@ -1054,9 +1056,7 @@ export class DockerTestExecutor extends EventEmitter {
 /**
  * Create Docker executor with default options
  */
-export function createDockerExecutor(
-  options?: Partial<DockerExecutorOptions>
-): DockerTestExecutor {
+export function createDockerExecutor(options?: Partial<DockerExecutorOptions>): DockerTestExecutor {
   const defaultOptions = DockerConfig.createDefault();
   return new DockerTestExecutor({ ...defaultOptions, ...options });
 }

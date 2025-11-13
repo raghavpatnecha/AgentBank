@@ -9,22 +9,22 @@ import type { TestCase } from './test-generator-types.js';
  * Load pattern types for performance testing
  */
 export type LoadPattern =
-  | 'constant'    // Constant number of users
-  | 'ramp'        // Gradual increase/decrease
-  | 'spike'       // Sudden load increases
-  | 'wave'        // Oscillating load pattern
-  | 'step';       // Step-wise increases
+  | 'constant' // Constant number of users
+  | 'ramp' // Gradual increase/decrease
+  | 'spike' // Sudden load increases
+  | 'wave' // Oscillating load pattern
+  | 'step'; // Step-wise increases
 
 /**
  * Performance test types
  */
 export type PerformanceTestType =
-  | 'load'        // Simulate concurrent users
-  | 'stress'      // Find breaking points
-  | 'spike'       // Sudden load increases
-  | 'endurance'   // Sustained load over time
+  | 'load' // Simulate concurrent users
+  | 'stress' // Find breaking points
+  | 'spike' // Sudden load increases
+  | 'endurance' // Sustained load over time
   | 'scalability' // Gradual increase to find limits
-  | 'soak';       // Long duration stability test
+  | 'soak'; // Long duration stability test
 
 /**
  * Performance test case extending base TestCase
@@ -138,15 +138,15 @@ export interface PerformanceAssertion {
  * Performance metric types
  */
 export type PerformanceMetricType =
-  | 'response_time'      // Average response time
-  | 'response_time_p50'  // Median response time
-  | 'response_time_p95'  // 95th percentile
-  | 'response_time_p99'  // 99th percentile
-  | 'throughput'         // Requests per second
-  | 'error_rate'         // Percentage of errors
-  | 'concurrent_users'   // Active concurrent users
-  | 'cpu_usage'          // CPU utilization
-  | 'memory_usage';      // Memory utilization
+  | 'response_time' // Average response time
+  | 'response_time_p50' // Median response time
+  | 'response_time_p95' // 95th percentile
+  | 'response_time_p99' // 99th percentile
+  | 'throughput' // Requests per second
+  | 'error_rate' // Percentage of errors
+  | 'concurrent_users' // Active concurrent users
+  | 'cpu_usage' // CPU utilization
+  | 'memory_usage'; // Memory utilization
 
 /**
  * Think time configuration (delay between requests)
@@ -313,7 +313,7 @@ export interface ResourceStats {
 
   /** Network I/O */
   network?: {
-    inbound: number;  // MB/s
+    inbound: number; // MB/s
     outbound: number; // MB/s
   };
 }
@@ -609,11 +609,11 @@ export interface PerformanceGeneratorOptions {
  * Export format options for performance reports
  */
 export type PerformanceReportFormat =
-  | 'json'        // JSON format
-  | 'html'        // HTML report with charts
-  | 'csv'         // CSV for spreadsheet analysis
-  | 'jmeter'      // JMeter XML format
-  | 'markdown';   // Markdown summary
+  | 'json' // JSON format
+  | 'html' // HTML report with charts
+  | 'csv' // CSV for spreadsheet analysis
+  | 'jmeter' // JMeter XML format
+  | 'markdown'; // Markdown summary
 
 /**
  * Report export options

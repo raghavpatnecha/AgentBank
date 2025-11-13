@@ -308,10 +308,7 @@ export enum CleanupStrategy {
 /**
  * Seed handler function
  */
-export type SeedHandler = (
-  data: any,
-  context: SeedContext
-) => Promise<void> | void;
+export type SeedHandler = (data: any, context: SeedContext) => Promise<void> | void;
 
 /**
  * Seed execution context

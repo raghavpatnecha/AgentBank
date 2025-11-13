@@ -173,7 +173,7 @@ export class DataSeeder {
       return false;
     }
 
-    const env = this.config.environment!;
+    const env = this.config.environment;
     const history = this.seedHistory.get(env) || new Set();
     return history.has(seedFile);
   }
@@ -182,7 +182,7 @@ export class DataSeeder {
    * Mark seed as executed
    */
   private markExecuted(seedFile: string): void {
-    const env = this.config.environment!;
+    const env = this.config.environment;
     if (!this.seedHistory.has(env)) {
       this.seedHistory.set(env, new Set());
     }
@@ -253,15 +253,11 @@ export class DataSeeder {
   /**
    * Insert batch of records
    */
-  private async insertBatch(
-    tableName: string,
-    data: any[],
-    context: SeedContext
-  ): Promise<number> {
+  private async insertBatch(tableName: string, data: any[], context: SeedContext): Promise<number> {
     const dbType = this.config.connection?.type;
 
     // Use custom handler if available
-    const handler = this.config.handlers![tableName];
+    const handler = this.config.handlers[tableName];
     if (handler) {
       await handler(data, context);
       return data.length;
@@ -288,11 +284,7 @@ export class DataSeeder {
   /**
    * Insert into SQL database
    */
-  private async insertSql(
-    _tableName: string,
-    data: any[],
-    _context: SeedContext
-  ): Promise<number> {
+  private async insertSql(_tableName: string, data: any[], _context: SeedContext): Promise<number> {
     if (data.length === 0) return 0;
 
     // Build INSERT query (mock implementation)
@@ -352,8 +344,8 @@ export class DataSeeder {
     // Split SQL into individual statements
     const statements = sql
       .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
     let count = 0;
     for (const _statement of statements) {
@@ -452,12 +444,12 @@ export class DataSeeder {
     const files: string[] = [];
 
     // Use explicit order if provided
-    if (this.config.order!.length > 0) {
-      return this.config.order!;
+    if (this.config.order.length > 0) {
+      return this.config.order;
     }
 
     // Otherwise, use sources
-    for (const source of this.config.sources!) {
+    for (const source of this.config.sources) {
       files.push(source);
     }
 

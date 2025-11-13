@@ -65,7 +65,7 @@ export class TestDataManager {
    */
   async build<T = any>(type: string, overrides: Partial<T> = {}): Promise<T> {
     const factory = this.factoryRegistry.get<T>(type);
-    return factory.build(overrides as any) as Promise<T>;
+    return factory.build(overrides as any);
   }
 
   /**
@@ -73,7 +73,7 @@ export class TestDataManager {
    */
   async create<T = any>(type: string, overrides: Partial<T> = {}): Promise<T> {
     const factory = this.factoryRegistry.get<T>(type);
-    const entity = await factory.create(overrides as any) as T;
+    const entity = (await factory.create(overrides as any)) as T;
 
     // Track created entity for cleanup
     this.trackEntity(type, entity);
@@ -84,28 +84,20 @@ export class TestDataManager {
   /**
    * Build multiple entities
    */
-  async buildMany<T = any>(
-    type: string,
-    count: number,
-    overrides: Partial<T> = {}
-  ): Promise<T[]> {
+  async buildMany<T = any>(type: string, count: number, overrides: Partial<T> = {}): Promise<T[]> {
     const factory = this.factoryRegistry.get<T>(type);
-    return factory.buildMany(count, overrides as any) as Promise<T[]>;
+    return factory.buildMany(count, overrides as any);
   }
 
   /**
    * Create multiple entities
    */
-  async createMany<T = any>(
-    type: string,
-    count: number,
-    overrides: Partial<T> = {}
-  ): Promise<T[]> {
+  async createMany<T = any>(type: string, count: number, overrides: Partial<T> = {}): Promise<T[]> {
     const factory = this.factoryRegistry.get<T>(type);
-    const entities = await factory.createMany(count, overrides as any) as T[];
+    const entities = await factory.createMany(count, overrides as any);
 
     // Track created entities
-    entities.forEach(entity => this.trackEntity(type, entity));
+    entities.forEach((entity) => this.trackEntity(type, entity));
 
     return entities;
   }
@@ -116,9 +108,7 @@ export class TestDataManager {
   async loadFixtures<T = any>(filePath: string): Promise<Fixture<T>[]> {
     const result = await this.fixtureLoader.loadFile<T>(filePath);
     if (result.errors && result.errors.length > 0) {
-      throw new Error(
-        `Failed to load fixtures: ${result.errors.map(e => e.message).join(', ')}`
-      );
+      throw new Error(`Failed to load fixtures: ${result.errors.map((e) => e.message).join(', ')}`);
     }
     return result.fixtures;
   }
@@ -134,10 +124,7 @@ export class TestDataManager {
   /**
    * Load and create entities from fixtures
    */
-  async seedFixtures<T = any>(
-    filePath: string,
-    options: { persist?: boolean } = {}
-  ): Promise<T[]> {
+  async seedFixtures<T = any>(filePath: string, options: { persist?: boolean } = {}): Promise<T[]> {
     const fixtures = await this.loadFixtures<T>(filePath);
     const entities: T[] = [];
 
@@ -168,9 +155,7 @@ export class TestDataManager {
 
     const result = await this.seeder.seed();
     if (!result.success) {
-      throw new Error(
-        `Seeding failed: ${result.errors?.map(e => e.message).join(', ')}`
-      );
+      throw new Error(`Seeding failed: ${result.errors?.map((e) => e.message).join(', ')}`);
     }
   }
 
@@ -356,9 +341,7 @@ export class TestDataManager {
   private async cleanupTransaction(txId: string): Promise<void> {
     // Filter entities created in this transaction
     for (const [type, entities] of this.createdEntities.entries()) {
-      const filtered = entities.filter(
-        (e: any) => e.transactionId !== txId
-      );
+      const filtered = entities.filter((e: any) => e.transactionId !== txId);
       this.createdEntities.set(type, filtered);
     }
   }
@@ -430,9 +413,7 @@ export class TestDataManager {
 /**
  * Create a test data manager instance
  */
-export function createTestDataManager(
-  config?: TestDataManagerConfig
-): TestDataManager {
+export function createTestDataManager(config?: TestDataManagerConfig): TestDataManager {
   return new TestDataManager(config);
 }
 
@@ -444,9 +425,7 @@ let globalManager: TestDataManager | null = null;
 /**
  * Get or create global test data manager
  */
-export function getTestDataManager(
-  config?: TestDataManagerConfig
-): TestDataManager {
+export function getTestDataManager(config?: TestDataManagerConfig): TestDataManager {
   if (!globalManager) {
     globalManager = new TestDataManager(config);
   }
