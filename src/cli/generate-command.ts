@@ -38,6 +38,9 @@ interface GenerateCommandOptions {
   organization?: OrganizationStrategy;
   baseUrl?: string;
   verbose?: boolean;
+  incremental?: boolean;
+  forceAll?: boolean;
+  dryRun?: boolean;
 }
 
 /**
@@ -68,6 +71,9 @@ export function createGenerateCommand(): Command {
       'by-tag'
     )
     .option('--base-url <url>', 'Base URL for API (overrides spec servers)')
+    .option('--no-incremental', 'Disable incremental mode (regenerate all tests)')
+    .option('--force-all', 'Force regenerate all tests even if unchanged')
+    .option('--dry-run', 'Show what would change without making changes')
     .option('-v, --verbose', 'Verbose output', false)
     .action(async (options: GenerateCommandOptions) => {
       await executeGenerate(options);
@@ -156,6 +162,12 @@ async function executeGenerate(options: GenerateCommandOptions): Promise<void> {
       framework: {
         useFixtures: config.options?.useFixtures ?? true,
         useHooks: config.options?.useHooks ?? true,
+      },
+      incremental: {
+        enabled: options.incremental !== false, // Default to true, disabled with --no-incremental
+        forceAll: options.forceAll ?? false,
+        dryRun: options.dryRun ?? false,
+        specPath: specPath, // Pass absolute spec path for metadata tracking
       },
     });
 

@@ -1,0 +1,8 @@
+# Add to .gitignore if you don't want to commit metadata
+# (Not recommended - committing metadata allows team to benefit from incremental generation)
+
+# .agentbank-cache/
+
+# Or commit it to share incremental benefits:
+# git add .agentbank-cache/
+# git commit -m "Add AgentBank generation metadata"

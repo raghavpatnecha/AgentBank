@@ -17,6 +17,9 @@ import type {
   CodeGeneratorInterface,
   OrganizedTests,
 } from '../types/generator-interfaces.js';
+import { IncrementalGenerator } from './incremental-generator.js';
+import { GenerationMetadataManager } from './generation-metadata.js';
+import type { GenerationOptionsSnapshot } from '../types/incremental-types.js';
 
 /**
  * Options for test generation
@@ -57,6 +60,21 @@ export interface TestGeneratorOptions {
     /** Generate before/after hooks */
     useHooks?: boolean;
   };
+
+  /** Incremental generation options */
+  incremental?: {
+    /** Enable incremental mode (default: true) */
+    enabled?: boolean;
+
+    /** Force regenerate all tests */
+    forceAll?: boolean;
+
+    /** Dry run - show what would change */
+    dryRun?: boolean;
+
+    /** Path to OpenAPI spec file (needed for incremental mode) */
+    specPath?: string;
+  };
 }
 
 /**
@@ -81,6 +99,8 @@ export class TestGenerator {
   private generators: Map<string, TestGeneratorInterface>;
   private organizer: TestOrganizerInterface | null;
   private codeGenerator: CodeGeneratorInterface | null;
+  private incrementalGenerator: IncrementalGenerator | null;
+  private metadataManager: GenerationMetadataManager | null;
 
   /**
    * Creates a new test generator instance
@@ -103,6 +123,11 @@ export class TestGenerator {
         useFixtures: true,
         useHooks: true,
       },
+      incremental: {
+        enabled: true,
+        forceAll: false,
+        dryRun: false,
+      },
       ...options,
     };
 
@@ -110,6 +135,17 @@ export class TestGenerator {
     this.generators = new Map();
     this.organizer = null;
     this.codeGenerator = null;
+    this.incrementalGenerator = null;
+    this.metadataManager = null;
+
+    // Initialize incremental generation if enabled
+    if (this.options.incremental?.enabled !== false) {
+      this.metadataManager = new GenerationMetadataManager();
+      this.incrementalGenerator = new IncrementalGenerator(this.metadataManager, {
+        forceAll: this.options.incremental?.forceAll ?? false,
+        dryRun: this.options.incremental?.dryRun ?? false,
+      });
+    }
   }
 
   /**
@@ -142,10 +178,12 @@ export class TestGenerator {
    *
    * Strategy:
    * 1. Extract all endpoints from spec
-   * 2. Generate test cases using all configured generators
-   * 3. Organize tests by configured strategy
-   * 4. Generate code files
-   * 5. Collect statistics
+   * 2. (Incremental) Detect changes and filter endpoints
+   * 3. Generate test cases using all configured generators
+   * 4. Organize tests by configured strategy
+   * 5. Generate code files
+   * 6. (Incremental) Update metadata and delete removed files
+   * 7. Collect statistics
    *
    * @returns Test generation result with files and statistics
    */
@@ -154,9 +192,9 @@ export class TestGenerator {
 
     try {
       // Step 1: Extract endpoints
-      const endpoints = this.extractEndpoints();
+      const allEndpoints = this.extractEndpoints();
 
-      if (endpoints.length === 0) {
+      if (allEndpoints.length === 0) {
         return {
           files: [],
           totalTests: 0,
@@ -168,6 +206,87 @@ export class TestGenerator {
               severity: 'high',
             },
           ],
+          errors: [],
+        };
+      }
+
+      // Step 2: Incremental mode - detect changes and filter endpoints
+      let endpoints = allEndpoints;
+      let incrementalStrategy = null;
+      let skippedCount = 0;
+      const warnings: any[] = [];
+
+      if (this.incrementalGenerator && this.metadataManager && this.options.incremental?.specPath) {
+        const currentOptions: GenerationOptionsSnapshot = {
+          includeAuth: this.options.includeAuth ?? true,
+          includeErrors: this.options.includeErrors ?? true,
+          includeEdgeCases: this.options.includeEdgeCases ?? true,
+          includeFlows: this.options.includeFlows ?? true,
+          includePerformance: this.options.includePerformance ?? false,
+          baseUrl: this.options.baseUrl,
+        };
+
+        const changes = await this.incrementalGenerator.detectChanges(
+          this.options.incremental.specPath,
+          this.spec,
+          allEndpoints,
+          currentOptions,
+          this.options.outputDir || 'tests/generated'
+        );
+
+        incrementalStrategy = this.incrementalGenerator.createRegenerationStrategy(changes);
+
+        // Print strategy summary
+        if (!this.options.incremental.dryRun) {
+          this.incrementalGenerator.printStrategySummary(incrementalStrategy);
+        }
+
+        // In dry run mode, print detailed summary and exit
+        if (this.options.incremental.dryRun) {
+          this.incrementalGenerator.printDryRunSummary(incrementalStrategy);
+          return {
+            files: [],
+            totalTests: 0,
+            statistics: this.createEmptyStatistics(startTime),
+            warnings: [],
+            errors: [],
+          };
+        }
+
+        // Filter endpoints to only those that need generation
+        if (incrementalStrategy.totalOperations < allEndpoints.length) {
+          endpoints = this.incrementalGenerator.filterEndpointsForGeneration(
+            allEndpoints,
+            incrementalStrategy
+          );
+          skippedCount = incrementalStrategy.toSkip.length;
+
+          // Add info about incremental mode
+          if (skippedCount > 0) {
+            console.log(
+              `\n⚡ Incremental mode: Processing ${endpoints.length} endpoints, skipping ${skippedCount} unchanged\n`
+            );
+          }
+        }
+
+        // Delete files for removed endpoints
+        if (incrementalStrategy.toDelete.length > 0) {
+          await this.incrementalGenerator.deleteRemovedFiles(
+            incrementalStrategy.toDelete,
+            this.options.outputDir || 'tests/generated',
+            this.options.incremental.dryRun
+          );
+        }
+      }
+
+      // If no endpoints to process (all skipped), return early
+      if (endpoints.length === 0 && skippedCount > 0) {
+        console.log('✅ All tests are up to date - nothing to generate!\n');
+        return {
+          files: [],
+          totalTests: 0,
+          statistics: this.createEmptyStatistics(startTime),
+          warnings: [],
           errors: [],
         };
       }
@@ -214,11 +333,25 @@ export class TestGenerator {
       // Step 5: Collect statistics
       const statistics = this.collectStatistics(endpoints, allTests, files, startTime);
 
+      // Step 6: Update metadata (incremental mode)
+      if (
+        this.metadataManager &&
+        this.options.incremental?.specPath &&
+        !this.options.incremental.dryRun
+      ) {
+        await this.saveGenerationMetadata(
+          this.options.incremental.specPath,
+          endpoints,
+          files,
+          allTests
+        );
+      }
+
       return {
         files,
         totalTests: allTests.length,
         statistics,
-        warnings: [],
+        warnings,
         errors: [],
       };
     } catch (error) {
@@ -235,6 +368,82 @@ export class TestGenerator {
           },
         ],
       };
+    }
+  }
+
+  /**
+   * Save generation metadata for incremental mode
+   */
+  private async saveGenerationMetadata(
+    specPath: string,
+    endpoints: ApiEndpoint[],
+    files: GeneratedTestFile[],
+    allTests: TestCase[]
+  ): Promise<void> {
+    if (!this.metadataManager) return;
+
+    try {
+      // Calculate spec hash
+      const specHash = await this.metadataManager.calculateSpecHash(specPath);
+
+      // Create or load metadata
+      let metadata = await this.metadataManager.loadMetadata();
+
+      if (!metadata) {
+        // Create new metadata
+        const options: GenerationOptionsSnapshot = {
+          includeAuth: this.options.includeAuth ?? true,
+          includeErrors: this.options.includeErrors ?? true,
+          includeEdgeCases: this.options.includeEdgeCases ?? true,
+          includeFlows: this.options.includeFlows ?? true,
+          includePerformance: this.options.includePerformance ?? false,
+          baseUrl: this.options.baseUrl,
+        };
+
+        metadata = this.metadataManager.createMetadata(
+          specPath,
+          specHash,
+          this.options.outputDir || 'tests/generated',
+          this.options.organizationStrategy || 'by-tag',
+          options
+        );
+      } else {
+        // Update existing metadata
+        metadata.specHash = specHash;
+        metadata.generatedAt = new Date().toISOString();
+        metadata.outputDir = this.options.outputDir || 'tests/generated';
+        metadata.organizationStrategy = this.options.organizationStrategy || 'by-tag';
+      }
+
+      // Update endpoint metadata
+      for (const endpoint of endpoints) {
+        // Find files for this endpoint
+        const endpointKey = `${endpoint.method.toUpperCase()} ${endpoint.path}`;
+        const endpointFiles = files
+          .filter((file) => file.metadata.endpoints.includes(endpointKey))
+          .map((file) => file.filePath);
+
+        // Find tests for this endpoint
+        const endpointTests = allTests.filter(
+          (test) => test.method === endpoint.method && test.endpoint === endpoint.path
+        );
+
+        const testTypes = [...new Set(endpointTests.map((t) => t.type))];
+
+        this.metadataManager.updateEndpointMetadata(
+          metadata,
+          endpoint,
+          endpointFiles,
+          testTypes,
+          endpointTests.length
+        );
+      }
+
+      // Save metadata
+      await this.metadataManager.saveMetadata(metadata);
+      console.log(`\n💾 Saved generation metadata to ${this.metadataManager.getMetadataPath()}\n`);
+    } catch (error) {
+      console.warn(`Warning: Failed to save generation metadata: ${error}`);
     }
   }
 
