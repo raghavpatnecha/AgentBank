@@ -3,6 +3,16 @@
  *
  * Uses GPT-4 to regenerate broken tests based on failure analysis.
  * This is used by the Self-Healing Agent (Agent 3).
+ *
+ * This implementation follows prompt engineering rules documented in:
+ * docs/prompt-engineering.md
+ *
+ * Key principles:
+ * - Context-Rich: Provide comprehensive context
+ * - Intent Preservation: Maintain original purpose
+ * - Format Control: Return only valid TypeScript
+ * - Few-Shot Learning: Include examples
+ * - Specificity: Focus on relevant information
  */
 
 import OpenAI from 'openai';
@@ -13,7 +23,13 @@ import type {
   ValidationError,
   ValidationWarning,
 } from '../types/ai-types.js';
-import { ValidationType } from '../types/ai-types.js';
+import { ValidationType, ChangeImpact } from '../types/ai-types.js';
+import {
+  getTestRepairPromptRules,
+  formatFewShotRepairExamples,
+  OUTPUT_FORMAT_RULES,
+  TEST_REPAIR_REQUIREMENTS,
+} from './prompt-engineering-rules.js';
 import fs from 'fs/promises';
 
 /**
@@ -185,63 +201,104 @@ export class AITestRegenerator {
   }
 
   /**
+   * Get prompt engineering rules from documentation
+   * Based on docs/prompt-engineering.md
+   */
+  private getPromptEngineeringRules(): string {
+    return getTestRepairPromptRules();
+  }
+
+  /**
+   * Get few-shot examples for test repair
+   */
+  private getFewShotExamples(): string {
+    return formatFewShotRepairExamples();
+  }
+
+  /**
    * Get system prompt for test regeneration
+   * Enhanced with prompt engineering rules from docs/prompt-engineering.md
    */
   private getSystemPrompt(): string {
     return `You are an expert test engineer specializing in API testing with Playwright.
 
-Your task is to regenerate failing tests to work with updated API specifications.
+Your task is to repair failing tests based on API specification changes.
 
-Guidelines:
-1. Preserve the test's original intent and coverage
-2. Update only what's necessary to fix the failure
-3. Follow Playwright best practices
-4. Use proper TypeScript types
-5. Include clear test descriptions
-6. Handle errors gracefully
-7. Return ONLY the complete test code, no explanations
+${this.getPromptEngineeringRules()}
 
 The test should:
 - Use Playwright's request fixture for API testing
 - Include proper assertions with expect()
 - Have clear test names
 - Handle async/await correctly
-- Validate response status and body`;
+- Validate response status and body
+
+${OUTPUT_FORMAT_RULES}`;
   }
 
   /**
    * Build prompt for test regeneration
+   * Enhanced with structured context and few-shot examples
    */
   private buildRegenerationPrompt(context: RegenerationContext): string {
     const { testName, failureAnalysis, originalTestCode, specChanges } = context;
 
-    let prompt = `# Test Regeneration Request\n\n`;
+    let prompt = `# Test Repair Request\n\n`;
 
-    prompt += `## Failing Test\n`;
-    prompt += `**Name:** ${testName}\n`;
-    prompt += `**File:** ${context.testFilePath}\n\n`;
+    // Role definition
+    prompt += `You are repairing a failing Playwright API test.\n\n`;
 
-    prompt += `## Failure Analysis\n`;
-    prompt += `**Type:** ${failureAnalysis.failureType}\n`;
+    // Context: Original Test Code
+    prompt += `## Original Test Code\n\`\`\`typescript\n${originalTestCode}\n\`\`\`\n\n`;
+
+    // Context: Test Failure Information
+    prompt += `## Test Failure Information\n`;
+    prompt += `**Test Name:** ${testName}\n`;
+    prompt += `**File:** ${context.testFilePath}\n`;
+    prompt += `**Failure Type:** ${failureAnalysis.failureType}\n`;
     prompt += `**Root Cause:** ${failureAnalysis.rootCause}\n`;
-    prompt += `**Confidence:** ${(failureAnalysis.confidence * 100).toFixed(0)}%\n\n`;
+    prompt += `**Confidence:** ${(failureAnalysis.confidence * 100).toFixed(0)}%\n`;
 
     if (failureAnalysis.suggestedFix) {
-      prompt += `**Suggested Fix:** ${failureAnalysis.suggestedFix}\n\n`;
+      prompt += `**Suggested Fix:** ${failureAnalysis.suggestedFix}\n`;
     }
+    prompt += `\n`;
 
+    // Context: API Changes
     if (specChanges && specChanges.length > 0) {
-      prompt += `## API Specification Changes\n`;
+      prompt += `## API Changes\n`;
+      prompt += `The following changes were made to the API specification:\n`;
       for (const change of specChanges) {
         prompt += `- **${change.type}** in ${change.path}: ${change.description}\n`;
+        if (change.impact === ChangeImpact.BREAKING) {
+          prompt += `  ⚠️  BREAKING CHANGE\n`;
+        }
       }
       prompt += `\n`;
     }
 
-    prompt += `## Current Test Code\n\`\`\`typescript\n${originalTestCode}\n\`\`\`\n\n`;
+    // Requirements
+    prompt += `## Requirements\n`;
+    TEST_REPAIR_REQUIREMENTS.forEach((req, i) => {
+      prompt += `${i + 1}. ${req}\n`;
+    });
+    prompt += `\n`;
 
-    prompt += `## Task\n`;
-    prompt += `Regenerate this test to fix the failure. Return ONLY the complete updated test code.`;
+    // Few-Shot Examples
+    prompt += `## Few-Shot Examples\n`;
+    prompt += `Here are examples of successful test repairs:\n`;
+    prompt += this.getFewShotExamples();
+    prompt += `\n`;
+
+    // Output Format
+    prompt += `## Output Format\n`;
+    prompt += OUTPUT_FORMAT_RULES;
+    prompt += `\n\n`;
+
+    // Task reminder
+    prompt += `## Your Task\n`;
+    prompt += `Repair the failing test above by addressing all API changes and following the requirements.\n`;
+    prompt += `Return ONLY the complete repaired test code in TypeScript.\n`;
 
     return prompt;
   }

@@ -8,11 +8,25 @@
  * - Security implications
  * - Real-world edge cases
  * - Implicit requirements not in the spec
+ *
+ * This implementation follows prompt engineering rules documented in:
+ * docs/prompt-engineering.md
+ *
+ * Key principles:
+ * - Context-Rich: Provide comprehensive context
+ * - Intent Clarity: Generate clear, purposeful tests
+ * - Format Control: Return only valid TypeScript
+ * - Few-Shot Learning: Include examples
+ * - Specificity: Focus on relevant information
  */
 
 import OpenAI from 'openai';
 import type { ApiEndpoint } from '../types/openapi-types.js';
 import type { TestCase } from '../types/test-generator-types.js';
+import {
+  getTestGenerationPromptRules,
+  TEST_GENERATION_REQUIREMENTS,
+} from '../ai/prompt-engineering-rules.js';
 
 export interface AITestGeneratorOptions {
   /** OpenAI API key */
@@ -144,7 +158,16 @@ export class AITestGenerator {
   }
 
   /**
+   * Get prompt engineering rules from documentation
+   * Based on docs/prompt-engineering.md
+   */
+  private getPromptEngineeringRules(): string {
+    return getTestGenerationPromptRules();
+  }
+
+  /**
    * Build system prompt for GPT-4
+   * Enhanced with prompt engineering rules from docs/prompt-engineering.md
    */
   private getSystemPrompt(): string {
     return `You are an expert API testing engineer with deep knowledge of:
@@ -154,6 +177,8 @@ export class AITestGenerator {
 - Real-world edge cases and failure scenarios
 - Workflow dependencies and state management
 - Performance and scalability testing
+
+${this.getPromptEngineeringRules()}
 
 Your task is to analyze API endpoints and generate intelligent test cases that go beyond basic schema validation.
 Focus on tests that catch real bugs, security issues, and business logic violations.
@@ -170,47 +195,107 @@ Return your response as a JSON array of test scenarios. Each scenario should hav
     "expectedBehavior": "Description of expected behavior",
     "validationPoints": ["Key things to verify"]
   }
-}`;
+}
+
+Important: Return ONLY a valid JSON array, no additional text or markdown.`;
   }
 
   /**
    * Build prompt for specific endpoint
+   * Enhanced with structured context following prompt engineering rules
    */
   private buildPrompt(endpoint: ApiEndpoint, allEndpoints: ApiEndpoint[]): string {
     const relatedEndpoints = this.findRelatedEndpoints(endpoint, allEndpoints);
 
-    return `Analyze this API endpoint and generate ${this.options.testsPerEndpoint} intelligent test scenarios:
+    let prompt = `# Test Generation Request\n\n`;
 
-**Endpoint:**
-${endpoint.method.toUpperCase()} ${endpoint.path}
-${endpoint.summary || ''}
-${endpoint.description || ''}
+    // Context: Endpoint Information
+    prompt += `## API Endpoint\n`;
+    prompt += `**Method:** ${endpoint.method.toUpperCase()}\n`;
+    prompt += `**Path:** ${endpoint.path}\n`;
+    if (endpoint.summary) {
+      prompt += `**Summary:** ${endpoint.summary}\n`;
+    }
+    if (endpoint.description) {
+      prompt += `**Description:** ${endpoint.description}\n`;
+    }
+    prompt += `\n`;
 
-**Parameters:**
-${JSON.stringify(endpoint.parameters || [], null, 2)}
+    // Context: Parameters
+    if (endpoint.parameters && endpoint.parameters.length > 0) {
+      prompt += `## Parameters\n\`\`\`json\n${JSON.stringify(endpoint.parameters, null, 2)}\n\`\`\`\n\n`;
+    }
 
-**Request Body:**
-${endpoint.requestBody ? JSON.stringify(endpoint.requestBody, null, 2) : 'None'}
+    // Context: Request Body
+    if (endpoint.requestBody) {
+      prompt += `## Request Body\n\`\`\`json\n${JSON.stringify(endpoint.requestBody, null, 2)}\n\`\`\`\n\n`;
+    }
 
-**Responses:**
-${JSON.stringify(endpoint.responses || {}, null, 2)}
+    // Context: Responses
+    prompt += `## Responses\n\`\`\`json\n${JSON.stringify(endpoint.responses || {}, null, 2)}\n\`\`\`\n\n`;
 
-**Security:**
-${JSON.stringify(endpoint.security || [], null, 2)}
+    // Context: Security Requirements
+    if (endpoint.security && endpoint.security.length > 0) {
+      prompt += `## Security Requirements\n\`\`\`json\n${JSON.stringify(endpoint.security, null, 2)}\n\`\`\`\n\n`;
+    }
 
-**Related Endpoints:**
-${relatedEndpoints.map((e) => `${e.method.toUpperCase()} ${e.path}`).join('\n')}
+    // Context: Related Endpoints (for workflow testing)
+    if (relatedEndpoints.length > 0) {
+      prompt += `## Related Endpoints\n`;
+      prompt += `Consider these related endpoints for workflow tests:\n`;
+      relatedEndpoints.forEach((e) => {
+        prompt += `- ${e.method.toUpperCase()} ${e.path}`;
+        if (e.summary) {
+          prompt += ` - ${e.summary}`;
+        }
+        prompt += `\n`;
+      });
+      prompt += `\n`;
+    }
 
-**Focus Areas:** ${this.options.focus.join(', ')}
+    // Requirements
+    prompt += `## Test Generation Requirements\n`;
+    TEST_GENERATION_REQUIREMENTS.forEach((req, i) => {
+      prompt += `${i + 1}. ${req}\n`;
+    });
+    prompt += `\n`;
 
-Generate ${this.options.testsPerEndpoint} test scenarios that:
-1. Test business logic constraints and domain rules
-2. Test security vulnerabilities and authorization
-3. Test workflow dependencies with related endpoints
-4. Test realistic edge cases and error conditions
-5. Consider implicit requirements not explicitly in the spec
+    // Focus Areas
+    prompt += `## Focus Areas\n`;
+    prompt += `Prioritize these testing aspects: ${this.options.focus.join(', ')}\n\n`;
 
-Return ONLY a JSON array of test scenarios, no additional text.`;
+    // Task
+    prompt += `## Your Task\n`;
+    prompt += `Generate ${this.options.testsPerEndpoint} intelligent test scenarios for this endpoint.\n`;
+    prompt += `Each test should:\n`;
+    prompt += `1. Test business logic constraints and domain rules\n`;
+    prompt += `2. Test security vulnerabilities and authorization\n`;
+    prompt += `3. Test workflow dependencies with related endpoints\n`;
+    prompt += `4. Test realistic edge cases and error conditions\n`;
+    prompt += `5. Consider implicit requirements not explicitly in the spec\n\n`;
+
+    // Output Format
+    prompt += `## Output Format\n`;
+    prompt += `Return ONLY a valid JSON array of test scenarios, no additional text or markdown.\n`;
+    prompt += `Each scenario must follow this structure:\n`;
+    prompt += `\`\`\`json\n`;
+    prompt += `[\n`;
+    prompt += `  {\n`;
+    prompt += `    "name": "Clear, descriptive test name",\n`;
+    prompt += `    "description": "What this test validates and why it matters",\n`;
+    prompt += `    "category": "business-logic" | "security" | "workflow" | "edge-case" | "performance",\n`;
+    prompt += `    "priority": "critical" | "high" | "medium" | "low",\n`;
+    prompt += `    "scenario": {\n`;
+    prompt += `      "requestData": { /* test data */ },\n`;
+    prompt += `      "expectedStatus": 200,\n`;
+    prompt += `      "expectedBehavior": "Description of expected behavior",\n`;
+    prompt += `      "validationPoints": ["Key things to verify"]\n`;
+    prompt += `    }\n`;
+    prompt += `  }\n`;
+    prompt += `]\n`;
+    prompt += `\`\`\`\n`;
+
+    return prompt;
   }
 
   /**
