@@ -140,6 +140,14 @@ describe('Backoff Utility', () => {
   });
 
   describe('executeWithBackoff', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
     it('should succeed on first attempt', async () => {
       const fn = vi.fn().mockResolvedValue('success');
       const result = await executeWithBackoff(fn);
@@ -161,7 +169,9 @@ describe('Backoff Utility', () => {
         enableJitter: false,
       };
 
-      const result = await executeWithBackoff(fn, config);
+      const promise = executeWithBackoff(fn, config);
+      await vi.runAllTimersAsync();
+      const result = await promise;
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(3);
     });
@@ -174,7 +184,9 @@ describe('Backoff Utility', () => {
         initialDelayMs: 10,
       };
 
-      await expect(executeWithBackoff(fn, config)).rejects.toThrow('persistent failure');
+      const promise = executeWithBackoff(fn, config);
+      await vi.runAllTimersAsync();
+      await expect(promise).rejects.toThrow('persistent failure');
       expect(fn).toHaveBeenCalledTimes(3); // Initial + 2 retries
     });
 
@@ -204,7 +216,9 @@ describe('Backoff Utility', () => {
         initialDelayMs: 10,
       };
 
-      const result = await executeWithBackoff(fn, config, shouldRetry);
+      const promise = executeWithBackoff(fn, config, shouldRetry);
+      await vi.runAllTimersAsync();
+      const result = await promise;
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(2);
     });

@@ -185,3 +185,65 @@ export {
   ContainerErrorCode,
   ContainerLifecycleEventType,
 } from './types/docker-types.js';
+
+// Pipeline Orchestrator (Core - Feature 7)
+export { PipelineOrchestrator } from './core/pipeline-orchestrator.js';
+export type { PipelineConfig, PipelineResult } from './core/pipeline-orchestrator.js';
+
+// Incremental Generator (Feature 1.1)
+export { IncrementalGenerator, createIncrementalGenerator } from './core/incremental-generator.js';
+
+// Email Reporting (Feature 6.3)
+export { EmailSender } from './reporting/email-sender.js';
+export type { EmailConfig, Attachment, TestReport } from './types/email-types.js';
+
+// Performance Testing & Reporting (Feature 3.2)
+export { PerformanceReporter } from './reporting/performance-reporter.js';
+export type { PerformanceReporterConfig } from './reporting/performance-reporter.js';
+export { PerformanceTestGenerator } from './generators/performance-test-generator.js';
+
+// GitHub Integration (Feature 5)
+export { WebhookServer, createDefaultConfig } from './github/webhook-server.js';
+export { JobProcessor, JobWorker } from './github/job-processor.js';
+export type { JobProcessorConfig } from './github/job-processor.js';
+export { CommentParser, createCommentParser, parseComment, detectBotMention } from './github/comment-parser.js';
+export { GitHubClient } from './github/github-client.js';
+export type {
+  TestJob,
+  JobStatus,
+  ParsedCommand,
+  CommandArgs,
+  CommandType,
+  ValidationResult,
+} from './types/webhook-types.js';
+
+// Self-Healing (Feature 4)
+export { SelfHealingOrchestrator } from './ai/self-healing-orchestrator.js';
+export { AITestRegenerator } from './ai/ai-test-regenerator.js';
+export { FailureAnalyzer } from './ai/failure-analyzer.js';
+export { RuleBasedHealer } from './ai/rule-based-healer.js';
+export { CostOptimizer } from './ai/cost-optimizer.js';
+
+// AI Utilities
+export { OpenAIClient } from './ai/openai-client.js';
+export { CacheManager } from './ai/cache-manager.js';
+export { PromptBuilder } from './ai/prompt-builder.js';
+
+// Reporting
+export { HTMLReporter } from './reporting/html-reporter.js';
+export { JSONReporter } from './reporting/json-reporter.js';
+export { JUnitReporter } from './reporting/junit-reporter.js';
+export { ReportManager } from './reporting/report-manager.js';
+
+// Test Data Management (Feature 6.2)
+export { EntityFactory } from './data/entity-factory.js';
+
+// Additional Generators
+export { AuthTestGenerator } from './generators/auth-test-generator.js';
+export { EdgeCaseGenerator } from './generators/edge-case-generator.js';
+
+// Executor Types
+export type {
+  ExecutionOptions,
+  ExecutionSummary,
+} from './types/executor-types.js';
